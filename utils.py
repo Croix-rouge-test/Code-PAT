@@ -145,7 +145,7 @@ def filtre_2025(df, date_col="debut_inscription", dayfirst=True):
 #Attention pour simplifier la fonction il faut que le nom initial de la Dataframe soit le même avec la colonne "nom tablme du dictionnaire de données :  Pegass_Inscription_rename = renommer_par_nom_table(PEGASS_PegassInscription, "PEGASS_PegassInscription", mapping_df)"
 
 #On récupère la table qui sera la table "dictionnaire de données" = sans doute un url
-def renommer_par_nom_table(df, nom_table, mapping_df=mapping_df):
+def renommer_par_nom_table(df, nom_table, mapping_df):
     # On filtre le mapping sur cette table
     mapping_table = mapping_df[mapping_df["nom_table"] == nom_table]
     mapping_dict = dict(zip(mapping_table["nom_variable"], mapping_table["rename"]))

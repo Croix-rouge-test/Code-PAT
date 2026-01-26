@@ -40,8 +40,11 @@ import unicodedata
 import re
 import torch
 from sentence_transformers import SentenceTransformer, util
+import sys
+sys.path.append(os.path.abspath("/Code-PAT/scripts_data"))
+from utils import *
 
-def import_clean_donnees_financieres(financier, mapping_df):
+def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
 
   # Import
   dt_prod = get_as_dataframe(financier.worksheet('DT_Prod'), skiprows=3,evaluate_formulas=True)
