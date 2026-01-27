@@ -77,6 +77,8 @@ def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
   dt_ul_res_net_corr_prod = dt_ul_res_net_corr_prod[['n_structure','Réalisé 2024 Total Année']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier ResCorrProd_2024'}).iloc[:dt_ul_res_net_corr_prod.shape[0]-1]
   dt_ul_treso_brute = dt_ul_treso_brute[['n_structure','Tréso nette au 31/12/2024','Financier Mois_AvanceTreso_2024']].rename(columns = {'Tréso nette au 31/12/2024' : "Financier TresoBrute_2024"}).iloc[:dt_ul_treso_brute.shape[0]-1]
 
+  print('Trace branche 1')
+
   # Clean
   def dept_clean(x):
     if x == '2A' or x == '2B':
@@ -121,14 +123,14 @@ def fusion_donnees_financieres(dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso
   return df_financier_DT, df_financier_DT_UL
 
 def verifier_n_dept(df_financier_DT):
-  
+
   # Doublons
   doublons = df_financier_DT[df_financier_DT.duplicated(subset=['n_dept'])]
   if doublons.shape[0] > 0 :
     print(' ❌ Il y a des doublons :')
     display(df_financier_DT[df_financier_DT.duplicated(subset=['n_dept'])])
   else :
-    print(' ✅ Pas de doublons')
+    print('Aucun doublon')
 
   # Taille des données
   if df_financier_DT['n_dept'].shape[0] == 107 :
