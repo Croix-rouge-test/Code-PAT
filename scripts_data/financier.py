@@ -106,6 +106,40 @@ def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
   return dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso_brute, dt_ul_ant_prod, dt_ul_ant_res_net, dt_ul_res_net_corr_prod, dt_ul_treso_brute
 
 
+def fusion_donnees_financieres(dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso_brute,dt_ul_ant_prod, dt_ul_ant_res_net, dt_ul_res_net_corr_prod, dt_ul_treso_brute):
+  # Données par DT
+  df_financier_DT = pd.merge(dt_prod, dt_resnet, on="n_dept", how="left")
+  df_financier_DT = pd.merge(df_financier_DT, dt_resnet_corr_prod, on="n_dept", how="left")
+  df_financier_DT = pd.merge(df_financier_DT, dt_treso_brute, on="n_dept", how="left")
+
+  # Données par structures
+  df_financier_DT_UL = pd.merge(dt_ul_ant_prod,dt_ul_ant_res_net, on="n_structure", how="left")
+  df_financier_DT_UL = pd.merge(df_financier_DT_UL, dt_ul_res_net_corr_prod, on="n_structure", how="left")
+  df_financier_DT_UL = pd.merge(df_financier_DT_UL, dt_ul_treso_brute, on="n_structure", how="left")
+
+  # Pas de numéro de structure pour le dataframe contenant les DT, on fera le merge sur le numéro de département
+  return df_financier_DT, df_financier_DT_UL
+
+def verifier_n_dept(df_financier_DT):
+  
+  # Doublons
+  doublons = df_financier_DT[df_financier_DT.duplicated(subset=['n_dept'])]
+  if doublons.shape[0] > 0 :
+    print(' ❌ Il y a des doublons :')
+    display(df_financier_DT[df_financier_DT.duplicated(subset=['n_dept'])])
+  else :
+    print(' ✅ Pas de doublons')
+
+  # Taille des données
+  if df_financier_DT['n_dept'].shape[0] == 107 :
+    print(' ✅ Pas de département manquant')
+  else :
+    print(' ❌ Il manque des départements : ')
+    manquants_financier = set(df_financier_DT['n_dept'])
+    manquants_struct = set(df_ref_structure['n_dept'])
+    manquants = manquants_financier.union(manquants_struct) - manquants_struct.intersection(manquants_financier)
+    print(manquants)
+
 
 
 
