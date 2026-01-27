@@ -41,7 +41,7 @@ import re
 import torch
 from sentence_transformers import SentenceTransformer, util
 import sys
-sys.path.append(os.path.abspath("/Code-PAT/scripts_data"))
+sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
 def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
@@ -76,8 +76,6 @@ def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
   dt_ul_ant_res_net = dt_ul_ant_res_net[['n_structure','Réalisé 2024 Total Année']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier ResNet_2024'}).iloc[:dt_ul_ant_res_net.shape[0]-1]
   dt_ul_res_net_corr_prod = dt_ul_res_net_corr_prod[['n_structure','Réalisé 2024 Total Année']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier ResCorrProd_2024'}).iloc[:dt_ul_res_net_corr_prod.shape[0]-1]
   dt_ul_treso_brute = dt_ul_treso_brute[['n_structure','Tréso nette au 31/12/2024','Financier Mois_AvanceTreso_2024']].rename(columns = {'Tréso nette au 31/12/2024' : "Financier TresoBrute_2024"}).iloc[:dt_ul_treso_brute.shape[0]-1]
-
-  print('Trace branche 1')
 
   # Clean
   def dept_clean(x):
@@ -118,7 +116,6 @@ def fusion_donnees_financieres(dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso
   df_financier_DT_UL = pd.merge(dt_ul_ant_prod,dt_ul_ant_res_net, on="n_structure", how="left")
   df_financier_DT_UL = pd.merge(df_financier_DT_UL, dt_ul_res_net_corr_prod, on="n_structure", how="left")
   df_financier_DT_UL = pd.merge(df_financier_DT_UL, dt_ul_treso_brute, on="n_structure", how="left")
-  print('Trace')
 
   # Pas de numéro de structure pour le dataframe contenant les DT, on fera le merge sur le numéro de département
   return df_financier_DT, df_financier_DT_UL
