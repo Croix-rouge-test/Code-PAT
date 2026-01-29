@@ -59,20 +59,22 @@ def filtres_mobilite(mobilite,mapping_df):
 
   return mobilite
 
-def indicateurs_mobilite(mobilite):
 
-  # données par structure
-  grp_by = mobilite.groupby('n_structure').sum(['nb_pa','nb_bene']).reset_index()
+def indicateurs_mobilite(df_mobilite, df_ref_structure, col_structure):
+  """
+  Calcul les indicateurs utilisant les données mobilité, certaines colonne seront utilisées plus tard pour des fusions
+  """
 
-  #checkup 
+  mobilite_dt = dt_rattachement(df_mobilite, df_ref_structure)
+  mobilite_dt = pd.merge(mobilite_dt, df_ref_structure['n_structure'].drop_duplicates(), on='n_structure', how="inner")
 
-  indics_mobil = pd.merge(grp_by, mobilite.groupby('n_structure').value_counts().reset_index()[['n_structure','count']], on='n_structure', how = 'left')
-  indics_mobil[indics_mobil['count'] > 1]
+  mobilite_dt_n_struc = mobilite_dt.groupby(col_structure).size().rename("AEO Structure_activite_mobile")
 
-  # mobilite[mobilite['n_structure'].isin([x for x in indics_mobil[indics_mobil['count'] > 1]['n_structure'].values])]
+  mobilite_dt_nb_pa_bene = mobilite_dt.groupby(col_structure).sum(['nb_pa','nb_bene']).rename(columns = {'nb_pa':'AEO Nb_PA_dispos_mobiles', 'nb_bene' : 'AEO Nb_benevoles_actifs'}).reset_index()
 
-
-
-  return mobilite
+  dt_return = pd.merge(mobilite_dt_n_struc, mobilite_dt_nb_pa_bene, on=col_structure, how="left")
+  if col_structure == 'DT_de_rattachement' :
+    dt_return = dt_return.rename(columns = {'DT_de_rattachement' : 'n_structure'})
+  return dt_return
 
 
