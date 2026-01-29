@@ -44,15 +44,14 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
-def filtres_mobilite(mobilite):
+def filtres_mobilite(mobilite,mapping_df):
   # Filtres et traitement de données
   mobilite = get_as_dataframe(mobilite.worksheet('Consolidation'), evaluate_formulas=True)
   mobilite = mobilite[(mobilite['Etat'] == 'Actif') & (mobilite['Code structure unifié'] != '') & (mobilite['Code structure unifié'].notna())]
-  mobilite = mobilite[["N Département ","Code structure unifié","Nombre Bénéficiaires/an", "Nombre de volontaires total"]].rename(columns = {"N Département ":"n_dept","Code structure unifié": "n_structure", "Nombre Bénéficiaires/an" : "nb_pa", "Nombre de volontaires total" : "nb_bene"})
-  mobilite['n_structure'] = mobilite['n_structure'].astype(int)
+  mobilite = renommer_par_nom_table(mobilite[["N Département ","Code structure unifié","Nombre Bénéficiaires/an", "Nombre de volontaires total"]], "Mobilité", mapping_df)
+  mobilite['n_structure'] = mobilite['n_structure'].astype(int).astype(str)
 
-  def keep_integer(x):
-    return re.sub("[^0-9]", "", x)
+
 
 
   mobilite['nb_pa'] = mobilite['nb_pa'].astype(str).apply(keep_integer).str.replace('^$','0',regex = True).astype(int)

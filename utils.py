@@ -332,3 +332,21 @@ def verifier_mapping(df, col_code_structure, col_libele, df_ref_structure):
         print(sorted(lignes_vides[col_libele].dropna().unique().tolist()))
     else:
         print("   ✅ Mapping réalisé avec succès.")
+
+
+def keep_integer(x):
+  """
+  En utilisant avec .apply() sur une colonne d'un dataframe,
+  permet de garder uniquement la partie avec des nombres du str.
+  Input doit être un str.
+  """
+  return re.sub("[^0-9]", "", x)
+  
+def dt_rattachement(df, df_ref_structure):
+  """
+  Permet d'associer les structures du dataframe avec la DT de rattachement, 
+  utile pour le merge avec toutes les données par DT. 
+  """
+  df_return = pd.merge(df, df_ref_structure[['n_structure','DT_de_rattachement']], on="n_structure", how="left")
+  df_return['DT_de_rattachement'] = df_return['DT_de_rattachement'].astype(str).apply(keep_integer)
+  return df_return
