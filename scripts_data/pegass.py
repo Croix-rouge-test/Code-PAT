@@ -116,6 +116,7 @@ def clean_pegass(Pegass_inscription,Pegass_activite,Ref_activité_benevole, mapp
 
   Pegass_activite = renommer_par_nom_table(Pegass_activite, "Pegass_activite", mapping_df)
   Ref_activité_benevole = renommer_par_nom_table(Ref_activité_benevole, "Ref_activité_benevole", mapping_df)
+  return Pegass_inscription, Pegass_activite, Ref_activité_benevole
 
 
 def fusion_pegass(Pegass_inscription, Pegass_activite, Ref_activité_benevole):
