@@ -104,7 +104,7 @@ def clean_declenchement(df_declenchement):
 
     df["nb_declenchements"] = df["Grand Total"] - df["Exercice"]
 
-    df[["N_dept", "DT"]] = df["Département"].str.split(" - ", expand=True)
+    df[["n_dept", "DT"]] = df["Département"].str.split(" - ", expand=True)
     df["DT"] = "DT " + df["DT"]
 
     return df
@@ -268,7 +268,7 @@ def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
         df_ref_structure[
             df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"
         ]
-        .set_index("N_dept")["n_structure"]
+        .set_index("n_dept")["n_structure"]
         .to_dict()
     )
 
@@ -295,13 +295,13 @@ def indicateurs_PST(df_PST, df_ref_structure):
     mask = df["n_structure"].isna() | (df["n_structure"] == "")
 
     df["N° Département"] = df["N° Département"].astype(str)
-    df_ref_structure["N_dept"] = df_ref_structure["N_dept"].astype(str)
+    df_ref_structure["n_dept"] = df_ref_structure["n_dept"].astype(str)
 
     mapping_dict = (
         df_ref_structure[
             df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"
         ]
-        .set_index("N_dept")["n_structure"]
+        .set_index("n_dept")["n_structure"]
         .to_dict()
     )
 
@@ -335,7 +335,7 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
     df = df_declenchement2.copy()
 
     df["DT"] = df["DT"].astype(str)
-    df["N_dept"] = df["N_dept"].astype(str)
+    df["n_dept"] = df["n_dept"].astype(str)
 
     df = rapprochement_libelles(df_ref_structure, df, "DT")
 
@@ -344,11 +344,11 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
         df_ref_structure[
             df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"
         ]
-        .set_index("N_dept")["n_structure"]
+        .set_index("n_dept")["n_structure"]
         .to_dict()
     )
 
-    df.loc[mask, "n_structure"] = df.loc[mask, "N_dept"].map(mapping_dict)
+    df.loc[mask, "n_structure"] = df.loc[mask, "n_dept"].map(mapping_dict)
 
     df = df.dropna(subset=["n_structure"])
 
