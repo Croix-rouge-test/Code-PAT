@@ -140,8 +140,88 @@ def verifier_n_dept(df_financier_DT,df_ref_structure):
     manquants = manquants_financier.union(manquants_struct) - manquants_struct.intersection(manquants_financier)
     print(manquants)
 
+def clean_financier_DPS(financier_DPS):
+    # Renommer les colonnes
+    financier_DPS.columns.values[0] = 'code_comptable'
+    financier_DPS.columns.values[1] = 'libelle'
+    financier_DPS.columns.values[3] = 'année'
+    financier_DPS.columns.values[4] = 'imputation_comptable'
+
+    # Filtrer sur la bonne année
+    df = financier_DPS[financier_DPS['année'] == "2024"]
+
+    # Filtrer sur l'activité DPS
+    df = df[df['imputation_comptable'] == "ACTA204"]
+
+    # Extraire le département
+    def extraire_et_nettoyer_code_departement(texte):
+        code = texte[-3:] # Extraire les 3 derniers caractères
+        code = code.lstrip('0') # Supprimer les zéros initiaux
+        return code
+    df['Code Département'] = df['code_comptable'].apply(extraire_et_nettoyer_code_departement)
+
+    # Suppression de la ligne nationnale
+    df = df[df["libelle"] != "TOTAL DELEGATION"]
+
+    # Suppression des doublons (corse)
+    df = df.drop_duplicates(subset=['Code Département'], keep='first')
+
+    # Conserver les colonnes utiles
+    df = df[["code_comptable","libelle","Code Département","année","imputation_comptable","PRODUITS DES POSTES SECOURS"]]
+    return df
 
 
+def clean_financier_FGP(financier_FGP):
+    # Fusionner les 5 premières lignes pour créer les noms de colonnes
+    header_row = 5
+    header = financier_FGP.iloc[:header_row].apply(lambda x: ' '.join(x.dropna()).strip(), axis=0)
+    financier_FGP = pd.DataFrame(financier_FGP.iloc[header_row:].values, columns=header)
+
+    # Conservation des lignes utiles
+    df = financier_FGP.head(13)
+
+    # Conservation des colonnes utiles
+    df = df[["Nom Structure","PRODUITS DE FORMATIONS SCOLARITE ET DROITS D INSCRIPTION Réalisé 2024"]]
+    return df
+
+
+def indicateur_financier_DPS(financier_DPS, df_ref_structure):
+    # Mapping sur le département
+    mapping_dict = df_ref_structure[df_ref_structure["Type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('N_dept')['N_structure'].to_dict()
+    financier_DPS['N_structure'] = financier_DPS['Code Département'].map(mapping_dict)
+    verifier_mapping(financier_DPS, "N_structure", "libelle" ,df_ref_structure)
+
+    # Transformation des str en int
+    financier_DPS['PRODUITS DES POSTES SECOURS'] = financier_DPS['PRODUITS DES POSTES SECOURS'].str.replace("€", "").str.replace("\u202f", "").str.replace(" ", "").replace("",0).astype(int)
+
+    # Conserver les colonnes utiles
+    financier_DPS = financier_DPS[["N_structure","PRODUITS DES POSTES SECOURS"]]
+
+    # Modification du nom de colonne
+    financier_DPS = financier_DPS.rename(columns={"PRODUITS DES POSTES SECOURS":"Secours Produits_DPS_2024"})
+    
+    return financier_DPS
+
+
+def indicateur_financier_FGP(financier_FGP, df_ref_structure):
+    # Recherche des correspondances vis à vis du référentiel structure
+    df = rapprochement_libelles(df_ref_structure, financier_FGP, "Nom Structure")
+
+    # Correction des écarts
+    index_to_correct = df[df['Nom Structure'] == "PACA CORSE"].index[0]
+    df.at[index_to_correct, 'N_structure'] = "3732"
+
+    index_to_correct = df[df['Nom Structure'] == "GRAND EST"].index[0]
+    df.at[index_to_correct, 'N_structure'] = "4455"
+
+    # Conservation des colonnes utiles
+    df = df[["PRODUITS DE FORMATIONS SCOLARITE ET DROITS D INSCRIPTION Réalisé 2024","N_structure"]]
+
+    # Modification du nom des colonnes
+    df = df.rename(columns={'PRODUITS DE FORMATIONS SCOLARITE ET DROITS D INSCRIPTION Réalisé 2024': 'Formation_grand_public CA_2024'})
+
+    # Modification des données pour obtenir des int
+    df['Formation_grand_public CA_2024'] = df['Formation_grand_public CA_2024'].str.replace(',', '').str.replace(' €', '').str.replace(' ', '').astype(int)
 
 
 
