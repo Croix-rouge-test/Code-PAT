@@ -221,6 +221,16 @@ def clean_conventions(df_conventions):
 
     return df
 
+def clean_raw_Textile(df_df_raw_Textile):
+    # Filtre sur le statut
+    df = df[df["statut"] == "A jour"]
+
+    # Filtrer sur les bons dispositif
+    print("Point d'apport possible : ",df["Type de point apport"].unique())
+    df = df[df["Type de point apport"].isin(['Boutique - La Boutique','Vestiaire','Boutique  - Mobile', 'Boutique - Bébé','Boutique - Chez Henry','Boutique - Recylcerie / Meuble','La Boutique'])]
+    
+    return df
+
 
 def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR,
@@ -228,7 +238,8 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_declenchement,
     df_redcall,
     df_CAICHUCMCC,
-    df_conventions
+    df_conventions,
+    df_raw_Textile
 ):
     df_OCR_clean = clean_OCR(df_OCR)
     df_PST_clean = clean_PST(df_PST)
@@ -236,6 +247,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_redcall_clean = clean_redcall(df_redcall)
     df_CAICHUCMCC_clean = clean_CAICHUCMCC(df_CAICHUCMCC)
     df_conventions_clean = clean_conventions(df_conventions)
+    df_raw_Textile = clean_raw_Textile(df_raw_Textile)
 
     return (
         df_OCR_clean,
@@ -244,6 +256,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
         df_redcall_clean,
         df_CAICHUCMCC_clean,
         df_conventions_clean
+        df_raw_Textile
     )
 
 
@@ -416,6 +429,14 @@ def indicateurs_conventions(df_conventions, df_ref_structure):
 
     return df
 
+
+def indicateurs_raw_Textile(df_raw_Textile):
+   # Agréger sur le Code structure
+   df = df.groupby("Code structure").size().reset_index(name="Textile Nb_dispositifs")
+
+   return df
+
+
 def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR,
     df_PST,
@@ -423,6 +444,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_RC_grouped,
     df_CAICHUCMCC2,
     df_conventions,
+    df_raw_Textile,
     df_ref_structure
 ):
     df_OCR_Nb_deployees = indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure)
@@ -431,6 +453,8 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_redcall2 = indicateurs_redcall(df_RC_grouped, df_ref_structure)
     df_CAICHUCMCC_VF = indicateurs_CAICHUCMCC(df_CAICHUCMCC2, df_ref_structure)
     df_conventions2 = indicateurs_conventions(df_conventions, df_ref_structure)
+    df_raw_Textile = indicateurs_raw_Textile(df_raw_Textile)
+
 
     return (
         df_OCR_Nb_deployees,
@@ -439,6 +463,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
         df_redcall2,
         df_CAICHUCMCC_VF,
         df_conventions2
+        df_raw_Textile
     )
 
 
