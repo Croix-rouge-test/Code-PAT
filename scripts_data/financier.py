@@ -183,6 +183,19 @@ def clean_financier_FGP(financier_FGP):
     # Conservation des colonnes utiles
     df = df[["Nom Structure","PRODUITS DE FORMATIONS SCOLARITE ET DROITS D INSCRIPTION Réalisé 2024"]]
     return df
+    
+
+def clean_financier_FGP_DPS(
+    financier_FGP,
+    financier_DPS
+):
+    df_financier_FGP_clean = clean_financier_FGP(financier_FGP)
+    df_financier_DPS_clean = clean_financier_DPS(financier_DPS)
+
+    return (
+        df_financier_FGP_clean,
+        df_financier_DPS_clean,
+    )
 
 
 def indicateur_financier_DPS(financier_DPS, df_ref_structure):
@@ -223,7 +236,17 @@ def indicateur_financier_FGP(financier_FGP, df_ref_structure):
     # Modification des données pour obtenir des int
     df['Formation_grand_public CA_2024'] = df['Formation_grand_public CA_2024'].str.replace(',', '').str.replace(' €', '').str.replace(' ', '').astype(int)
 
+def indicateur_financier_FGP_DPS(
+    financier_FGP,
+    financier_DPS
+):
+    df_financier_FGP_indicateur = indicateur_financier_FGP(financier_FGP)
+    df_financier_DPS_indicateur = indicateur_financier_DPS(financier_DPS)
 
+    return (
+        df_financier_FGP_indicateur,
+        df_financier_DPS_indicateur,
+    )
 
 
 
