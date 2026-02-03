@@ -123,7 +123,7 @@ def clean_redcall(df_redcall):
 
     df_grouped = (
         df
-        .groupby("ID de la structure", as_index=False)[cols_to_sum]
+        .groupby("Nom de la structure", as_index=False)[cols_to_sum]
         .sum()
     )
 
@@ -365,26 +365,12 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
 
 def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     df = df_RC_grouped[
-        ["ID de la structure", "Utilisation_Redcall"]
+        ["Nom de la structure", "Utilisation_Redcall"]
     ].copy()
 
-    df["ID de la structure"] = df["ID de la structure"].astype(str)
     df["Utilisation_Redcall"] = df["Utilisation_Redcall"].astype(str)
 
-    df.rename(columns={"ID de la structure": "n_structure"}, inplace=True)
-
-    df_ref_structure.rename(
-        columns={"ID de la structure": "n_structure"},
-        inplace=True
-    )
-
-    dict_structure = (
-        df_ref_structure
-        .set_index("n_structure")["nom_structure"]
-        .to_dict()
-    )
-
-    df["nom_structure"] = df["n_structure"].map(dict_structure)
+    df = rapprochement_libelles(df_ref_structure, df, "Nom de la structure")
 
     df = df.rename(
         columns={
