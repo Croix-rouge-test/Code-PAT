@@ -123,7 +123,7 @@ def clean_redcall(df_redcall):
 
     df_grouped = (
         df
-        .groupby("ID de la structure", as_index=False)[cols_to_sum]
+        .groupby("Nom de la structure", as_index=False)[cols_to_sum]
         .sum()
     )
 
@@ -177,6 +177,7 @@ def clean_conventions(df_conventions):
             'DT Annuaire Opé',
             'Departement',
             'Prefecture',
+            'Tri partite',
             'Recherche de personnes',
             'SDIS / BMPM / BSPP',
             'SNCF',
@@ -197,6 +198,7 @@ def clean_conventions(df_conventions):
 
     colonnes_oui_non = [
         'Prefecture',
+        'Tri partite',
         'Recherche de personnes',
         'SDIS / BMPM / BSPP',
         'SNCF',
@@ -221,15 +223,37 @@ def clean_conventions(df_conventions):
 
     return df
 
-def clean_raw_Textile(df_df_raw_Textile):
+def clean_raw_Textile(df_raw_Textile):
     # Filtre sur le statut
-    df = df[df["statut"] == "A jour"]
+    df = df_raw_Textile[df_raw_Textile["statut"] == "A jour"]
 
     # Filtrer sur les bons dispositif
     print("Point d'apport possible : ",df["Type de point apport"].unique())
     df = df[df["Type de point apport"].isin(['Boutique - La Boutique','Vestiaire','Boutique  - Mobile', 'Boutique - Bébé','Boutique - Chez Henry','Boutique - Recylcerie / Meuble','La Boutique'])]
     
     return df
+
+
+def clean_ProdResTextile(df_raw_ProdResTextile):
+    df = df_raw_ProdResTextile.iloc[:-1]
+
+    # Renommer les colonnes
+    df.columns.values[0] = 'code_comptable'
+    df.columns.values[1] = 'libelle'
+    df.columns.values[22] = 'Textile Produit_2024'
+    df.columns.values[24] = 'Textile Resultat_2024'
+
+    # Conserver les lignes liées aux DT
+    df = df[df['code_comptable'].str.contains("DD", na=False)]
+
+# Extraire le département
+    def extraire_et_nettoyer_code_departement(texte):
+      code = texte[-3:] # Extraire les 3 derniers caractères
+      code = code.lstrip('0') # Supprimer les zéros initiaux
+      return code
+      df['Code Département'] = df['code_comptable'].apply(extraire_et_nettoyer_code_departement)
+
+      return df
 
 
 def clean_OCR_PST_DEC_RED_CAI_CONV(
@@ -239,7 +263,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_redcall,
     df_CAICHUCMCC,
     df_conventions,
-    df_raw_Textile
+    df_raw_ProdResTextile
 ):
     df_OCR_clean = clean_OCR(df_OCR)
     df_PST_clean = clean_PST(df_PST)
@@ -247,7 +271,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_redcall_clean = clean_redcall(df_redcall)
     df_CAICHUCMCC_clean = clean_CAICHUCMCC(df_CAICHUCMCC)
     df_conventions_clean = clean_conventions(df_conventions)
-    df_raw_Textile = clean_raw_Textile(df_raw_Textile)
+    df_raw_ProdResTextile = clean_ProdResTextile(df_raw_ProdResTextile)
 
     return (
         df_OCR_clean,
@@ -255,8 +279,8 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
         df_declenchement_clean,
         df_redcall_clean,
         df_CAICHUCMCC_clean,
-        df_conventions_clean
-        df_raw_Textile
+        df_conventions_clean,
+        df_raw_ProdResTextile
     )
 
 
@@ -432,9 +456,29 @@ def indicateurs_conventions(df_conventions, df_ref_structure):
 
 def indicateurs_raw_Textile(df_raw_Textile):
    # Agréger sur le Code structure
-   df = df.groupby("Code structure").size().reset_index(name="Textile Nb_dispositifs")
+   df = df_raw_Textile.groupby("Code structure").size().reset_index(name="Textile Nb_dispositifs")
 
    return df
+
+
+def indicateurs_ProdResTextile(df_raw_ProdResTextile, df_ref_structure):
+    # Mapping sur le département
+    mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('N_dept')['n_structure'].to_dict()
+    df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['N_dept'].map(mapping_dict)
+    verifier_mapping(df_raw_ProdResTextiledf, "n_structure", "nom_structure" ,df_ref_structure)
+
+# Conservation des colonnes utiles
+    df = df_raw_ProdResTextile[["n_structure","Textile Produit_2024", "Textile Resultat_2024"]]
+
+# Suppression des espaces et "-"
+    df['Textile Produit_2024'] = df['Textile Produit_2024'].str.replace(r"\s+", "", regex=True)
+    df['Textile Produit_2024'] = df['Textile Produit_2024'].str.replace("-", "")
+    df['Textile Resultat_2024'] = df['Textile Resultat_2024'].str.replace(r"\s+", "", regex=True)
+    df['Textile Resultat_2024'] = df['Textile Resultat_2024'].str.replace("-", "")
+
+    return df
+
+
 
 
 def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
@@ -444,7 +488,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_RC_grouped,
     df_CAICHUCMCC2,
     df_conventions,
-    df_raw_Textile,
+    df_raw_ProdResTextile,
     df_ref_structure
 ):
     df_OCR_Nb_deployees = indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure)
@@ -453,7 +497,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_redcall2 = indicateurs_redcall(df_RC_grouped, df_ref_structure)
     df_CAICHUCMCC_VF = indicateurs_CAICHUCMCC(df_CAICHUCMCC2, df_ref_structure)
     df_conventions2 = indicateurs_conventions(df_conventions, df_ref_structure)
-    df_raw_Textile = indicateurs_raw_Textile(df_raw_Textile)
+    df_raw_ProdResTextile = indicateurs_ProdResTextile(df_raw_ProdResTextile , df_ref_structure)
 
 
     return (
@@ -462,8 +506,8 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
         df_declenchement3,
         df_redcall2,
         df_CAICHUCMCC_VF,
-        df_conventions2
-        df_raw_Textile
+        df_conventions2,
+        df_raw_ProdResTextile
     )
 
 
