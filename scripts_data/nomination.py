@@ -44,24 +44,30 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
-def clean_nomination(NOMINATION_nomination, NOMINATION_attribution_nomination, mapping_df):
-  NOMINATION_nomination = renommer_par_nom_table(NOMINATION_nomination, "nomination", mapping_df)
-  NOMINATION_attribution_nomination = renommer_par_nom_table(NOMINATION_attribution_nomination, "attribution_nomination", mapping_df)
-  return NOMINATION_nomination, NOMINATION_attribution_nomination
+#def clean_nomination(NOMINATION_nomination, NOMINATION_attribution_nomination, mapping_df):
+#  NOMINATION_nomination = renommer_par_nom_table(NOMINATION_nomination, "nomination", mapping_df)
+#  NOMINATION_attribution_nomination = renommer_par_nom_table(NOMINATION_attribution_nomination, "attribution_nomination", mapping_df)
+#  return NOMINATION_nomination, NOMINATION_attribution_nomination
 
-def fusion_nomination(NOMINATION_nomination, NOMINATION_attribution_nomination):
+def fusion_nomination(df_nomination, df_ref_nomination):
   #FTILRE SUR ANNEE NULLE OU FIN EN 2025
 
   # Vérification que la colonne est au format datetime
-  NOMINATION_attribution_nomination['date_fin_nomination'] = pd.to_datetime(NOMINATION_attribution_nomination['date_fin_nomination'], errors='coerce')
-  NOMINATION_attribution_nomination['date_debut_nomination'] = pd.to_datetime(NOMINATION_attribution_nomination['date_debut_nomination'], errors='coerce')
+  df_nomination['nomination_date_fin_nomination'] = pd.to_datetime(df_nomination['nomination_date_fin_nomination'], errors='coerce')
+  df_nomination['nomination_date_debut_nomination'] = pd.to_datetime(df_nomination['nomination_date_debut_nomination'], errors='coerce')
 
   # Filtrage : date nulle ou année = 2025
-  NOMINATION_attribution_nomination = NOMINATION_attribution_nomination[
-      NOMINATION_attribution_nomination['date_fin_nomination'].isna() | (NOMINATION_attribution_nomination['date_fin_nomination'].dt.year == 2025)
+  df_nomination = df_nomination[
+      df_nomination['nomination_date_fin_nomination'].isna() | (df_nomination['nomination_date_fin_nomination'].dt.year == 2025)
   ]
 
-  df_NOMINATION = pd.merge(NOMINATION_nomination, NOMINATION_attribution_nomination,on="nomination_id", how="left") #VERIFIER LA FOREIGN KEY!
+  df_NOMINATION = pd.merge(
+     df_nomination,
+     df_ref_nomination,
+     left_on="nomination_nomination_id_fk",
+     right_on="nomination_id_pk",
+     how="left"
+      )
 
   return df_NOMINATION
 
