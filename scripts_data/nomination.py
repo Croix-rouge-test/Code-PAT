@@ -72,61 +72,6 @@ def fusion_nomination(df_nomination, df_ref_nomination):
   return df_NOMINATION
 
 
-import pandas as pd
-
-def _indicateurs_referents_par_mois(
-    df_nomination,
-    libelle_nomination,
-    annee=2025
-):
-    # Filtre sur le libellé
-    df = df_nomination[
-        df_nomination["libelle_nomination"] == libelle_nomination
-    ].copy()
-
-    # Génération des mois
-    mois = pd.date_range(
-        start=f"{annee}-01-01",
-        end=f"{annee}-12-01",
-        freq="MS"
-    )
-
-    resultats = []
-
-    for m in mois:
-        debut_mois = m
-        fin_mois = m + pd.offsets.MonthEnd(1)
-
-        actifs = df[
-            (df["date_debut_nomination"] <= fin_mois) &
-            (df["date_fin_nomination"] >= debut_mois)
-        ]
-
-        comptage = (
-            actifs
-            .groupby("structure_id")
-            .size()
-            .reset_index(name="nb")
-        )
-
-        comptage["mois"] = m.strftime("%Y-%m")
-        resultats.append(comptage)
-
-    df_mois = pd.concat(resultats)
-
-    df_pivot = (
-        df_mois
-        .pivot(
-            index="structure_id",
-            columns="mois",
-            values="nb"
-        )
-        .fillna(0)
-        .astype(int)
-    )
-
-    return df_pivot
-
 def indicateurs_nomination_AEO(df_NOMINATION, annee=2025):
     # Filtre sur les libellés appropriés
     libelles_AEO = ["RTAAD", "RLAAD"]
