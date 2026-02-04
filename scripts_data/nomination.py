@@ -128,18 +128,28 @@ def _indicateurs_referents_par_mois(
     return df_pivot
 
 def indicateurs_nomination_AEO(df_NOMINATION, annee=2025):
-    return _indicateurs_referents_par_mois(
-        df_nomination=df_NOMINATION,
-        libelle_nomination="RTAEO",
-        annee=annee
-    )
+    # Filtre sur les libellés appropriés
+    libelles_AEO = ["RTAAD", "RLAAD"]
+    referents_AEO = df_NOMINATION[
+        df_NOMINATION["nomination_libcourt"].isin(libelles_AEO)
+    ]
+
+    # On compte le nb de RTAEO & RLAEO
+    referents_AEO = (referents_AEO.groupby('nomination_structure_id_fk')['nomination_nivol_id_fk'].nunique())
+    return referents_AEO
+
 
 def indicateurs_nomination_OCR(df_NOMINATION, annee=2025):
-    return _indicateurs_referents_par_mois(
-        df_nomination=df_NOMINATION,
-        libelle_nomination="RTOCR",
-        annee=annee
-    )
+    # Filtre sur les libellés appropriés
+    libelles_OCR = ["RTOCR", "RLOCR"]
+    referents_OCR = df_NOMINATION[
+        df_NOMINATION["nomination_libcourt"].isin(libelles_OCR)
+    ]
+    # On compte le nb de RTAEO & RLAEO
+    referents_OCR = (referents_OCR.groupby('nomination_structure_id_fk')['nomination_nivol_id_fk'].nunique())
+    return referents_OCR
+
+
 
 def indicateurs_nomination(df_NOMINATION, annee=2025):
     referents_AEO_mois = indicateurs_nomination_AEO(df_NOMINATION, annee)
