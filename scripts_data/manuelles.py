@@ -248,12 +248,13 @@ def clean_ProdResTextile(df_raw_ProdResTextile):
 
 # Extraire le département
     def extraire_et_nettoyer_code_departement(texte):
-      code = texte[-3:] # Extraire les 3 derniers caractères
-      code = code.lstrip('0') # Supprimer les zéros initiaux
-      return code
-      df['Code Département'] = df['code_comptable'].apply(extraire_et_nettoyer_code_departement)
+        code = texte[-3:] # Extraire les 3 derniers caractères
+        code = code.lstrip('0') # Supprimer les zéros initiaux
+        return code
+        
+    df['Code Département'] = df['code_comptable'].apply(extraire_et_nettoyer_code_departement)
 
-      return df
+    return df
 
 
 def clean_OCR_PST_DEC_RED_CAI_CONV(
