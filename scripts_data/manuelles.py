@@ -263,6 +263,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_redcall,
     df_CAICHUCMCC,
     df_conventions,
+    df_raw_Textile,
     df_raw_ProdResTextile
 ):
     df_OCR_clean = clean_OCR(df_OCR)
@@ -271,6 +272,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_redcall_clean = clean_redcall(df_redcall)
     df_CAICHUCMCC_clean = clean_CAICHUCMCC(df_CAICHUCMCC)
     df_conventions_clean = clean_conventions(df_conventions)
+    df_raw_Textile = clean_raw_Textile(df_raw_Textile)
     df_raw_ProdResTextile = clean_ProdResTextile(df_raw_ProdResTextile)
 
     return (
@@ -280,6 +282,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
         df_redcall_clean,
         df_CAICHUCMCC_clean,
         df_conventions_clean,
+        df_raw_Textile,
         df_raw_ProdResTextile
     )
 
@@ -488,6 +491,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_RC_grouped,
     df_CAICHUCMCC2,
     df_conventions,
+    df_raw_Textile,
     df_raw_ProdResTextile,
     df_ref_structure
 ):
@@ -497,6 +501,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_redcall2 = indicateurs_redcall(df_RC_grouped, df_ref_structure)
     df_CAICHUCMCC_VF = indicateurs_CAICHUCMCC(df_CAICHUCMCC2, df_ref_structure)
     df_conventions2 = indicateurs_conventions(df_conventions, df_ref_structure)
+    df_raw_Textile = indicateurs_raw_Textile(df_raw_Textile)
     df_raw_ProdResTextile = indicateurs_ProdResTextile(df_raw_ProdResTextile , df_ref_structure)
 
 
@@ -507,6 +512,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
         df_redcall2,
         df_CAICHUCMCC_VF,
         df_conventions2,
+        df_raw_Textile,
         df_raw_ProdResTextile
     )
 
