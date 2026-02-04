@@ -251,7 +251,7 @@ def clean_ProdResTextile(df_raw_ProdResTextile):
         code = texte[-3:] # Extraire les 3 derniers caractères
         code = code.lstrip('0') # Supprimer les zéros initiaux
         return code
-        
+
     df['Code Département'] = df['code_comptable'].apply(extraire_et_nettoyer_code_departement)
 
     return df
@@ -467,9 +467,9 @@ def indicateurs_raw_Textile(df_raw_Textile):
 
 def indicateurs_ProdResTextile(df_raw_ProdResTextile, df_ref_structure):
     # Mapping sur le département
-    mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
-    df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['n_dept'].map(mapping_dict)
-    verifier_mapping(df_raw_ProdResTextiledf, "n_structure", "nom_structure" ,df_ref_structure)
+    mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('N_dept')['n_structure'].to_dict()
+    df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['Code Département'].map(mapping_dict)
+    verifier_mapping(df_raw_ProdResTextile, "n_structure", "nom_structure" ,df_ref_structure)
 
 # Conservation des colonnes utiles
     df = df_raw_ProdResTextile[["n_structure","Textile Produit_2024", "Textile Resultat_2024"]]
