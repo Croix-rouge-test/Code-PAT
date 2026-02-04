@@ -467,9 +467,9 @@ def indicateurs_raw_Textile(df_raw_Textile):
 
 def indicateurs_ProdResTextile(df_raw_ProdResTextile, df_ref_structure):
     # Mapping sur le département
-    mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('N_dept')['n_structure'].to_dict()
+    mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('N_dept')['N_structure'].to_dict()
     df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['Code Département'].map(mapping_dict)
-    verifier_mapping(df_raw_ProdResTextile, "n_structure", "nom_structure" ,df_ref_structure)
+    verifier_mapping(df_raw_ProdResTextile, "n_structure", "libelle" ,df_ref_structure)
 
 # Conservation des colonnes utiles
     df = df_raw_ProdResTextile[["n_structure","Textile Produit_2024", "Textile Resultat_2024"]]
