@@ -91,6 +91,7 @@ def indicateurs_impact_ppc(df_IMPACT):
     IMPACT_ppc = (
     IMPACT_Urgences
     .groupby('impact_structure_id_fk')['impact_reponse'].sum().reset_index(name='Dispositifs_d_urgence Nb_personnes_prises_charge'))
+    
     return IMPACT_ppc
 
 
@@ -106,8 +107,15 @@ def indicateurs_impact_agrementAB(df_IMPACT):
     IMPACT_Urgences['impact_reponse'] = (
     IMPACT_Urgences['impact_reponse']
     .str.replace("'", "", regex=False)   # enlève les guillemets simples
-    .astype(float)
-    .astype(int)
+    )
+
+    IMPACT_Urgences.loc[:, 'impact_reponse'] = (
+    IMPACT_Urgences['impact_reponse']
+    .astype(str)
+    .str.strip()
+    .str.lower()
+    .map({'Oui': 1.0, 'Non': 0.0})
+    .astype('Int64')   # ou .astype(int) si tu es sûre qu’il n’y a pas de NaN
     )
 
     IMPACT_agrementAB = (
@@ -128,8 +136,15 @@ def indicateurs_impact_agrementDPS(df_IMPACT):
     IMPACT_Urgences['impact_reponse'] = (
     IMPACT_Urgences['impact_reponse']
     .str.replace("'", "", regex=False)   # enlève les guillemets simples
-    .astype(float)
-    .astype(int)
+    )
+
+    IMPACT_Urgences.loc[:, 'impact_reponse'] = (
+    IMPACT_Urgences['impact_reponse']
+    .astype(str)
+    .str.strip()
+    .str.lower()
+    .map({'Oui': 1.0, 'Non': 0.0})
+    .astype('Int64')   # ou .astype(int) si tu es sûre qu’il n’y a pas de NaN
     )
 
     IMPACT_agrementDPS = (
@@ -139,7 +154,19 @@ def indicateurs_impact_agrementDPS(df_IMPACT):
     return IMPACT_agrementDPS
 
 
+def indicateurs_IMPACTppc_DT(IMPACT_ppc, rattachement_court):
+    # Merge données avec rattachement_court
+    df_referents_OCR = pd.merge(
+    referents_OCR,
+    rattachementcourt,
+    left_on="nomination_structure_id_fk",
+    right_on="n_structure",
+    how="left"
+    )
 
+    # Groupby sur DT_de_rattachement
+    referents_OCR_DT = (df_referents_OCR.groupby('DT_de_rattachement')['OCR Nb_referents'].sum())
+    return referents_OCR_DT
 
 
 
