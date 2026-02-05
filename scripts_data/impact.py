@@ -57,15 +57,87 @@ def fusion_impact(df_impact, df_ref_impact):
   # left = pd.merge(df1, df2, on="id", how="left")
 
   # 1) Join avec action sur act_id
-  df_IMPACT = pd.merge(df_impact, df_ref_impact, on="impact_indicateur_id_pk", how="left")
+  df_IMPACT = pd.merge(df_impact, df_ref_impact, left_on="impact_indicateur_id_fk", right_on="impact_indicateur_id_pk", how="left")
 
   return df_IMPACT
 
 def indicateurs_impact_ppc(df_IMPACT, df_ref_structure):
-    
     # Filtre sur les libellés appropriés
-    libelles_OCR = ["RTOCR", "RLOCR"]
-    referents_OCR = df_IMPACT[
-    df_IMPACT["nomination_libcourt"].isin(libelles_OCR)
-    ]
-  return IMPACT_ppc
+    libelles_Urgences = [10119, 10125, 10126, 10127, 10128, 10129, 10115, 10132, 10133, 10134, 10135, 10136, 10137]
+    IMPACT_Urgences = df_IMPACT[df_IMPACT["impact_indicateur_activite_benevole_id_fk"].isin(libelles_Urgences)]
+
+    libelles_ppc = [383, 427, 456, 462, 190, 193, 194, 199, 464, 465]
+    IMPACT_Urgences = df_IMPACT[df_IMPACT["impact_indicateur_id_fk"].isin(libelles_ppc)]
+
+    IMPACT_Urgences['impact_reponse'] = (
+    IMPACT_Urgences['impact_reponse']
+    .str.replace("'", "", regex=False)   # enlève les guillemets simples
+    .astype(float)
+    .astype(int)
+    )
+
+    IMPACT_ppc = (
+    IMPACT_Urgences
+    .groupby('impact_structure_id_fk', as_index=False)['impact_reponse'].reset_index(name='Dispositifs_d_urgence Nb_personnes_prises_charge')
+    .sum())
+    return IMPACT_ppc
+
+
+
+def indicateurs_impact_agrementAB(df_IMPACT, df_ref_structure):
+    # Filtre sur les libellés appropriés
+    libelles_Urgences = [10119, 10125, 10126, 10127, 10128, 10129, 10115, 10132, 10133, 10134, 10135, 10136, 10137]
+    IMPACT_Urgences = df_IMPACT[df_IMPACT["impact_indicateur_activite_benevole_id_fk"].isin(libelles_Urgences)]
+    
+    libelles_agrementAB = [355, 367, 380, 394, 414, 422, 438, 452, 461, 356, 368, 381, 395, 415, 423, 439, 453]
+    IMPACT_Urgences = df_IMPACT[df_IMPACT["impact_indicateur_id_fk"].isin(libelles_agrementAB)]
+    
+    IMPACT_Urgences['impact_reponse'] = (
+    IMPACT_Urgences['impact_reponse']
+    .str.replace("'", "", regex=False)   # enlève les guillemets simples
+    .astype(float)
+    .astype(int)
+    )
+
+    IMPACT_agrementAB = (
+    IMPACT_Urgences
+    .groupby('impact_structure_id_fk', as_index=False)['impact_reponse'].reset_index(name='Dispositifs_d_urgence Nb_agrements')
+    .sum())
+
+    return IMPACT_agrementAB
+
+
+def indicateurs_impact_agrementDPS(df_IMPACT, df_ref_structure):
+    # Filtre sur les libellés appropriés
+    libelles_Urgences = [10119, 10125, 10126, 10127, 10128, 10129, 10115, 10132, 10133, 10134, 10135, 10136, 10137]
+    IMPACT_Urgences = df_IMPACT[df_IMPACT["impact_indicateur_activite_benevole_id_fk"].isin(libelles_Urgences)]
+    
+    libelles_agrementDPS = [417, 425, 441, 455]
+    IMPACT_Urgences = df_IMPACT[df_IMPACT["impact_indicateur_id_fk"].isin(libelles_agrementDPS)]
+  
+    IMPACT_Urgences['impact_reponse'] = (
+    IMPACT_Urgences['impact_reponse']
+    .str.replace("'", "", regex=False)   # enlève les guillemets simples
+    .astype(float)
+    .astype(int)
+    )
+
+    IMPACT_agrementDPS = (
+    IMPACT_Urgences
+    .groupby('impact_structure_id_fk', as_index=False)['impact_reponse'].reset_index(name='Secours Nb_agrements_DPS_2025')
+    .sum())
+
+    return IMPACT_agrementDPS
+
+
+
+
+
+
+
+
+
+
+
+
+
