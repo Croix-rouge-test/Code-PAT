@@ -45,9 +45,9 @@ sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
 ## récupération des données
-df_alim=get_as_dataframe(gspread_client.open_by_url('https://docs.google.com/spreadsheets/d/1bk_ktsT9hBPJS5EY70teq80NzOs_cm3JfrRkX4AYTF4/edit?gid=0#gid=0').worksheet('Feuille 1'))
+
 def clean_alim(df_alim):
-    df_alim=df_alim[["Dispositif","Structure rattachement",'N° structure']]
+    df_alim=df_alim[["Dispositif","Stucture rattachement",'N° structure']]
 
     ## préparation Aide_alimentaire Nb_U2A
     df_alim = df_alim. rename(columns={"Dispositif":"dispositif","Stucture rattachement" :"Structure", "N° structure":"#struct"})
