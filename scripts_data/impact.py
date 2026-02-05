@@ -44,36 +44,28 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
-def clean_impact(IMPACT_indicateurs, IMPACT_indicateur_value, IMPACT_donnees_activite, IMPACT_abstract_donnees_activite, mapping_df):
 
-  IMPACT_indicateurs = renommer_par_nom_table(IMPACT_indicateurs, "IMPACT_indicateurs", mapping_df)
-  IMPACT_indicateur_value = renommer_par_nom_table(IMPACT_indicateur_value, "IMPACT_indicateur_value", mapping_df)
-  IMPACT_donnees_activite = renommer_par_nom_table(IMPACT_donnees_activite, "IMPACT_donnees_activite", mapping_df)
-  IMPACT_abstract_donnees_activite = renommer_par_nom_table(IMPACT_abstract_donnees_activite, "IMPACT_abstract_donnees_activite", mapping_df)
-
-  return IMPACT_indicateurs, IMPACT_indicateur_value, IMPACT_donnees_activite, IMPACT_abstract_donnees_activite
-
-def fusion_impact(IMPACT_indicateurs, IMPACT_indicateur_value, IMPACT_donnees_activite, IMPACT_abstract_donnees_activite):
+def fusion_impact(df_impact, df_ref_impact):
   #FTILRE SUR ANNEE 2025
 
   # Vérification que la colonne est au format datetime
-  IMPACT_donnees_activite['date_fin_activite'] = pd.to_datetime(IMPACT_donnees_activite['date_fin_activite'], errors='coerce')
-  IMPACT_donnees_activite['date_debut_activite'] = pd.to_datetime(IMPACT_donnees_activite['date_debut_activite'], errors='coerce')
+  df_impact['impact_date_fin'] = pd.to_datetime(df_impact['impact_date_fin'], errors='coerce')
+  df_impact['impact_date_debut'] = pd.to_datetime(df_impact['impact_date_debut'], errors='coerce')
 
   # Filtrage : date nulle ou année = 2025
-  IMPACT_donnees_activite = IMPACT_donnees_activite[ (IMPACT_donnees_activite['date_debut_activite'].dt.year == 2025)]
+  df_impact = df_impact[ (df_impact['impact_date_debut'].dt.year == 2025)]
   # left = pd.merge(df1, df2, on="id", how="left")
 
   # 1) Join avec action sur act_id
-  df_IMPACT = pd.merge(IMPACT_indicateur_value, IMPACT_indicateurs, on="n_indicateurs", how="left")
-
-  # 2) Join avec rattachement_action sur act_id + str_id
-  df_IMPACT = pd.merge(df_IMPACT, IMPACT_donnees_activite, on="id_activite", how="left")
-
-  # 3) Join avec contact sur cob_idrp
-  df_IMPACT = pd.merge(df_IMPACT, IMPACT_abstract_donnees_activite, on="id_activite", how="left")
+  df_IMPACT = pd.merge(df_impact, df_ref_impact, on="impact_indicateur_id_pk", how="left")
 
   return df_IMPACT
 
-def indicateurs_impact():
-  return None
+def indicateurs_impact_ppc(df_IMPACT, df_ref_structure):
+    
+    # Filtre sur les libellés appropriés
+    libelles_OCR = ["RTOCR", "RLOCR"]
+    referents_OCR = df_IMPACT[
+    df_IMPACT["nomination_libcourt"].isin(libelles_OCR)
+    ]
+  return IMPACT_ppc
