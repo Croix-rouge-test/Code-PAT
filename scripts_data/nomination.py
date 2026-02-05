@@ -108,7 +108,7 @@ def indicateurs_nominationAEO_DT(referents_AEO, rattachementcourt):
     )
 
     # Groupby sur DT_de_rattachement
-    referents_AEO_DT = (df_referents_AEO.groupby('DT_de_rattachement'))
+    referents_AEO_DT = (df_referents_AEO.groupby('DT_de_rattachement')['AEO Nb_responsables'].sum())
     return referents_AEO_DT
 
 
@@ -123,7 +123,7 @@ def indicateurs_nominationOCR_DT(referents_OCR, rattachementcourt):
     )
 
     # Groupby sur DT_de_rattachement
-    referents_OCR_DT = (df_referents_OCR.groupby('DT_de_rattachement'))
+    referents_OCR_DT = (df_referents_OCR.groupby('DT_de_rattachement')['OCR Nb_referents'].sum())
     return referents_OCR_DT
 
 
