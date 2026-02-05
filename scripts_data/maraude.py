@@ -75,7 +75,7 @@ def prep_nb_maraudes_sigma(df, filtre_annee_fn=None):
     return d
 
 
-    def prep_nb_personnes_rencontrees_sigma(df, filtre_annee_fn=None):
+def prep_nb_personnes_rencontrees_sigma(df, filtre_annee_fn=None):
     cols_keep = ["maraude_id_fk","maraude_structure_id_fk","maraude_statut","maraude_date_debut","maraude_date_fin", 'maraude_rencontre_beneficiaire_id_fk',
        'maraude_rencontre_contact_realise', 'maraude_rencontre_typologie',
        'maraude_rencontre_nb_hommes', 'maraude_rencontre_nb_femmes',
