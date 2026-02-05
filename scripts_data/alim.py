@@ -44,14 +44,15 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
-# récupération des données
+## récupération des données
 df_alim=get_as_dataframe(gspread_client.open_by_url('https://docs.google.com/spreadsheets/d/1bk_ktsT9hBPJS5EY70teq80NzOs_cm3JfrRkX4AYTF4/edit?gid=0#gid=0').worksheet('Feuille 1'))
 df_alim=df_alim[["Dispositif","Structure rattachement",'N° structure']]
 
-# préparation Aide_alimentaire Nb_U2A
+## préparation Aide_alimentaire Nb_U2A
 df_alim = df_alim. rename(columns={"Dispositif":"dispositif","Stucture rattachement" :"Structure", "N° structure":"#struct"})
+
 if 'U2A' in df_alim.columns:
-    # Identifier les doublons dans la colonne 'U2A'
+ # Identifier les doublons dans la colonne 'U2A'
     duplicates = df_alim[df_alim['U2A'].duplicated(keep=False)]
     
 # Compter le nombre de doublons
