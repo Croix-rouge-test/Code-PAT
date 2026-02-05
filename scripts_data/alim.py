@@ -46,32 +46,34 @@ from utils import *
 
 ## récupération des données
 df_alim=get_as_dataframe(gspread_client.open_by_url('https://docs.google.com/spreadsheets/d/1bk_ktsT9hBPJS5EY70teq80NzOs_cm3JfrRkX4AYTF4/edit?gid=0#gid=0').worksheet('Feuille 1'))
-df_alim=df_alim[["Dispositif","Structure rattachement",'N° structure']]
+def clean_alim(df_alim):
+    df_alim=df_alim[["Dispositif","Structure rattachement",'N° structure']]
 
-## préparation Aide_alimentaire Nb_U2A
-df_alim = df_alim. rename(columns={"Dispositif":"dispositif","Stucture rattachement" :"Structure", "N° structure":"#struct"})
+    ## préparation Aide_alimentaire Nb_U2A
+    df_alim = df_alim. rename(columns={"Dispositif":"dispositif","Stucture rattachement" :"Structure", "N° structure":"#struct"})
 
-if 'U2A' in df_alim.columns:
- # Identifier les doublons dans la colonne 'U2A'
-    duplicates = df_alim[df_alim['U2A'].duplicated(keep=False)]
-    
-# Compter le nombre de doublons
-    num_duplicates = duplicates.shape[0]
-    
-    if num_duplicates > 0:
-        print(f"Il y a {num_duplicates} lignes avec des doublons dans la colonne 'U2A'.")
-        print("Voici les lignes en doublon (affichant toutes les occurrences des valeurs dupliquées) :")
-        display(duplicates.sort_values(by='U2A'))
+    if 'U2A' in df_alim.columns:
+    # Identifier les doublons dans la colonne 'U2A'
+        duplicates = df_alim[df_alim['U2A'].duplicated(keep=False)]
+        
+    # Compter le nombre de doublons
+        num_duplicates = duplicates.shape[0]
+        
+        if num_duplicates > 0:
+            print(f"Il y a {num_duplicates} lignes avec des doublons dans la colonne 'U2A'.")
+            print("Voici les lignes en doublon (affichant toutes les occurrences des valeurs dupliquées) :")
+            display(duplicates.sort_values(by='U2A'))
+        else:
+            print("Aucun doublon trouvé dans la colonne 'U2A'.")
     else:
-        print("Aucun doublon trouvé dans la colonne 'U2A'.")
-else:
-    print("La colonne 'U2A' n'existe pas dans le DataFrame df_alim.")
+        print("La colonne 'U2A' n'existe pas dans le DataFrame df_alim.")
 
-    print(f"Taille du DataFrame avant suppression des doublons : {df_alim.shape}")
-df_alim_sans_doublons = df_alim.drop_duplicates(subset=['U2A'], keep='first')
-print(f"Taille du DataFrame après suppression des doublons : {df_alim_sans_doublons.shape}")
+        print(f"Taille du DataFrame avant suppression des doublons : {df_alim.shape}")
+    df_alim_sans_doublons = df_alim.drop_duplicates(subset=['U2A'], keep='first')
+    print(f"Taille du DataFrame après suppression des doublons : {df_alim_sans_doublons.shape}")
 
-display(df_alim_sans_doublons.head())
+    display(df_alim_sans_doublons.head())
 
-df_alim_U2A_sans_doublons = df_alim_sans_doublons.groupby("#struct").size().reset_index(name="Aide_alimentaire Nb_U2A")
-print(df_alim_U2A_sans_doublons.head())
+    df_alim_U2A_sans_doublons = df_alim_sans_doublons.groupby("#struct").size().reset_index(name="Aide_alimentaire Nb_U2A")
+    return df_alim_U2A_sans_doublons, df2, df3
+    print(df_alim_U2A_sans_doublons.head())
