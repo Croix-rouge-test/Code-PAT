@@ -90,7 +90,7 @@ def indicateurs_impact_ppc(df_IMPACT):
 
     IMPACT_ppc = (
     IMPACT_Urgences
-    .groupby('impact_structure_id_fk', as_index=False)['impact_reponse'].sum().reset_index(name='Dispositifs_d_urgence Nb_personnes_prises_charge'))
+    .groupby('impact_structure_id_fk')['impact_reponse'].sum().reset_index(name='Dispositifs_d_urgence Nb_personnes_prises_charge'))
     return IMPACT_ppc
 
 
@@ -112,7 +112,7 @@ def indicateurs_impact_agrementAB(df_IMPACT):
 
     IMPACT_agrementAB = (
     IMPACT_Urgences
-    .groupby('impact_structure_id_fk', as_index=False)['impact_reponse'].sum().reset_index(name='Dispositifs_d_urgence Nb_agrements'))
+    .groupby('impact_structure_id_fk')['impact_reponse'].sum().reset_index(name='Dispositifs_d_urgence Nb_agrements'))
 
     return IMPACT_agrementAB
 
@@ -134,7 +134,7 @@ def indicateurs_impact_agrementDPS(df_IMPACT):
 
     IMPACT_agrementDPS = (
     IMPACT_Urgences
-    .groupby('impact_structure_id_fk', as_index=False)['impact_reponse'].sum().reset_index(name='Secours Nb_agrements_DPS_2025'))
+    .groupby('impact_structure_id_fk')['impact_reponse'].sum().reset_index(name='Secours Nb_agrements_DPS_2025'))
 
     return IMPACT_agrementDPS
 
