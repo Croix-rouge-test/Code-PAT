@@ -159,7 +159,7 @@ def indicateurs_IMPACTppc_DT(IMPACT_ppc, rattachement_court):
     df_IMPACT_ppc = pd.merge(
     IMPACT_ppc,
     rattachement_court,
-    left_on="nomination_structure_id_fk",
+    left_on="impact_structure_id_fk",
     right_on="n_structure",
     how="left"
     )
@@ -174,7 +174,7 @@ def indicateurs_IMPACTagrementAB_DT(IMPACT_agrementAB, rattachement_court):
     df_IMPACT_agrementAB = pd.merge(
     IMPACT_agrementAB,
     rattachement_court,
-    left_on="nomination_structure_id_fk",
+    left_on="impact_structure_id_fk",
     right_on="n_structure",
     how="left"
     )
@@ -189,7 +189,7 @@ def indicateurs_IMPACTagrementAB_DT(IMPACT_agrementDPS, rattachement_court):
     df_IMPACT_agrementDPS = pd.merge(
     IMPACT_agrementDPS,
     rattachement_court,
-    left_on="nomination_structure_id_fk",
+    left_on="impact_structure_id_fk",
     right_on="n_structure",
     how="left"
     )
