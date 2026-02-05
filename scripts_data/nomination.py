@@ -97,13 +97,34 @@ def indicateurs_nomination_OCR(df_NOMINATION, annee=2025):
     return referents_OCR
 
 
+def indicateurs_nominationAEO_DT(referents_AEO, rattachementcourt):
+    # Merge données avec rattachement_court
+    df_referents_AEO = pd.merge(
+    referents_AEO,
+    rattachementcourt,
+    left_on="nomination_structure_id_fk",
+    right_on="n_structure",
+    how="left"
+    )
 
-def indicateurs_nomination(df_NOMINATION, annee=2025):
-    referents_AEO_mois = indicateurs_nomination_AEO(df_NOMINATION, annee)
-    referents_OCR_mois = indicateurs_nomination_OCR(df_NOMINATION, annee)
+    # Groupby sur DT_de_rattachement
+    referents_AEO_DT = (df_referents_AEO.groupby('DT_de_rattachement'))
+    return referents_AEO_DT
 
-    return referents_AEO_mois, referents_OCR_mois
 
+def indicateurs_nominationOCR_DT(referents_OCR, rattachementcourt):
+    # Merge données avec rattachement_court
+    df_referents_OCR = pd.merge(
+    referents_OCR,
+    rattachementcourt,
+    left_on="nomination_structure_id_fk",
+    right_on="n_structure",
+    how="left"
+    )
+
+    # Groupby sur DT_de_rattachement
+    referents_OCR_DT = (df_referents_OCR.groupby('DT_de_rattachement'))
+    return referents_OCR_DT
 
 
 
