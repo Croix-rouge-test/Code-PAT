@@ -57,11 +57,23 @@ def fusion_impact(df_impact, df_ref_impact):
   # left = pd.merge(df1, df2, on="id", how="left")
 
   # 1) Join avec action sur act_id
-  df_IMPACT = pd.merge(df_impact, df_ref_impact, left_on="impact_indicateur_id_fk", right_on="impact_indicateur_id_pk", how="left")
+  df_IMPACT = pd.merge(
+    df_impact,
+    df_ref_impact,
+    left_on=[
+        "impact_indicateur_id_fk"
+        "impact_activite_benevole_id_fk",
+    ],
+    right_on=[
+        "impact_indicateur_id_pk"
+        "impact_indicateur_activite_benevole_id_fk",
+    ],
+    how="left"
+    )
 
   return df_IMPACT
 
-def indicateurs_impact_ppc(df_IMPACT, df_ref_structure):
+def indicateurs_impact_ppc(df_IMPACT):
     # Filtre sur les libellés appropriés
     libelles_Urgences = [10119, 10125, 10126, 10127, 10128, 10129, 10115, 10132, 10133, 10134, 10135, 10136, 10137]
     IMPACT_Urgences = df_IMPACT[df_IMPACT["impact_indicateur_activite_benevole_id_fk"].isin(libelles_Urgences)]
@@ -84,7 +96,7 @@ def indicateurs_impact_ppc(df_IMPACT, df_ref_structure):
 
 
 
-def indicateurs_impact_agrementAB(df_IMPACT, df_ref_structure):
+def indicateurs_impact_agrementAB(df_IMPACT):
     # Filtre sur les libellés appropriés
     libelles_Urgences = [10119, 10125, 10126, 10127, 10128, 10129, 10115, 10132, 10133, 10134, 10135, 10136, 10137]
     IMPACT_Urgences = df_IMPACT[df_IMPACT["impact_indicateur_activite_benevole_id_fk"].isin(libelles_Urgences)]
@@ -107,7 +119,7 @@ def indicateurs_impact_agrementAB(df_IMPACT, df_ref_structure):
     return IMPACT_agrementAB
 
 
-def indicateurs_impact_agrementDPS(df_IMPACT, df_ref_structure):
+def indicateurs_impact_agrementDPS(df_IMPACT):
     # Filtre sur les libellés appropriés
     libelles_Urgences = [10119, 10125, 10126, 10127, 10128, 10129, 10115, 10132, 10133, 10134, 10135, 10136, 10137]
     IMPACT_Urgences = df_IMPACT[df_IMPACT["impact_indicateur_activite_benevole_id_fk"].isin(libelles_Urgences)]
