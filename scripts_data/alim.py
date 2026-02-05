@@ -70,6 +70,10 @@ def clean_alim(df_alim):
   df_alim_sans_doublons =df_alim.drop_duplicates(subset=['Code U2A'], keep='first')
   print(f"Taille du DataFrame après suppression des doublons : {df_alim_sans_doublons.shape}")
   df_alim_sans_doublons = df_alim_sans_doublons.rename(columns={"N° structure": "n_structure"})
+  # Conversion de la colonne n_structure en string pour la cohérence avec df_ref_structure
+  df_alim_sans_doublons['n_structure'] = df_alim_sans_doublons['n_structure'].astype(str)
+  # Supprimer le '.0' des chaînes si elles proviennent de nombres flottants
+  df_alim_sans_doublons['n_structure'] = df_alim_sans_doublons['n_structure'].apply(lambda x: x[:-2] if x.endswith('.0') else x)
   display(df_alim_sans_doublons.head())
 
     # U2A
