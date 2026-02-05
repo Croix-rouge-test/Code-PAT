@@ -61,12 +61,12 @@ def fusion_impact(df_impact, df_ref_impact):
     df_impact,
     df_ref_impact,
     left_on=[
-        "impact_indicateur_id_fk"
-        "impact_activite_benevole_id_fk",
+        "impact_indicateur_id_fk",
+        "impact_activite_benevole_id_fk"
     ],
     right_on=[
-        "impact_indicateur_id_pk"
-        "impact_indicateur_activite_benevole_id_fk",
+        "impact_indicateur_id_pk",
+        "impact_indicateur_activite_benevole_id_fk"
     ],
     how="left"
     )
