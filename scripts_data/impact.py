@@ -156,22 +156,47 @@ def indicateurs_impact_agrementDPS(df_IMPACT):
 
 def indicateurs_IMPACTppc_DT(IMPACT_ppc, rattachement_court):
     # Merge données avec rattachement_court
-    df_referents_OCR = pd.merge(
-    referents_OCR,
-    rattachementcourt,
+    df_IMPACT_ppc = pd.merge(
+    IMPACT_ppc,
+    rattachement_court,
     left_on="nomination_structure_id_fk",
     right_on="n_structure",
     how="left"
     )
 
     # Groupby sur DT_de_rattachement
-    referents_OCR_DT = (df_referents_OCR.groupby('DT_de_rattachement')['OCR Nb_referents'].sum())
-    return referents_OCR_DT
+    IMPACT_ppc_DT = (df_IMPACT_ppc.groupby('DT_de_rattachement')['Dispositifs_d_urgence Nb_personnes_prises_charge'].sum())
+    return IMPACT_ppc_DT
 
 
+def indicateurs_IMPACTagrementAB_DT(IMPACT_agrementAB, rattachement_court):
+    # Merge données avec rattachement_court
+    df_IMPACT_agrementAB = pd.merge(
+    IMPACT_agrementAB,
+    rattachement_court,
+    left_on="nomination_structure_id_fk",
+    right_on="n_structure",
+    how="left"
+    )
+
+    # Groupby sur DT_de_rattachement
+    IMPACT_agrementAB_DT = (df_IMPACT_agrementAB.groupby('DT_de_rattachement')['Dispositifs_d_urgence Nb_agrements'].sum())
+    return IMPACT_agrementAB_DT
 
 
+def indicateurs_IMPACTagrementAB_DT(IMPACT_agrementDPS, rattachement_court):
+    # Merge données avec rattachement_court
+    df_IMPACT_agrementDPS = pd.merge(
+    IMPACT_agrementDPS,
+    rattachement_court,
+    left_on="nomination_structure_id_fk",
+    right_on="n_structure",
+    how="left"
+    )
 
+    # Groupby sur DT_de_rattachement
+    IMPACT_agrementDPS_DT = (df_IMPACT_agrementDPS.groupby('DT_de_rattachement')['Secours Nb_agrements_DPS_2025'].sum())
+    return IMPACT_agrementDPS_DT
 
 
 
