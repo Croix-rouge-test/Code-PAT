@@ -47,33 +47,62 @@ from utils import *
 ## récupération des données
 
 def clean_alim(df_alim):
-    df_alim=df_alim[["Dispositif","Stucture rattachement",'N° structure']]
+  df_alim=df_alim[["Dispositif","Code U2A","Stucture rattachement",'N° structure']]
 
-    ## préparation Aide_alimentaire Nb_U2A
-    df_alim = df_alim. rename(columns={"Dispositif":"dispositif","Stucture rattachement" :"Structure", "N° structure":"#struct"})
+  ## préparation BDD alim
+  if 'Code U2A' in df_alim.columns:
+    # Identifier les doublons dans la colonne 'Code U2A'
+    duplicates = df_alim[df_alim['Code U2A'].duplicated(keep=False)]
 
-    if 'U2A' in df_alim.columns:
-    # Identifier les doublons dans la colonne 'U2A'
-        duplicates = df_alim[df_alim['U2A'].duplicated(keep=False)]
-        
     # Compter le nombre de doublons
-        num_duplicates = duplicates.shape[0]
-        
-        if num_duplicates > 0:
-            print(f"Il y a {num_duplicates} lignes avec des doublons dans la colonne 'U2A'.")
-            print("Voici les lignes en doublon (affichant toutes les occurrences des valeurs dupliquées) :")
-            display(duplicates.sort_values(by='U2A'))
-        else:
-            print("Aucun doublon trouvé dans la colonne 'U2A'.")
+    num_duplicates = duplicates.shape[0]
+
+    if num_duplicates > 0:
+          print(f"Il y a {num_duplicates} lignes avec des doublons dans la colonne 'Code U2A'.")
+          print("Voici les lignes en doublon (affichant toutes les occurrences des valeurs dupliquées) :")
+          display(duplicates.sort_values(by='Code U2A'))
     else:
-        print("La colonne 'U2A' n'existe pas dans le DataFrame df_alim.")
+          print("Aucun doublon trouvé dans la colonne 'Code U2A'.")
+  else:
+        print("La colonne 'Code U2A' n'existe pas dans le DataFrame df_alim.")
+ 
+  # Création d'une base de données sans doublon
+  df_alim_sans_doublons =df_alim.drop_duplicates(subset=['Code U2A'], keep='first')
+  print(f"Taille du DataFrame après suppression des doublons : {df_alim_sans_doublons.shape}")
+  df_alim_sans_doublons = df_alim_sans_doublons.rename(columns={"N° structure": "n_structure"})
+  display(df_alim_sans_doublons.head())
 
-        print(f"Taille du DataFrame avant suppression des doublons : {df_alim.shape}")
-    df_alim_sans_doublons = df_alim.drop_duplicates(subset=['U2A'], keep='first')
-    print(f"Taille du DataFrame après suppression des doublons : {df_alim_sans_doublons.shape}")
+    # U2A
 
-    display(df_alim_sans_doublons.head())
+  if 'Dispositif' in df_alim_sans_doublons.columns:
+      print("Nombre d'occurrences pour chaque type de 'Dispositif':")
+      display(df_alim_sans_doublons['Dispositif'].value_counts())
+  else:
+      print("La colonne 'Dispositif' n'existe pas dans le DataFrame df_alim_sans_doublons.")
+  
+  df_alim_U2A_sans_doublons = df_alim_sans_doublons.groupby("N° structure").size().reset_index(name="Aide_alimentaire Nb_U2A")
+    
+  # Epicerie sociale
+  df_alim_epicerie_sociale= df_alim_sans_doublons[df_alim_sans_doublons['Dispositif'] == 'Epicerie sociale']
+  display(df_alim_epicerie_sociale.head())
+  df_alim_epicerie_sociale.shape[0]
+  df_alim_epicerie_sociale = df_alim_epicerie_sociale.groupby("n_structure").size().reset_index(name="Aide_alimentaire Nb_epiceries_sociales")
+  verifier_colonne_structure(df_alim_epicerie_sociale,"n_structure", df_ref_structure)
 
-    df_alim_U2A_sans_doublons = df_alim_sans_doublons.groupby("#struct").size().reset_index(name="Aide_alimentaire Nb_U2A")
-    return df_alim_U2A_sans_doublons, df2, df3
-    print(df_alim_U2A_sans_doublons.head())
+  # Accueil Alimentaire
+  df_alim_accueil_alimentaire= df_alim_sans_doublons[df_alim_sans_doublons['Dispositif'] .isin(['Accueil alimentaire', 'Accueil Alimentaire'])]
+  display (df_alim_accueil_alimentaire.head())
+  df_alim_accueil_alimentaire.shape[0]
+  df_alim_accueil_alimentaire = df_alim_accueil_alimentaire.groupby("n_structure").size().reset_index(name="Aide_alimentaire Nb_Centre_distribution_alimentaire")
+  verifier_colonne_structure(df_alim_accueil_alimentaire, "n_structure", df_ref_structure)
+
+  # CRsr
+  df_alim_crsr= df_alim_sans_doublons[df_alim_sans_doublons['Dispositif'].isin(['Croix-Rouge sur Roues', 'CRSR Accueil alimentaire'])]
+  display (df_alim_crsr.head())
+  df_alim_crsr.shape[0]
+  df_alim_crsr = df_alim_crsr.groupby("n_structure").size().reset_index(name="Aide_alimentaire Nb_crsr")
+  verifier_colonne_structure(df_alim_crsr, "n_structure", df_ref_structure)
+
+
+  return df_alim_U2A_sans_doublons, df2, df3
+  
