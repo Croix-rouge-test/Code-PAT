@@ -184,7 +184,7 @@ def indicateurs_IMPACTagrementAB_DT(IMPACT_agrementAB, rattachement_court):
     return IMPACT_agrementAB_DT
 
 
-def indicateurs_IMPACTagrementAB_DT(IMPACT_agrementDPS, rattachement_court):
+def indicateurs_IMPACTagrementDPS_DT(IMPACT_agrementDPS, rattachement_court):
     # Merge données avec rattachement_court
     df_IMPACT_agrementDPS = pd.merge(
     IMPACT_agrementDPS,
