@@ -81,6 +81,7 @@ def indicateurs_nomination_AEO(df_NOMINATION, annee=2025):
 
     # On compte le nb de RTAEO & RLAEO
     referents_AEO = (referents_AEO.groupby('nomination_structure_id_fk')['nomination_nivol_id_fk'].nunique())
+    referents_AEO = referents_AEO.rename(columns={"nomination_structure_id_fk": "AEO Nb_responsables"})
     return referents_AEO
 
 
@@ -92,6 +93,7 @@ def indicateurs_nomination_OCR(df_NOMINATION, annee=2025):
     ]
     # On compte le nb de RTAEO & RLAEO
     referents_OCR = (referents_OCR.groupby('nomination_structure_id_fk')['nomination_nivol_id_fk'].nunique())
+    referents_OCR = referents_OCR.rename(columns={"nomination_structure_id_fk": "OCR Nb_referents"})
     return referents_OCR
 
 
