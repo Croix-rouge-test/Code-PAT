@@ -175,7 +175,7 @@ def clean_financier_FGP(financier_FGP):
 
 
     # Conservation des colonnes utiles
-    df = df[["Nom Structure","PRODUITS DE FORMATIONS SCOLARITE ET DROITS D INSCRIPTION Réalisé 2024"]]
+    df = financier_FGP[["Nom Structure","PRODUITS DE FORMATIONS SCOLARITE ET DROITS D INSCRIPTION Réalisé 2024"]]
     return df
     
 
@@ -194,15 +194,15 @@ def clean_financier_FGP_DPS(
 
 def indicateur_financier_DPS(financier_DPS, df_ref_structure):
     # Mapping sur le département
-    mapping_dict = df_ref_structure[df_ref_structure["Type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('N_dept')['N_structure'].to_dict()
-    financier_DPS['N_structure'] = financier_DPS['Code Département'].map(mapping_dict)
-    verifier_mapping(financier_DPS, "N_structure", "libelle" ,df_ref_structure)
+    mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
+    financier_DPS['n_structure'] = financier_DPS['Code Département'].map(mapping_dict)
+    verifier_mapping(financier_DPS, "n_structure", "libelle" ,df_ref_structure)
 
     # Transformation des str en int
     financier_DPS['PRODUITS DES POSTES SECOURS'] = financier_DPS['PRODUITS DES POSTES SECOURS'].str.replace("€", "").str.replace("\u202f", "").str.replace(" ", "").replace("",0).astype(int)
 
     # Conserver les colonnes utiles
-    financier_DPS = financier_DPS[["N_structure","PRODUITS DES POSTES SECOURS"]]
+    financier_DPS = financier_DPS[["n_structure","PRODUITS DES POSTES SECOURS"]]
 
     # Modification du nom de colonne
     financier_DPS = financier_DPS.rename(columns={"PRODUITS DES POSTES SECOURS":"Secours Produits_DPS_2024"})
@@ -216,10 +216,10 @@ def indicateur_financier_FGP(financier_FGP, df_ref_structure):
 
     # Correction des écarts
     index_to_correct = df[df['Nom Structure'] == "PACA CORSE"].index[0]
-    df.at[index_to_correct, 'N_structure'] = "3732"
+    df.at[index_to_correct, 'n_structure'] = "3732"
 
     index_to_correct = df[df['Nom Structure'] == "GRAND EST"].index[0]
-    df.at[index_to_correct, 'N_structure'] = "4455"
+    df.at[index_to_correct, 'n_structure'] = "4455"
 
     # Conservation des colonnes utiles
     df = df[["PRODUITS DE FORMATIONS SCOLARITE ET DROITS D INSCRIPTION Réalisé 2024","N_structure"]]
@@ -243,5 +243,33 @@ def indicateur_financier_FGP_DPS(
     )
 
 
+def financier_FGP_DT(df_financier_FGP_indicateur, rattachement_court):
+    df_financier_FGP_indicateur['n_structure'] = df_financier_FGP_indicateur['n_structure'].astype('float64')
+    # Merge données avec rattachement_court
+    df_financier_FGP = pd.merge(
+    df_financier_FGP_indicateur,
+    rattachement_court,
+    on="n_structure",
+    how="left"
+    )
+
+    # Groupby sur DT_de_rattachement
+    financier_FGP_DT = (df_financier_FGP.groupby('DT_de_rattachement')['Formation_grand_public CA_2024'].sum())
+    return financier_FGP_DT
+
+
+def financier_DPS_DT(df_financier_DPS_indicateur, rattachement_court):
+    df_financier_DPS_indicateur['n_structure'] = df_financier_DPS_indicateur['n_structure'].astype('float64')
+    # Merge données avec rattachement_court
+    df_financier_DPS = pd.merge(
+    df_financier_DPS_indicateur,
+    rattachement_court,
+    on="n_structure",
+    how="left"
+    )
+
+    # Groupby sur DT_de_rattachement
+    financier_DPS_DT = (df_financier_DPS.groupby('DT_de_rattachement')['Secours Produits_DPS_2024'].sum())
+    return financier_DPS_DT
 
 
