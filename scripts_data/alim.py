@@ -84,14 +84,22 @@ def clean_alim(df_alim):
   else:
       print("La colonne 'Dispositif' n'existe pas dans le DataFrame df_alim_sans_doublons.")
   
-  df_alim_U2A_sans_doublons = df_alim_sans_doublons.groupby("N° structure").size().reset_index(name="Aide_alimentaire Nb_U2A")
-    
+  df_alim_U2A_sans_doublons = df_alim_sans_doublons.groupby("n_structure").size().reset_index(name="Aide_alimentaire Nb_U2A")
+  verifier_colonne_structure(df_alim_U2A_sans_doublons,"n_structure", df_ref_structure)
+
+  df_alim_U2A_DT = dt_rattachement(df_alim_U2A_sans_doublons, df_ref_structure)
+  df_alim_U2A_DT = df_alim_U2A_DT.groupby("DT_de_rattachement").size().reset_index(name="Aide_alimentaire Nb_U2A DT")
+
   # Epicerie sociale
   df_alim_epicerie_sociale= df_alim_sans_doublons[df_alim_sans_doublons['Dispositif'] == 'Epicerie sociale']
   display(df_alim_epicerie_sociale.head())
   df_alim_epicerie_sociale.shape[0]
   df_alim_epicerie_sociale = df_alim_epicerie_sociale.groupby("n_structure").size().reset_index(name="Aide_alimentaire Nb_epiceries_sociales")
   verifier_colonne_structure(df_alim_epicerie_sociale,"n_structure", df_ref_structure)
+  
+  df_alim_epicerie_sociale_DT = dt_rattachement(df_alim_epicerie_sociale, df_ref_structure)
+  df_alim_epicerie_sociale_DT = df_alim_epicerie_sociale_DT.groupby("DT_de_rattachement").size().reset_index(name="Aide_alimentaire Nb_epiceries_sociales DT")
+  
 
   # Accueil Alimentaire
   df_alim_accueil_alimentaire= df_alim_sans_doublons[df_alim_sans_doublons['Dispositif'] .isin(['Accueil alimentaire', 'Accueil Alimentaire'])]
@@ -99,14 +107,19 @@ def clean_alim(df_alim):
   df_alim_accueil_alimentaire.shape[0]
   df_alim_accueil_alimentaire = df_alim_accueil_alimentaire.groupby("n_structure").size().reset_index(name="Aide_alimentaire Nb_Centre_distribution_alimentaire")
   verifier_colonne_structure(df_alim_accueil_alimentaire, "n_structure", df_ref_structure)
-
+  
+  df_alim_accueil_alimentaire_DT = dt_rattachement(df_alim_accueil_alimentaire, df_ref_structure)
+  df_alim_accueil_alimentaire_DT = df_accueil_alimentaire_DT.groupby("DT_de_rattachement").size().reset_index(name="Aide_alimentaire Nb_Centre_distribution_alimentaire DT")
+  
   # CRsr
   df_alim_crsr= df_alim_sans_doublons[df_alim_sans_doublons['Dispositif'].isin(['Croix-Rouge sur Roues', 'CRSR Accueil alimentaire'])]
   display (df_alim_crsr.head())
   df_alim_crsr.shape[0]
   df_alim_crsr = df_alim_crsr.groupby("n_structure").size().reset_index(name="Aide_alimentaire Nb_crsr")
   verifier_colonne_structure(df_alim_crsr, "n_structure", df_ref_structure)
-
+  
+  df_alim_crsr_DT = dt_rattachement(df_alim_crsr, df_ref_structure)
+  df_alim_crsr_DT = df_crsr_DT.groupby("DT_de_rattachement").size().reset_index(name="Aide_alimentaire Nb_crsr DT")
 
   return df_alim_U2A_sans_doublons, df2, df3
   
