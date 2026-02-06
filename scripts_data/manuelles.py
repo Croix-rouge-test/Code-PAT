@@ -445,11 +445,11 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     )
 
 
-def indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court):
+def indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachementcourt):
     # Merge données avec rattachement_court
     OCR_Nb_deployees = pd.merge(
     df_OCR_Nb_deployees,
-    rattachement_court,
+    rattachementcourt,
     on="n_structure",
     how="left"
     )
@@ -461,11 +461,11 @@ def indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court):
 
 
 
-def indicateurs_redcall_DT(df_redcall2, rattachement_court):
+def indicateurs_redcall_DT(df_redcall2, rattachementcourt):
     # Merge données avec rattachement_court
     redcall = pd.merge(
     df_redcall2,
-    rattachement_court,
+    rattachementcourt,
     on="n_structure",
     how="left"
     )
