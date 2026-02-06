@@ -369,7 +369,7 @@ def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     df = df_RC_grouped[
         ["Nom de la structure", "Utilisation_Redcall"]
     ].copy()
-
+    df = df[df["Nom de la structure"] != "ANNUAIRE NATIONAL"]
     df["Utilisation_Redcall"] = df["Utilisation_Redcall"].astype(str)
 
     df = rapprochement_libelles(df_ref_structure, df, "Nom de la structure")
@@ -459,36 +459,6 @@ def indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court):
     return Nb_OCR_DT
 
 
-def indicateurs_PST_DT(df_Dispositifs_d_urgence_PST, rattachement_court):
-    # Merge données avec rattachement_court
-    Dispositifs_d_urgence_PST = pd.merge(
-    df_Dispositifs_d_urgence_PST,
-    rattachement_court,
-    on="n_structure",
-    how="left"
-    )
-
-    # Groupby sur DT_de_rattachement
-    PST_DT = (Dispositifs_d_urgence_PST.groupby('DT_de_rattachement')['Dispositifs_d_urgence PST'].sum())
-    return PST_DT
-
-
-
-
-def indicateurs_Declenchement_DT(df_declenchement3, rattachement_court):
-    # Merge données avec rattachement_court
-    Declenchement = pd.merge(
-    df_declenchement3,
-    rattachement_court,
-    on="n_structure",
-    how="left"
-    )
-
-    # Groupby sur DT_de_rattachement
-    Declenchement_DT = (Declenchement.groupby('DT_de_rattachement')['Dispositifs_d_urgence Nb_declenchements'].sum())
-    return Declenchement_DT
-
-
 
 def indicateurs_redcall_DT(df_redcall2, rattachement_court):
     # Merge données avec rattachement_court
@@ -505,54 +475,15 @@ def indicateurs_redcall_DT(df_redcall2, rattachement_court):
 
 
 
-def indicateurs_CAICHUCMCC_DT(df_CAICHUCMCC_VF, rattachement_court):
-    columns = [
-        "Dispositifs_d_urgence Nb_lots_CAI",
-        "Dispositifs_d_urgence Nb_lots_CHU",
-        "Dispositifs_d_urgence Nb_lots_CMCC"
-    ]
-    
-    # Merge avec rattachement_court
-    CAICHUCMCC = pd.merge(
-        df_CAICHUCMCC_VF,
-        rattachement_court,
-        on="n_structure",
-        how="left"
+def OCR_RedCall_DT(df_OCR_Nb_deployees, df_redcall2):
+    Nb_OCR_DT = indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court)
+    RedCall_DT = indicateurs_redcall_DT(df_redcall2, rattachement_court)
+
+    return (
+        Nb_OCR_DT,
+        RedCall_DT,
     )
 
-    # Groupby sur DT_de_rattachement (somme colonne par colonne)
-    CAICHUCMCC_DT = (
-        CAICHUCMCC
-        .groupby("DT_de_rattachement")[columns]
-        .sum()
-    )
-
-    return CAICHUCMCC_DT
-
-
-
-def indicateurs_conventions_DT(df_conventions2, rattachement_court):
-    columns = [
-        "Dispositifs_d_urgence Nb_conventions_prefecture",
-        "Dispositifs_d_urgence Nb_conventions_operateurs",
-    ]
-    
-    # Merge avec rattachement_court
-    conventions = pd.merge(
-        df_conventions2,
-        rattachement_court,
-        on="n_structure",
-        how="left"
-    )
-
-    # Groupby sur DT_de_rattachement (somme colonne par colonne)
-    conventions_DT = (
-        conventions
-        .groupby("DT_de_rattachement")[columns]
-        .sum()
-    )
-
-    return conventions_DT
 
 
 
