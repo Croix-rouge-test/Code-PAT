@@ -467,7 +467,7 @@ def indicateurs_raw_Textile(df_raw_Textile):
 
 def indicateurs_ProdResTextile(df_raw_ProdResTextile, df_ref_structure):
     # Mapping sur le département
-    mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('N_dept')['N_structure'].to_dict()
+    mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
     df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['Code Département'].map(mapping_dict)
     verifier_mapping(df_raw_ProdResTextile, "n_structure", "libelle" ,df_ref_structure)
 
@@ -518,5 +518,41 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     )
 
 
-  
+
+def Textile_DT(df_raw_Textile, rattachement_court):
+    df_raw_Textile['Code structure'] = df_raw_Textile['Code structure'].astype('object')
+    # Merge données avec rattachement_court
+    textile = pd.merge(df_raw_Textile, rattachement_court, left_on="Code structure", right_on="n_structure", how="left")
+
+    # Groupby sur DT_de_rattachement
+    Textile_DT = (textile.groupby('DT_de_rattachement')['Textile Nb_dispositifs'].sum())
+    return Textile_DT
+
+
+def Textile_financier_DT(df_raw_ProdResTextile, rattachement_court):
+    df_raw_ProdResTextile['Code structure'] = df_raw_ProdResTextile['Code structure'].astype('object')
+    # Merge données avec rattachement_court
+    textile_financier = pd.merge(df_raw_ProdResTextile, rattachement_court, left_on="Code structure", right_on="n_structure", how="left")
+
+    # Groupby sur DT_de_rattachement
+    Textile_financier__DT = (textile_financier.groupby('DT_de_rattachement')['Textile Nb_dispositifs'].sum())
+    return Textile_financier__DT
+
+
+
+def TEXTILE_DT(df_raw_Textile, df_raw_ProdResTextile, rattachement_court):
+    Textile_DT = Textile_DT(df_raw_Textile, rattachement_court)
+    Textile_financier__DT = Textile_financier_DT(df_raw_ProdResTextile, rattachement_court)
+
+
+    return (
+        Textile_DT,
+        Textile_financier__DT,
+    )
+
+
+
+
+
+
 
