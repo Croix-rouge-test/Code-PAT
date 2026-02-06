@@ -123,7 +123,7 @@ def clean_redcall(df_redcall):
 
     df_grouped = (
         df
-        .groupby("ID de la structure", as_index=False)[cols_to_sum]
+        .groupby("Nom de la structure", as_index=False)[cols_to_sum]
         .sum()
     )
 
