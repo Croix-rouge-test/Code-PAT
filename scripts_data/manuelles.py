@@ -177,6 +177,7 @@ def clean_conventions(df_conventions):
             'DT Annuaire Opé',
             'Departement',
             'Prefecture',
+            'Tri partite',
             'Recherche de personnes',
             'SDIS / BMPM / BSPP',
             'SNCF',
