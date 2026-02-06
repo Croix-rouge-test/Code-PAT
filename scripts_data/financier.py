@@ -172,13 +172,7 @@ def clean_financier_DPS(financier_DPS):
 
 
 def clean_financier_FGP(financier_FGP):
-    # Fusionner les 5 premières lignes pour créer les noms de colonnes
-    header_row = 5
-    header = financier_FGP.iloc[:header_row].apply(lambda x: ' '.join(x.dropna()).strip(), axis=0)
-    financier_FGP = pd.DataFrame(financier_FGP.iloc[header_row:].values, columns=header)
 
-    # Conservation des lignes utiles
-    df = financier_FGP.head(13)
 
     # Conservation des colonnes utiles
     df = df[["Nom Structure","PRODUITS DE FORMATIONS SCOLARITE ET DROITS D INSCRIPTION Réalisé 2024"]]
