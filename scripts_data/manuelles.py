@@ -123,7 +123,7 @@ def clean_redcall(df_redcall):
 
     df_grouped = (
         df
-        .groupby("Nom de la structure", as_index=False)[cols_to_sum]
+        .groupby("ID de la structure", as_index=False)[cols_to_sum]
         .sum()
     )
 
@@ -197,6 +197,7 @@ def clean_conventions(df_conventions):
 
     colonnes_oui_non = [
         'Prefecture',
+        'Tri partite',
         'Recherche de personnes',
         'SDIS / BMPM / BSPP',
         'SNCF',
@@ -365,12 +366,26 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
 
 def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     df = df_RC_grouped[
-        ["Nom de la structure", "Utilisation_Redcall"]
+        ["ID de la structure", "Utilisation_Redcall"]
     ].copy()
 
+    df["ID de la structure"] = df["ID de la structure"].astype(str)
     df["Utilisation_Redcall"] = df["Utilisation_Redcall"].astype(str)
 
-    df = rapprochement_libelles(df_ref_structure, df, "Nom de la structure")
+    df.rename(columns={"ID de la structure": "n_structure"}, inplace=True)
+
+    df_ref_structure.rename(
+        columns={"ID de la structure": "n_structure"},
+        inplace=True
+    )
+
+    dict_structure = (
+        df_ref_structure
+        .set_index("n_structure")["nom_structure"]
+        .to_dict()
+    )
+
+    df["nom_structure"] = df["n_structure"].map(dict_structure)
 
     df = df.rename(
         columns={
@@ -442,5 +457,136 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     )
 
 
-  
+def indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court):
+    # Merge données avec rattachement_court
+    OCR_Nb_deployees = pd.merge(
+    df_OCR_Nb_deployees,
+    rattachement_court,
+    on="n_structure",
+    how="left"
+    )
+
+
+    # Groupby sur DT_de_rattachement
+    Nb_OCR_DT = (OCR_Nb_deployees.groupby('DT_de_rattachement')['OCR Nb_deployees'].sum())
+    return Nb_OCR_DT
+
+
+def indicateurs_PST_DT(df_Dispositifs_d_urgence_PST, rattachement_court):
+    # Merge données avec rattachement_court
+    Dispositifs_d_urgence_PST = pd.merge(
+    df_Dispositifs_d_urgence_PST,
+    rattachement_court,
+    on="n_structure",
+    how="left"
+    )
+
+    # Groupby sur DT_de_rattachement
+    PST_DT = (Dispositifs_d_urgence_PST.groupby('DT_de_rattachement')['Dispositifs_d_urgence PST'].sum())
+    return PST_DT
+
+
+
+
+def indicateurs_Declenchement_DT(df_declenchement3, rattachement_court):
+    # Merge données avec rattachement_court
+    Declenchement = pd.merge(
+    df_declenchement3,
+    rattachement_court,
+    on="n_structure",
+    how="left"
+    )
+
+    # Groupby sur DT_de_rattachement
+    Declenchement_DT = (Declenchement.groupby('DT_de_rattachement')['Dispositifs_d_urgence Nb_declenchements'].sum())
+    return Declenchement_DT
+
+
+
+def indicateurs_redcall_DT(df_redcall2, rattachement_court):
+    # Merge données avec rattachement_court
+    redcall = pd.merge(
+    df_redcall2,
+    rattachement_court,
+    on="n_structure",
+    how="left"
+    )
+
+    # Groupby sur DT_de_rattachement
+    RedCall_DT = (redcall.groupby('DT_de_rattachement')['Dispositifs_d_urgence_Utilisation_RedCall'].sum())
+    return RedCall_DT
+
+
+
+def indicateurs_CAICHUCMCC_DT(df_CAICHUCMCC_VF, rattachement_court):
+    columns = [
+        "Dispositifs_d_urgence Nb_lots_CAI",
+        "Dispositifs_d_urgence Nb_lots_CHU",
+        "Dispositifs_d_urgence Nb_lots_CMCC"
+    ]
+    
+    # Merge avec rattachement_court
+    CAICHUCMCC = pd.merge(
+        df_CAICHUCMCC_VF,
+        rattachement_court,
+        on="n_structure",
+        how="left"
+    )
+
+    # Groupby sur DT_de_rattachement (somme colonne par colonne)
+    CAICHUCMCC_DT = (
+        CAICHUCMCC
+        .groupby("DT_de_rattachement")[columns]
+        .sum()
+    )
+
+    return CAICHUCMCC_DT
+
+
+
+def indicateurs_conventions_DT(df_conventions2, rattachement_court):
+    columns = [
+        "Dispositifs_d_urgence Nb_conventions_prefecture",
+        "Dispositifs_d_urgence Nb_conventions_operateurs",
+    ]
+    
+    # Merge avec rattachement_court
+    conventions = pd.merge(
+        df_conventions2,
+        rattachement_court,
+        on="n_structure",
+        how="left"
+    )
+
+    # Groupby sur DT_de_rattachement (somme colonne par colonne)
+    conventions_DT = (
+        conventions
+        .groupby("DT_de_rattachement")[columns]
+        .sum()
+    )
+
+    return conventions_DT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
