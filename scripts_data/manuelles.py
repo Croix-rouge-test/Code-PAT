@@ -477,8 +477,8 @@ def indicateurs_redcall_DT(df_redcall2, rattachementcourt):
 
 
 def OCR_RedCall_DT(df_OCR_Nb_deployees, df_redcall2):
-    Nb_OCR_DT = indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court)
-    RedCall_DT = indicateurs_redcall_DT(df_redcall2, rattachement_court)
+    Nb_OCR_DT = indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachementcourt)
+    RedCall_DT = indicateurs_redcall_DT(df_redcall2, rattachementcourt)
 
     return (
         Nb_OCR_DT,
