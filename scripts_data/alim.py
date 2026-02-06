@@ -44,8 +44,8 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
+### dans la section alim du code,, le dossier est ajouté mais pas l'appel à cette fonction et le return pour les 4 indicateurs alim et leur déclinaisoon DT, il n'y a pas de merge de ces indicateurs
 ## récupération des données
-
 def clean_alim(df_alim):
   df_alim=df_alim[["Dispositif","Code U2A","Stucture rattachement",'N° structure']]
 
@@ -66,7 +66,7 @@ def clean_alim(df_alim):
   else:
         print("La colonne 'Code U2A' n'existe pas dans le DataFrame df_alim.")
  
-  # Création d'une base de données sans doublon
+  # Création d'une base de données sans doublons
   df_alim_sans_doublons =df_alim.drop_duplicates(subset=['Code U2A'], keep='first')
   print(f"Taille du DataFrame après suppression des doublons : {df_alim_sans_doublons.shape}")
   df_alim_sans_doublons = df_alim_sans_doublons.rename(columns={"N° structure": "n_structure"})
@@ -77,7 +77,6 @@ def clean_alim(df_alim):
   display(df_alim_sans_doublons.head())
 
     # U2A
-
   if 'Dispositif' in df_alim_sans_doublons.columns:
       print("Nombre d'occurrences pour chaque type de 'Dispositif':")
       display(df_alim_sans_doublons['Dispositif'].value_counts())
