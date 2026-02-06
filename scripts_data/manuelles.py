@@ -369,7 +369,8 @@ def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     df = df_RC_grouped[
         ["Nom de la structure", "Utilisation_Redcall"]
     ].copy()
-    df = df[df["Nom de la structure"] != "ANNUAIRE NATIONAL"]
+    df = df[
+    ~df["Nom de la structure"].isin(["ANNUAIRE NATIONAL", "REGION OCCITANIE"])]
     df["Utilisation_Redcall"] = df["Utilisation_Redcall"].astype(str)
 
     df = rapprochement_libelles(df_ref_structure, df, "Nom de la structure")
