@@ -123,7 +123,7 @@ def clean_redcall(df_redcall):
 
     df_grouped = (
         df
-        .groupby("ID de la structure", as_index=False)[cols_to_sum]
+        .groupby("Nom de la structure", as_index=False)[cols_to_sum]
         .sum()
     )
 
@@ -177,6 +177,7 @@ def clean_conventions(df_conventions):
             'DT Annuaire Opé',
             'Departement',
             'Prefecture',
+            'Tri partite',
             'Recherche de personnes',
             'SDIS / BMPM / BSPP',
             'SNCF',
@@ -197,6 +198,7 @@ def clean_conventions(df_conventions):
 
     colonnes_oui_non = [
         'Prefecture',
+        'Tri partite',
         'Recherche de personnes',
         'SDIS / BMPM / BSPP',
         'SNCF',
@@ -365,26 +367,13 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
 
 def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     df = df_RC_grouped[
-        ["ID de la structure", "Utilisation_Redcall"]
+        ["Nom de la structure", "Utilisation_Redcall"]
     ].copy()
-
-    df["ID de la structure"] = df["ID de la structure"].astype(str)
+    df = df[~df["Nom de la structure"].isin(["ANNUAIRE NATIONAL", "REGION OCCITANIE"])]
+    df['Nom de la structure'] = df['Nom de la structure'].replace('UNITE LOCALE DU BRIONNAIS', 'UNITE LOCALE DE LA CLAYETTE - MARCIGNY')
     df["Utilisation_Redcall"] = df["Utilisation_Redcall"].astype(str)
 
-    df.rename(columns={"ID de la structure": "n_structure"}, inplace=True)
-
-    df_ref_structure.rename(
-        columns={"ID de la structure": "n_structure"},
-        inplace=True
-    )
-
-    dict_structure = (
-        df_ref_structure
-        .set_index("n_structure")["nom_structure"]
-        .to_dict()
-    )
-
-    df["nom_structure"] = df["n_structure"].map(dict_structure)
+    df = rapprochement_libelles(df_ref_structure, df, "Nom de la structure")
 
     df = df.rename(
         columns={
@@ -456,5 +445,64 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     )
 
 
-  
+def indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court):
+    df_OCR_Nb_deployees['n_structure'] = df_OCR_Nb_deployees['n_structure'].astype('float64')
+    # Merge données avec rattachement_court
+    OCR_Nb_deployees = pd.merge(
+    df_OCR_Nb_deployees,
+    rattachement_court,
+    on="n_structure",
+    how="left"
+    )
+
+
+    # Groupby sur DT_de_rattachement
+    Nb_OCR_DT = (OCR_Nb_deployees.groupby('DT_de_rattachement')['OCR Nb_deployees'].sum())
+    return Nb_OCR_DT
+
+
+
+def indicateurs_redcall_DT(df_redcall2, rattachement_court):
+    df_redcall2['n_structure'] = df_redcall2['n_structure'].astype('float64')
+    # Merge données avec rattachement_court
+    redcall = pd.merge(df_redcall2, rattachement_court, on="n_structure", how="left")
+
+    # Groupby sur DT_de_rattachement
+    RedCall_DT = (redcall.groupby('DT_de_rattachement')['Dispositifs_d_urgence_Utilisation_RedCall'].max())
+    return RedCall_DT
+
+
+
+def OCR_RedCall_DT(df_OCR_Nb_deployees, df_redcall2, rattachement_court):
+    Nb_OCR_DT = indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court)
+    RedCall_DT = indicateurs_redcall_DT(df_redcall2, rattachement_court)
+
+    return (
+        Nb_OCR_DT,
+        RedCall_DT,
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
