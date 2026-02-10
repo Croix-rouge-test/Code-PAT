@@ -46,14 +46,22 @@ sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
 
+def clean_gaia(client):
+  query_gaia = """
+  SELECT *
+  FROM crf-pat.dataset_PAT_2025.crf_pat_2025_rattachement_benevole
+  """
+  df_gaia_rattachement_benevole = client.query(query_gaia).to_dataframe()
+  # Vérification que la colonne est au format datetime
+  df_gaia_rattachement_benevole['rattachement_benevole_date_fin'] = pd.to_datetime(df_gaia_rattachement_benevole['rattachement_benevole_date_fin'], errors='coerce')
+  df_gaia_rattachement_benevole['rattachement_benevole_date_debut'] = pd.to_datetime(df_gaia_rattachement_benevole['rattachement_benevole_date_debut'], errors='coerce')
 
+  return df_gaia_rattachement_benevole
 
 
 
 def indicateurs_gaia(df_gaia):
-  # Vérification que la colonne est au format datetime
-  df_gaia['rattachement_benevole_date_fin'] = pd.to_datetime(df_gaia['rattachement_benevole_date_fin'], errors='coerce')
-  df_gaia['rattachement_benevole_date_debut'] = pd.to_datetime(df_gaia['rattachement_benevole_date_debut'], errors='coerce')
+
 
 
   # Filtrage : date nulle ou année = 2025
@@ -146,7 +154,7 @@ def indicateurs_gaia_nvx_DT(nb_nvx_benevoles, rattachement_court):
 
 
     # Groupby sur DT_de_rattachement
-    nb_nvx_benevoles_DT = (df_nb_nvx_benevoles.groupby('DT_de_rattachement')['Nb_nvx_Benevoles_2025'].sum())
+    nb_nvx_benevoles_DT = (df_nb_nvx_benevoles.groupby('DT_de_rattachement')['Structure Nb_nvx_Benevoles_2025'].sum())
     return nb_nvx_benevoles_DT
 
 

@@ -46,16 +46,30 @@ sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
 
+def clean_impact(client):
+
+  query_ref_impact = """
+  SELECT *
+  FROM crf-pat.dataset_PAT_2025.crf_impact_ref_indicateur
+  """
+
+  query_impact = """
+  SELECT *
+  FROM crf-pat.dataset_PAT_2025.crf_pat_2025_impact_indicateur_suivi
+  """
 
 
-def fusion_impact(df_impact, df_ref_impact):
-  #FTILRE SUR ANNEE 2025
-
-
+  df_ref_impact = client.query(query_ref_impact).to_dataframe()
+  df_impact = client.query(query_impact).to_dataframe()
   # Vérification que la colonne est au format datetime
   df_impact['impact_date_fin'] = pd.to_datetime(df_impact['impact_date_fin'], errors='coerce')
   df_impact['impact_date_debut'] = pd.to_datetime(df_impact['impact_date_debut'], errors='coerce')
 
+  return df_ref_impact, df_impact
+
+
+def fusion_impact(df_impact, df_ref_impact):
+  #FTILRE SUR ANNEE 2025
 
   # Filtrage : date nulle ou année = 2025
   df_impact = df_impact[ (df_impact['impact_date_debut'].dt.year == 2025)]

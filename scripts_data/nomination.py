@@ -46,19 +46,26 @@ sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
 
-#def clean_nomination(NOMINATION_nomination, NOMINATION_attribution_nomination, mapping_df):
-#  NOMINATION_nomination = renommer_par_nom_table(NOMINATION_nomination, "nomination", mapping_df)
-#  NOMINATION_attribution_nomination = renommer_par_nom_table(NOMINATION_attribution_nomination, "attribution_nomination", mapping_df)
-#  return NOMINATION_nomination, NOMINATION_attribution_nomination
+def clean_nomination(client):
+  query_ref_nomination = """
+  SELECT *
+  FROM crf-pat.dataset_PAT_2025.crf_nomination_ref_nomination
+  """
+
+  query_nomination = """
+  SELECT *
+  FROM crf-pat.dataset_PAT_2025.crf_pat_2025_nomination
+  """
+  df_ref_nomination = client.query(query_ref_nomination).to_dataframe()
+  df_nomination = client.query(query_nomination).to_dataframe()
+  # Vérification que la colonne est au format datetime
+  df_nomination['nomination_date_fin_nomination'] = pd.to_datetime(df_nomination['nomination_date_fin_nomination'], errors='coerce')
+  df_nomination['nomination_date_debut_nomination'] = pd.to_datetime(df_nomination['nomination_date_debut_nomination'], errors='coerce')
+  return df_ref_nomination, df_nomination
 
 
 def fusion_nomination(df_nomination, df_ref_nomination):
   #FTILRE SUR ANNEE NULLE OU FIN EN 2025
-
-
-  # Vérification que la colonne est au format datetime
-  df_nomination['nomination_date_fin_nomination'] = pd.to_datetime(df_nomination['nomination_date_fin_nomination'], errors='coerce')
-  df_nomination['nomination_date_debut_nomination'] = pd.to_datetime(df_nomination['nomination_date_debut_nomination'], errors='coerce')
 
 
   # Filtrage : date nulle ou année = 2025
