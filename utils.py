@@ -191,19 +191,18 @@ def normalize_structure(structure: str) -> str:
     return s
 # Rapprochement libellés quand on a ni les codes 
 
-def rapprochement_libelles(df_ref, df_traiter, colonne_analyser, seuil_alerte=0.8, embeddings_file='reference_embeddings.pt', silent=True):
+def rapprochement_libelles(df_ref, df_traiter, colonne_analyser, seuil_alerte=0.80, embeddings_file='reference_embeddings.pt', silent=True):
+    # Ensure df_ref['nom_structure'] is string type and handle potential NaNs
+    df_ref['nom_structure'] = df_ref['nom_structure'].fillna('').astype(str)
+
     # Charger le modèle pré-entraîné
     model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
     # Obtenir les embeddings des libellés de référence
     reference_labels = df_ref['nom_structure'].tolist()
 
-    # Vérifier si le fichier d'embeddings existe
-    if os.path.exists(embeddings_file):
-        reference_embeddings = torch.load(embeddings_file)
-    else:
-        reference_embeddings = model.encode(reference_labels, convert_to_tensor=True)
-        torch.save(reference_embeddings, embeddings_file)
+    # Always compute reference_embeddings from the current reference_labels to prevent mismatch
+    reference_embeddings = model.encode(reference_labels, convert_to_tensor=True)
 
     # Dictionnaire pour mémoriser les rapprochements déjà calculés
     memo_similarities = {}
@@ -230,7 +229,7 @@ def rapprochement_libelles(df_ref, df_traiter, colonne_analyser, seuil_alerte=0.
         label_to_match = row[colonne_analyser]
 
         # Simplifications et corrections des libellés
-        label_to_match_rework = re.sub(r'unité locale', 'UL', label_to_match, flags=re.IGNORECASE)
+        label_to_match_rework = re.sub(r'unité locale', 'UL', str(label_to_match), flags=re.IGNORECASE)
         label_to_match_rework = re.sub(r'direction territoriale', 'DT', label_to_match_rework, flags=re.IGNORECASE)
         label_to_match_rework = re.sub(r'antenne', 'AL', label_to_match_rework, flags=re.IGNORECASE)
         label_to_match_rework = re.sub(r'unite locale', 'UL', label_to_match_rework, flags=re.IGNORECASE)

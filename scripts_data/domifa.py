@@ -46,20 +46,13 @@ from utils import *
 
 # Clean
 
-def clean_domifa(client):
+def clean_domifa(client,df_ref_structure):
   # Import
   query = """
   SELECT *
   FROM `crf-pat.dataset_PAT_2025.Domifa`
   """
   df_domiciliation = client.query(query).to_dataframe()
-
-  query = """
-  SELECT *
-  FROM `crf-pat.dataset_PAT_2025.Ref_structure`
-  """
-
-  df_ref_structure = client.query(query).to_dataframe()
 
   query = """
   SELECT *
@@ -83,6 +76,7 @@ def clean_domifa(client):
 
   #Rapprochement libelles
   df_domiciliation = rapprochement_libelles(ref_structure1, df_domiciliation, "Structure")
+  df_domiciliation['n_structure'] = df_domiciliation['n_structure'].astype(str).astype(int)
 
   return df_domiciliation, df_rattachement_court
 
@@ -117,7 +111,10 @@ def indicateurs_domifa(df_domiciliation):
 
   # Vérifications 
 
-def verificiation_domifa(df_personnes_domiciliees_struct,df_personnes_domiciliees_DT,ref_structure1):
+
+  # commit domifa
+
+def verificiation_domifa(df_domiciliation,df_personnes_domiciliees_struct,df_personnes_domiciliees_DT,ref_structure1,df_rattachement_court):
   #1. Vérification des NaN ou valeurs vides
   #2. Vérification des doublons (uniquement les codes)
   #3Vérification des codes absents du référentiel
