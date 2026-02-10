@@ -174,6 +174,21 @@ def filtre(df, key, filters=None):
     return df.loc[df[col].isin(values)]
 
 
+# Normaliser les libellés des structures
+
+def normalize_structure(structure: str) -> str:
+    if structure is None:
+        return structure
+
+    # Enlève les accents (UNITÉ -> UNITE, DÉLÉGATION -> DELEGATION, etc.)
+    s = unicodedata.normalize("NFD", structure)
+    s = "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
+
+    # Remplacements (insensible à la casse)
+    s = re.sub(r"\bUNITE\s+LOCALE\b", "UL", s, flags=re.IGNORECASE)
+    s = re.sub(r"\bDELEGATION\s+TERRITORIALE\b", "DT", s, flags=re.IGNORECASE)
+
+    return s
 # Rapprochement libellés quand on a ni les codes 
 
 def rapprochement_libelles(df_ref, df_traiter, colonne_analyser, seuil_alerte=0.8, embeddings_file='reference_embeddings.pt', silent=True):
@@ -333,6 +348,30 @@ def verifier_mapping(df, col_code_structure, col_libele, df_ref_structure):
     else:
         print("   ✅ Mapping réalisé avec succès.")
 
+# Vérification qu'on a bien la même somme entre le fichier source et le fichier de sortie
+
+def check_sum_equal(df_left, col_left, df_right, col_right, label_left="DF1", label_right="DF2", raise_on_fail=True):
+    """
+    Compare la somme de df_left[col_left] et df_right[col_right].
+    - Coerce en numérique (NaN -> 0)
+    - Affiche OK si égal, sinon affiche l'écart et lève une erreur si raise_on_fail=True
+    """
+    s_left = pd.to_numeric(df_left[col_left], errors="coerce").fillna(0).sum()
+    s_right = pd.to_numeric(df_right[col_right], errors="coerce").fillna(0).sum()
+
+    if s_left != s_right:
+        msg = (
+            f"Incohérence ❌ : somme {label_left}[{col_left}]={s_left} "
+            f"vs {label_right}[{col_right}]={s_right} (écart={s_left - s_right})"
+        )
+        if raise_on_fail:
+            raise ValueError(msg)
+        else:
+            print(msg)
+            return False
+
+    print(f"OK ✅ : sommes égales ({s_left}) entre {label_left}[{col_left}] et {label_right}[{col_right}]")
+    return True
 
 def keep_integer(x):
   """

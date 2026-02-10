@@ -408,7 +408,8 @@ def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     df = df_RC_grouped[
         ["Nom de la structure", "Utilisation_Redcall"]
     ].copy()
-
+    df = df[~df["Nom de la structure"].isin(["ANNUAIRE NATIONAL", "REGION OCCITANIE"])]
+    df['Nom de la structure'] = df['Nom de la structure'].replace('UNITE LOCALE DU BRIONNAIS', 'UNITE LOCALE DE LA CLAYETTE - MARCIGNY')
     df["Utilisation_Redcall"] = df["Utilisation_Redcall"].astype(str)
 
     df = rapprochement_libelles(df_ref_structure, df, "Nom de la structure")
@@ -518,37 +519,60 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     )
 
 
-
-def Textile_DT(df_raw_Textile, rattachement_court):
-    df_raw_Textile['Code structure'] = df_raw_Textile['Code structure'].astype('object')
+def indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court):
+    df_OCR_Nb_deployees['n_structure'] = df_OCR_Nb_deployees['n_structure'].astype('float64')
     # Merge données avec rattachement_court
-    textile = pd.merge(df_raw_Textile, rattachement_court, left_on="Code structure", right_on="n_structure", how="left")
+    OCR_Nb_deployees = pd.merge(
+    df_OCR_Nb_deployees,
+    rattachement_court,
+    on="n_structure",
+    how="left"
+    )
+
 
     # Groupby sur DT_de_rattachement
-    Textile_DT = (textile.groupby('DT_de_rattachement')['Textile Nb_dispositifs'].sum())
-    return Textile_DT
+    Nb_OCR_DT = (OCR_Nb_deployees.groupby('DT_de_rattachement')['OCR Nb_deployees'].sum())
+    return Nb_OCR_DT
 
 
-def Textile_financier_DT(df_raw_ProdResTextile, rattachement_court):
-    df_raw_ProdResTextile['Code structure'] = df_raw_ProdResTextile['Code structure'].astype('object')
+
+def indicateurs_redcall_DT(df_redcall2, rattachement_court):
+    df_redcall2['n_structure'] = df_redcall2['n_structure'].astype('float64')
     # Merge données avec rattachement_court
-    textile_financier = pd.merge(df_raw_ProdResTextile, rattachement_court, left_on="Code structure", right_on="n_structure", how="left")
+    redcall = pd.merge(df_redcall2, rattachement_court, on="n_structure", how="left")
 
     # Groupby sur DT_de_rattachement
-    Textile_financier__DT = (textile_financier.groupby('DT_de_rattachement')['Textile Nb_dispositifs'].sum())
-    return Textile_financier__DT
+    RedCall_DT = (redcall.groupby('DT_de_rattachement')['Dispositifs_d_urgence_Utilisation_RedCall'].max())
+    return RedCall_DT
 
 
 
-def TEXTILE_DT(df_raw_Textile, df_raw_ProdResTextile, rattachement_court):
-    Textile_DT = Textile_DT(df_raw_Textile, rattachement_court)
-    Textile_financier__DT = Textile_financier_DT(df_raw_ProdResTextile, rattachement_court)
-
+def OCR_RedCall_DT(df_OCR_Nb_deployees, df_redcall2, rattachement_court):
+    Nb_OCR_DT = indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court)
+    RedCall_DT = indicateurs_redcall_DT(df_redcall2, rattachement_court)
 
     return (
-        Textile_DT,
-        Textile_financier__DT,
+        Nb_OCR_DT,
+        RedCall_DT,
     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
