@@ -330,7 +330,7 @@ def indicateurs_PST(df_PST, df_ref_structure):
     df.loc[
         df["Territoire"] == "DT  42 - Loire",
         ["n_structure", "nom_structure"]
-    ] = [47, "DT DE LA LOIRE"]
+    ] = ['47', "DT DE LA LOIRE"]
 
     return df
 
@@ -358,7 +358,7 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
     df.loc[
         df["Département"] == "42 - Loire",
         ["n_structure", "nom_structure"]
-    ] = [47, "DT DE LA LOIRE"]
+    ] = ['47', "DT DE LA LOIRE"]
 
     df = df.rename(
         columns={"nb_declenchements": "Dispositifs_d_urgence Nb_declenchements"}
