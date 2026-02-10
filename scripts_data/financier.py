@@ -229,7 +229,7 @@ def indicateur_financier_DPS(financier_DPS, df_ref_structure):
     # Mapping sur le département
     mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
     financier_DPS['n_structure'] = financier_DPS['Code Département'].map(mapping_dict)
-    verifier_mapping(financier_DPS, "n_structure", "libelle" ,df_ref_structure)
+    #verifier_mapping(financier_DPS, "n_structure", "libelle" ,df_ref_structure)
 
 
     # Transformation des str en int

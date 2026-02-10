@@ -53,6 +53,25 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
+
+# Import
+
+def import_maraude(client):
+  query = """
+  SELECT *
+  FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_maraude`
+  """
+  df_maraude = client.query(query).to_dataframe()
+
+  query = """
+  SELECT *
+  FROM `crf-pat.dataset_PAT_2025.rattachement_court`
+  """
+
+  df_rattachement_court = client.query(query).to_dataframe()
+
+  return df_maraude, df_rattachement_court
+
 # Clean
 
 def prep_nb_maraudes_sigma(df, filtre_annee_fn=None):
@@ -99,6 +118,16 @@ def prep_nb_personnes_rencontrees_sigma(df, filtre_annee_fn=None):
         # ou: d = filtre_annee_fn(d, "maraude_date_debut") si elle retourne un df
 
     return d
+
+def clean_maraudes(client):
+
+  df_maraude, df_rattachement_court = import_maraude(client)
+
+  df_nb_personnes_rencontrees_sigma = prep_nb_personnes_rencontrees_sigma(df_maraude)
+  df_Nb_maraudes_SIGMA =prep_nb_maraudes_sigma(df_maraude)
+  df_Nb_maraudes_SIGMA =prep_nb_maraudes_sigma(df_maraude)
+
+  return df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA
 
 #Calcul Structure
 
@@ -176,4 +205,6 @@ def nb_personnes_rencontrees_SIGMA_DT(df, filtre=None,
               .rename(out_col)
               .to_frame() #transforme la serie en dataframe
               .reset_index())
+
+def indicateurs_maraude(df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA):
 
