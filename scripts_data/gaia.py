@@ -34,6 +34,7 @@ import shutil
 import zipfile
 from google.colab import drive, files
 
+
 from google.colab import auth
 from google.auth import default
 import unicodedata
@@ -44,43 +45,117 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
-def clean_gaia(GAIA_action, GAIA_rattachement_action, GAIA_contact, GAIA_structure, GAIA_act_str, mapping_df):
-  GAIA_action = renommer_par_nom_table(GAIA_action, "GAIA_action", mapping_df)
-  GAIA_rattachement_action = renommer_par_nom_table(GAIA_rattachement_action, "GAIA_rattachement_action", mapping_df)
-  GAIA_contact = renommer_par_nom_table(GAIA_contact, "GAIA_contact", mapping_df)
-  GAIA_structure = renommer_par_nom_table(GAIA_structure, "GAIA_structure", mapping_df)
-  GAIA_act_str = renommer_par_nom_table(GAIA_act_str, "GAIA_act_str", mapping_df)
-  return GAIA_action, GAIA_rattachement_action, GAIA_contact, GAIA_structure, GAIA_act_str
 
-def fusion_gaia(GAIA_action, GAIA_rattachement_action, GAIA_contact, GAIA_structure, GAIA_act_str):
-  #FTILRE SUR ANNEE NULLE OU FIN EN 2025
 
+
+
+
+def indicateurs_gaia(df_gaia):
   # Vérification que la colonne est au format datetime
-  GAIA_act_str['date_fin_activite_struct'] = pd.to_datetime(GAIA_act_str['date_fin_activite_struct'], errors='coerce')
+  df_gaia['rattachement_benevole_date_fin'] = pd.to_datetime(df_gaia['rattachement_benevole_date_fin'], errors='coerce')
+  df_gaia['rattachement_benevole_date_debut'] = pd.to_datetime(df_gaia['rattachement_benevole_date_debut'], errors='coerce')
+
 
   # Filtrage : date nulle ou année = 2025
-  GAIA_act_str = GAIA_act_str[
-      GAIA_act_str['date_fin_activite_struct'].isna() | (GAIA_act_str['date_fin_activite_struct'].dt.year == 2025)
+  df_gaia = df_gaia[
+    (
+        df_gaia['rattachement_benevole_date_fin'].isna()
+        | (df_gaia['rattachement_benevole_date_fin'].dt.year == 2025)
+    )
+    &
+    (
+        df_gaia['rattachement_benevole_date_debut'].isna()
+        | (df_gaia['rattachement_benevole_date_debut'].dt.year != 2026)
+    )
   ]
-  # left = pd.merge(df1, df2, on="id", how="left")
+ 
+  df_gaia = df_gaia.rename(columns={
+    'rattachement_benevole_structure_id_fk': 'n_structure',
+    'rattachement_benevole_nivol_id_fk': 'Structure Nb_Benevoles'
+  })
+ # On compte le nb de volontaires de l'urgence
+  nb_benevoles = (df_gaia.groupby('n_structure')['Structure Nb_Benevoles'].nunique())
+  return nb_benevoles
 
-  # 1) Join avec action sur act_id
-  df_GAIA = pd.merge(GAIA_rattachement_action, GAIA_action, on="n_action_ben", how="left")
 
-  # 2) Join avec rattachement_action sur act_id + str_id
-  df_GAIA = pd.merge(df_GAIA, GAIA_act_str, on="n_action_ben", how="left")
 
-  # 3) Join avec contact sur cob_idrp
-  df_GAIA = pd.merge(df_GAIA, GAIA_structure, on="id_structure", how="left")
 
-  return df_GAIA
 
-def indicateurs_gaia(df_GAIA):
-  # Filtre sur le libelle approprié
-  df_urgence = df_GAIA[df_GAIA["libelle_action_ben"] == "Urgences et autres opérations"]
-  # On compte le nb de volontaires de l'urgence
-  NbBeneDecla_GAIA = (df_urgence.groupby('n_structure_x')['id_gaia'].nunique())
-  return NbBeneDecla_GAIA
+
+
+
+
+
+def indicateurs_gaia_nvx(df_gaia):
+  # Vérification que la colonne est au format datetime
+  df_gaia['rattachement_benevole_date_fin'] = pd.to_datetime(df_gaia['rattachement_benevole_date_fin'], errors='coerce')
+  df_gaia['rattachement_benevole_date_debut'] = pd.to_datetime(df_gaia['rattachement_benevole_date_debut'], errors='coerce')
+
+
+  # Filtrage : date debut année = 2025
+  df_gaia = df_gaia[
+      df_gaia['rattachement_benevole_date_debut'].dt.year == 2025
+  ]
+ 
+  df_gaia = df_gaia.rename(columns={
+    'rattachement_benevole_structure_id_fk': 'n_structure',
+    'rattachement_benevole_nivol_id_fk': 'Structure Nb_nvx_Benevoles_2025'
+  })
+ # On compte le nb de volontaires de l'urgence
+  nb_nvx_benevoles = (df_gaia.groupby('n_structure')['Structure Nb_nvx_Benevoles_2025'].nunique())
+  return nb_nvx_benevoles
+
+
+
+
+
+
+
+
+
+
+def indicateurs_gaia_DT(nb_benevoles, rattachement_court):
+    # Merge données avec rattachement_court
+    df_nb_benevoles = pd.merge(
+    nb_benevoles,
+    rattachement_court,
+    on="n_structure",
+    how="left"
+    )
+
+
+    # Groupby sur DT_de_rattachement
+    nb_benevoles_DT = (df_nb_benevoles.groupby('DT_de_rattachement')['Structure Nb_Benevoles'].sum())
+    return nb_benevoles_DT
+
+
+
+
+
+
+
+
+def indicateurs_gaia_nvx_DT(nb_nvx_benevoles, rattachement_court):
+    # Merge données avec rattachement_court
+    df_nb_nvx_benevoles = pd.merge(
+    nb_nvx_benevoles,
+    rattachement_court,
+    on="n_structure",
+    how="left"
+    )
+
+
+    # Groupby sur DT_de_rattachement
+    nb_nvx_benevoles_DT = (df_nb_nvx_benevoles.groupby('DT_de_rattachement')['Nb_nvx_Benevoles_2025'].sum())
+    return nb_nvx_benevoles_DT
+
+
+
+
+
+
+
+
 
 
 

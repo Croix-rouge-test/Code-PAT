@@ -34,6 +34,7 @@ import shutil
 import zipfile
 from google.colab import drive, files
 
+
 from google.colab import auth
 from google.auth import default
 import unicodedata
@@ -44,102 +45,111 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
-def clean_nomination(NOMINATION_nomination, NOMINATION_attribution_nomination, mapping_df):
-  NOMINATION_nomination = renommer_par_nom_table(NOMINATION_nomination, "nomination", mapping_df)
-  NOMINATION_attribution_nomination = renommer_par_nom_table(NOMINATION_attribution_nomination, "attribution_nomination", mapping_df)
-  return NOMINATION_nomination, NOMINATION_attribution_nomination
 
-def fusion_nomination(NOMINATION_nomination, NOMINATION_attribution_nomination):
+#def clean_nomination(NOMINATION_nomination, NOMINATION_attribution_nomination, mapping_df):
+#  NOMINATION_nomination = renommer_par_nom_table(NOMINATION_nomination, "nomination", mapping_df)
+#  NOMINATION_attribution_nomination = renommer_par_nom_table(NOMINATION_attribution_nomination, "attribution_nomination", mapping_df)
+#  return NOMINATION_nomination, NOMINATION_attribution_nomination
+
+
+def fusion_nomination(df_nomination, df_ref_nomination):
   #FTILRE SUR ANNEE NULLE OU FIN EN 2025
 
+
   # Vérification que la colonne est au format datetime
-  NOMINATION_attribution_nomination['date_fin_nomination'] = pd.to_datetime(NOMINATION_attribution_nomination['date_fin_nomination'], errors='coerce')
-  NOMINATION_attribution_nomination['date_debut_nomination'] = pd.to_datetime(NOMINATION_attribution_nomination['date_debut_nomination'], errors='coerce')
+  df_nomination['nomination_date_fin_nomination'] = pd.to_datetime(df_nomination['nomination_date_fin_nomination'], errors='coerce')
+  df_nomination['nomination_date_debut_nomination'] = pd.to_datetime(df_nomination['nomination_date_debut_nomination'], errors='coerce')
+
 
   # Filtrage : date nulle ou année = 2025
-  NOMINATION_attribution_nomination = NOMINATION_attribution_nomination[
-      NOMINATION_attribution_nomination['date_fin_nomination'].isna() | (NOMINATION_attribution_nomination['date_fin_nomination'].dt.year == 2025)
+  df_nomination = df_nomination[
+      df_nomination['nomination_date_fin_nomination'].isna() | (df_nomination['nomination_date_fin_nomination'].dt.year == 2025)
   ]
 
-  df_NOMINATION = pd.merge(NOMINATION_nomination, NOMINATION_attribution_nomination,on="nomination_id", how="left") #VERIFIER LA FOREIGN KEY!
+
+  df_NOMINATION = pd.merge(
+     df_nomination,
+     df_ref_nomination,
+     left_on="nomination_nomination_id_fk",
+     right_on="nomination_id_pk",
+     how="left"
+      )
+
 
   return df_NOMINATION
 
 
-import pandas as pd
 
-def _indicateurs_referents_par_mois(
-    df_nomination,
-    libelle_nomination,
-    annee=2025
-):
-    # Filtre sur le libellé
-    df = df_nomination[
-        df_nomination["libelle_nomination"] == libelle_nomination
-    ].copy()
-
-    # Génération des mois
-    mois = pd.date_range(
-        start=f"{annee}-01-01",
-        end=f"{annee}-12-01",
-        freq="MS"
-    )
-
-    resultats = []
-
-    for m in mois:
-        debut_mois = m
-        fin_mois = m + pd.offsets.MonthEnd(1)
-
-        actifs = df[
-            (df["date_debut_nomination"] <= fin_mois) &
-            (df["date_fin_nomination"] >= debut_mois)
-        ]
-
-        comptage = (
-            actifs
-            .groupby("structure_id")
-            .size()
-            .reset_index(name="nb")
-        )
-
-        comptage["mois"] = m.strftime("%Y-%m")
-        resultats.append(comptage)
-
-    df_mois = pd.concat(resultats)
-
-    df_pivot = (
-        df_mois
-        .pivot(
-            index="structure_id",
-            columns="mois",
-            values="nb"
-        )
-        .fillna(0)
-        .astype(int)
-    )
-
-    return df_pivot
 
 def indicateurs_nomination_AEO(df_NOMINATION, annee=2025):
-    return _indicateurs_referents_par_mois(
-        df_nomination=df_NOMINATION,
-        libelle_nomination="RTAEO",
-        annee=annee
-    )
+    # Filtre sur les libellés appropriés
+    libelles_AEO = ["RTAAD", "RLAAD"]
+    referents_AEO = df_NOMINATION[
+        df_NOMINATION["nomination_libcourt"].isin(libelles_AEO)
+    ]
+
+
+    # On compte le nb de RTAEO & RLAEO
+    referents_AEO = (referents_AEO.groupby('nomination_structure_id_fk')['nomination_nivol_id_fk'].nunique().reset_index(name='AEO Nb_responsables'))
+   
+    return referents_AEO
+
+
+
 
 def indicateurs_nomination_OCR(df_NOMINATION, annee=2025):
-    return _indicateurs_referents_par_mois(
-        df_nomination=df_NOMINATION,
-        libelle_nomination="RTOCR",
-        annee=annee
+    # Filtre sur les libellés appropriés
+    libelles_OCR = ["RTOCR", "RLOCR"]
+    referents_OCR = df_NOMINATION[
+        df_NOMINATION["nomination_libcourt"].isin(libelles_OCR)
+    ]
+    # On compte le nb de RTAEO & RLAEO
+    referents_OCR = (referents_OCR.groupby('nomination_structure_id_fk')['nomination_nivol_id_fk'].nunique().reset_index(name='OCR Nb_referents'))
+
+
+    return referents_OCR
+
+
+
+
+def indicateurs_nominationAEO_DT(referents_AEO, rattachement_court):
+    # Merge données avec rattachement_court
+    df_referents_AEO = pd.merge(
+    referents_AEO,
+    rattachement_court,
+    left_on="nomination_structure_id_fk",
+    right_on="n_structure",
+    how="left"
     )
 
-def indicateurs_nomination(df_NOMINATION, annee=2025):
-    referents_AEO_mois = indicateurs_nomination_AEO(df_NOMINATION, annee)
-    referents_OCR_mois = indicateurs_nomination_OCR(df_NOMINATION, annee)
 
-    return referents_AEO_mois, referents_OCR_mois
+    # Groupby sur DT_de_rattachement
+    referents_AEO_DT = (df_referents_AEO.groupby('DT_de_rattachement')['AEO Nb_responsables'].sum())
+    return referents_AEO_DT
+
+
+
+
+def indicateurs_nominationOCR_DT(referents_OCR, rattachement_court):
+    # Merge données avec rattachement_court
+    df_referents_OCR = pd.merge(
+    referents_OCR,
+    rattachement_court,
+    left_on="nomination_structure_id_fk",
+    right_on="n_structure",
+    how="left"
+    )
+
+
+    # Groupby sur DT_de_rattachement
+    referents_OCR_DT = (df_referents_OCR.groupby('DT_de_rattachement')['OCR Nb_referents'].sum())
+    return referents_OCR_DT
+
+
+
+
+
+
 
 
 
