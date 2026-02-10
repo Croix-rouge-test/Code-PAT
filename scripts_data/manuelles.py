@@ -297,6 +297,7 @@ def indicateurs_PST(df_PST, df_ref_structure):
     mask = df["n_structure"].isna() | (df["n_structure"] == "")
 
     df["N° Département"] = df["N° Département"].astype(str)
+    df["N° Département"] = df["N° Département"].apply(lambda x: x[:-2] if x.endswith('.0') else x)
     df_ref_structure["n_dept"] = df_ref_structure["n_dept"].astype(str)
 
     mapping_dict = (
