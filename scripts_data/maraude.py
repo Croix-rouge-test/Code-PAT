@@ -127,7 +127,7 @@ def clean_maraudes(client):
   df_Nb_maraudes_SIGMA =prep_nb_maraudes_sigma(df_maraude)
   df_Nb_maraudes_SIGMA =prep_nb_maraudes_sigma(df_maraude)
 
-  return df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA
+  return df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA, df_maraude, df_rattachement_court
 
 #Calcul Structure
 
@@ -206,5 +206,128 @@ def nb_personnes_rencontrees_SIGMA_DT(df, filtre=None,
               .to_frame() #transforme la serie en dataframe
               .reset_index())
 
-def indicateurs_maraude(df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA):
+def indicateurs_maraude(df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA,df_rattachement_court):
+
+  #calcul Nombre de maraude par structure
+
+  df_Nb_maraudes_SIGMA = df_Nb_maraudes_SIGMA.groupby("maraude_structure_id_fk", as_index=False)["maraude_id_fk"].count()
+  df_Nb_maraudes_SIGMA.columns = ["n_structure", "Maraude Nb_maraudes_SIGMA"]
+
+  #calcul Nombre de maraude par DT
+
+  Nb_maraudes_SIGMA_DT = Nb_maraudes_SIGMA_DT(Nb_maraudes_SIGMA)
+  #Calcul du nombre de contacts par structure
+  df_nb_personnes_rencontrees_sigma = add_nb_personnes(df_nb_personnes_rencontrees_sigma)
+
+  df_nb_personnes_rencontrees_SIGMA = (
+      df_nb_personnes_rencontrees_sigma
+      .groupby("maraude_structure_id_fk", as_index=False)["nb personnes"]
+      .sum()
+  )
+  df_nb_personnes_rencontrees_SIGMA.columns = ["n_structure", "Maraude Nb_contacts"]
+  #Calcul du nombre de contacts par DT
+
+
+  df_nb_personnes_rencontrees_SIGMA  = pd.merge(df_nb_personnes_rencontrees_SIGMA , df_rattachement_court, on='n_structure', how="left") #a conserver dans le code principal
+
+  nb_personnes_rencontrees_SIGMA_DT = nb_contact_SIGMA_DT(df_nb_personnes_rencontrees_SIGMA)
+
+  #Calcul du nombre de personnes différentes rencontrées
+
+  df_max_nb_personnes = df_nb_personnes_rencontrees_sigma.loc[
+      df_nb_personnes_rencontrees_sigma.groupby("maraude_rencontre_beneficiaire_id_fk")["nb personnes"].idxmax(),
+      ["maraude_rencontre_beneficiaire_id_fk", "maraude_structure_id_fk", "nb personnes"]
+  ].reset_index(drop=True)
+
+  df_max_nb_personnes.columns = ["maraude_rencontre_beneficiaire_id_fk","n_structure", "Maraude Nb_personnes_rencontrees"]
+
+  df_max_nb_personnes_struct = df_max_nb_personnes.groupby("n_structure")["Maraude Nb_personnes_rencontrees"].sum() #a conserver dans le code principal
+
+  df_max_nb_personnes_struct = pd.merge(df_max_nb_personnes_struct , df_rattachement_court, on='n_structure', how="left") #a conserver dans le code principal
+  
+  #Calcul du nombre de personnes différentes rencontrées par DT
+  nb_personnes_rencontrees_SIGMA_DT = nb_personnes_rencontrees_SIGMA_DT(df_max_nb_personnes_struct)
+
+  return df_Nb_maraudes_SIGMA, df_nb_personnes_rencontrees_sigma, nb_personnes_rencontrees_SIGMA_DT, df_max_nb_personnes, df_max_nb_personnes_struct
+
+def lignes_vides(df, col_code_structure, label=None, raise_error=False):
+
+    #Vérifie si une colonne contient des NaN ou des valeurs vides ("").
+    #Affiche un message OK/KO. Optionnellement lève une erreur.
+
+    s = df[col_code_structure]
+    lignes_vides = df[s.isna() | (s.astype(str).str.strip() == "")]
+
+    col_name = label or col_code_structure
+    if not lignes_vides.empty:
+        msg = f"❌ {len(lignes_vides)} valeur(s) manquante(s) ou vide(s) détectée(s) dans '{col_name}'."
+        print(msg)
+        if raise_error:
+            raise ValueError(msg)
+        return False, lignes_vides
+    else:
+        print(f"✅ Aucun NaN ou valeur vide détecté dans '{col_name}'.")
+        return True, lignes_vides
+
+def verification_maraude(df_ref_structure,Nb_maraudes_SIGMA,Nb_maraudes_SIGMA_DT, df_PREP_Nb_maraudes_SIGMA, df_nb_personnes_rencontrees_sigma, df_nb_personnes_rencontrees_SIGMA,nb_personnes_rencontrees_SIGMA_DT,df_Nb_maraudes_SIGMA,df_maraude):
+  # 1. Vérification des NaN ou valeurs vides
+  Sigma_vide = lignes_vides(Nb_maraudes_SIGMA, "DT_de_rattachement")
+  verifier_colonne_structure(Nb_maraudes_SIGMA, "n_structure", df_ref_structure)
+  # Vérifications
+
+  Maraude_etab = sum(Sigma_vide[1]['Maraude Nb_maraudes_SIGMA'])
+
+  #1. vérification du nombre de maraude dans Sigma
+  if Nb_maraudes_SIGMA_DT["Maraude Nb_maraudes_SIGMA"].sum() + Maraude_etab != len(df_PREP_Nb_maraudes_SIGMA):
+      raise ValueError(
+          f"Incohérence: somme des maraudes par DT={Nb_maraudes_SIGMA_DT['Maraude Nb_maraudes_SIGMA'].sum()} vs total des maraudes finies={len(df_PREP_Nb_maraudes_SIGMA)}"
+      )
+  else:
+      print("OK ✅ : la somme du nb de maraude dans SIGMA correspond au nombre de lignes de df_PREP_Nb_maraudes_SIGMA")
+
+      # Vérifications
+
+  #1. vérification du personnes_rencontrees dans Sigma
+  if df_nb_personnes_rencontrees_SIGMA["Maraude Nb_contacts"].sum() != df_nb_personnes_rencontrees_sigma["nb personnes"].sum():
+      raise ValueError(
+          f"Incohérence: Maraude Nb_contacts ={df_nb_personnes_rencontrees_SIGMA["Maraude Nb_contacts"].sum()} vs nb_lignes df_Nb_maraudes_sigma={df_nb_personnes_rencontrees_sigma["nb personnes"].sum()}"
+      )
+  else:
+      print("OK ✅ : la somme du nb de maraude dans SIGMA correspond au nombre de lignes de df_Nb_maraudes_SIGMA")
+
+  # Vérifications
+
+  Personnes_rencontrees = lignes_vides(df_nb_personnes_rencontrees_SIGMA, "DT_de_rattachement")[1]['Maraude Nb_contacts'].sum()
+
+  #1. vérification du nombre de personnes rencontrées par maraude dans Sigma
+  if nb_personnes_rencontrees_SIGMA_DT["Maraude Nb_contacts"].sum() + Personnes_rencontrees!= df_nb_personnes_rencontrees_SIGMA["Maraude Nb_contacts"].sum():
+      raise ValueError(
+          f"Incohérence: somme des maraudes par DT={nb_personnes_rencontrees_SIGMA_DT["Maraude Nb_contacts"].sum()} vs total des maraudes finies={df_nb_personnes_rencontrees_SIGMA["Maraude Nb_contacts"].sum()}"
+      )
+  else:
+      print("OK ✅ : la somme du nb de maraude dans SIGMA correspond au nombre de lignes de df_PREP_Nb_maraudes_SIGMA")
+  # Vérifications
+
+  #1. vérification du nombre de maraude dans Sigma
+  if df_Nb_maraudes_SIGMA["Maraude Nb_maraudes_SIGMA"].sum() != len(df_maraude):
+      raise ValueError(
+          f"Incohérence: somme df_counts={df_Nb_maraudes_SIGMA['Maraude Nb_maraudes_SIGMA'].sum()} vs nb_lignes df_Nb_maraudes_SIGMA={len(df_maraude)}"
+      )
+  else:
+      print("OK ✅ : la somme du nb de maraude dans SIGMA correspond au nombre de lignes de df_Nb_maraudes_SIGMA")
+
+      # Vérifications
+
+  #1. vérification du nombre de maraude dans Sigma
+  if df_Nb_maraudes_SIGMA["Maraude Nb_maraudes_SIGMA"].sum() != len(df_PREP_Nb_maraudes_SIGMA):
+      raise ValueError(
+          f"Incohérence: somme df_counts={df_counts['Maraude Nb_maraudes_SIGMA'].sum()} vs nb_lignes df_Nb_maraudes_SIGMA={len(df_Nb_maraudes_SIGMA)}"
+      )
+  else:
+      print("OK ✅ : la somme du nb de maraude dans SIGMA correspond au nombre de lignes de df_Nb_maraudes_SIGMA")
+
+
+
+
+
 
