@@ -297,6 +297,7 @@ def indicateurs_PST(df_PST, df_ref_structure):
     mask = df["n_structure"].isna() | (df["n_structure"] == "")
 
     df["N° Département"] = df["N° Département"].astype(str)
+    df["N° Département"] = df["N° Département"].apply(lambda x: x[:-2] if x.endswith('.0') else x)
     df_ref_structure["n_dept"] = df_ref_structure["n_dept"].astype(str)
 
     mapping_dict = (
@@ -329,7 +330,7 @@ def indicateurs_PST(df_PST, df_ref_structure):
     df.loc[
         df["Territoire"] == "DT  42 - Loire",
         ["n_structure", "nom_structure"]
-    ] = [47, "DT DE LA LOIRE"]
+    ] = ['47', "DT DE LA LOIRE"]
 
     return df
 
@@ -357,7 +358,7 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
     df.loc[
         df["Département"] == "42 - Loire",
         ["n_structure", "nom_structure"]
-    ] = [47, "DT DE LA LOIRE"]
+    ] = ['47', "DT DE LA LOIRE"]
 
     df = df.rename(
         columns={"nb_declenchements": "Dispositifs_d_urgence Nb_declenchements"}
@@ -377,7 +378,7 @@ def indicateurs_redcall(df_RC_grouped, df_ref_structure):
 
     df = df.rename(
         columns={
-            "Utilisation_Redcall": "Dispositifs_d_urgence_Utilisation_RedCall"
+            "Utilisation_Redcall": "Dispositifs_d_urgence Utilisation_RedCall"
         }
     )
 

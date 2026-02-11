@@ -70,7 +70,7 @@ def indicateurs_mobilite(df_mobilite, df_ref_structure, col_structure):
 
   mobilite_dt_n_struc = mobilite_dt.groupby(col_structure).size().rename("AEO Structure_activite_mobile")
 
-  mobilite_dt_nb_pa_bene = mobilite_dt.groupby(col_structure).sum(['nb_pa','nb_bene']).rename(columns = {'nb_pa':'AEO Nb_PA_dispos_mobiles', 'nb_bene' : 'AEO Nb_benevoles_actifs'}).reset_index()
+  mobilite_dt_nb_pa_bene = mobilite_dt.groupby(col_structure).sum(['nb_pa']).rename(columns = {'nb_pa':'AEO Nb_PA_dispos_mobiles'}).reset_index()
 
   dt_return = pd.merge(mobilite_dt_n_struc, mobilite_dt_nb_pa_bene, on=col_structure, how="left")
   if col_structure == 'DT_de_rattachement' :
