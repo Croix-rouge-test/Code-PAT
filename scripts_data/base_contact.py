@@ -218,6 +218,7 @@ def clean_base_contact(client):
     df_formation_session_resultat = client.query(query_formation_session_resultat).to_dataframe()
     df_formation_session_resultat['FORMATION_DATE_OBTENTION'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_OBTENTION'], errors='coerce')
     df_formation_session_resultat['FORMATION_DATE_RECYCLAGE'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_RECYCLAGE'], errors='coerce')
+    df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['FORMATION_SESSION_STRUCTURE_ID_FK'] != 1]
     return df_formation_session_resultat
 
 def indicateurs_base_contact(df_formation_session_resultat, df_ref_structure):
