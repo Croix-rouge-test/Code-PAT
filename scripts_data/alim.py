@@ -120,9 +120,63 @@ def indicateurs_alim(df_alim_sans_doublons, df_ref_structure):
     df_alim_epicerie_sociale, 
     df_alim_accueil_alimentaire, 
     df_alim_crsr,
-    df_alim_U2A_DT,
-    df_alim_epicerie_sociale_DT,
-    df_alim_accueil_alimentaire_DT,
-    df_alim_crsr_DT
   )
-  
+
+
+def indicateurs_alim_DT(
+    df_alim_U2A_sans_doublons, 
+    df_alim_epicerie_sociale, 
+    df_alim_accueil_alimentaire, 
+    df_alim_crsr, 
+    rattachement_court
+):
+    """
+    Merge + groupby DT pour tous les DataFrames alimentation et retourne les 4 DataFrames modifiés.
+    """
+
+    # --- U2A ---
+    df_alim_U2A_DT = df_alim_U2A_sans_doublons.copy()
+    df_alim_U2A_DT["n_structure"] = df_alim_U2A_DT["n_structure"].astype("float64")
+    df_alim_U2A_DT = pd.merge(
+        df_alim_U2A_DT,
+        rattachement_court,
+        on="n_structure",
+        how="left"
+    )
+    df_alim_U2A_DT = df_alim_U2A_DT.groupby("DT_de_rattachement", as_index=False)["Aide_alimentaire Nb_U2A"].sum()
+
+    # --- Epicerie sociale ---
+    df_alim_epicerie_sociale_DT = df_alim_epicerie_sociale.copy()
+    df_alim_epicerie_sociale_DT["n_structure"] = df_alim_epicerie_sociale_DT["n_structure"].astype("float64")
+    df_alim_epicerie_sociale_DT = pd.merge(
+        df_alim_epicerie_sociale_DT,
+        rattachement_court,
+        on="n_structure",
+        how="left"
+    )
+    df_alim_epicerie_sociale_DT = df_alim_epicerie_sociale_DT.groupby("DT_de_rattachement", as_index=False)["Aide_alimentaire Nb_epiceries_sociales"].sum()
+
+    # --- Accueil alimentaire ---
+    df_alim_accueil_alimentaire_DT = df_alim_accueil_alimentaire.copy()
+    df_alim_accueil_alimentaire_DT["n_structure"] = df_alim_accueil_alimentaire_DT["n_structure"].astype("float64")
+    df_alim_accueil_alimentaire_DT = pd.merge(
+        df_alim_accueil_alimentaire_DT,
+        rattachement_court,
+        on="n_structure",
+        how="left"
+    )
+    df_alim_accueil_alimentaire_DT = df_alim_accueil_alimentaire_DT.groupby("DT_de_rattachement", as_index=False)["Aide_alimentaire Nb_Centre_distribution_alimentaire"].sum()
+
+    # --- CRSR ---
+    df_alim_crsr_DT = df_alim_crsr.copy()
+    df_alim_crsr_DT["n_structure"] = df_alim_crsr_DT["n_structure"].astype("float64")
+    df_alim_crsr_DT = pd.merge(
+        df_alim_crsr_DT,
+        rattachement_court,
+        on="n_structure",
+        how="left"
+    )
+    df_alim_crsr_DT = df_alim_crsr_DT.groupby("DT_de_rattachement", as_index=False)["Aide_alimentaire Nb_crsr"].sum()
+
+    return df_alim_U2A_DT, df_alim_epicerie_sociale_DT, df_alim_accueil_alimentaire_DT, df_alim_crsr_DT
+
