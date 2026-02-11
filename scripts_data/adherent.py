@@ -86,7 +86,22 @@ def indicateurs_adherent(df_adherent_sans_doublons, df_ref_structure):
   # Nb d'adhérents
   df_adherent_sans_doublons = df_adherent_sans_doublons.groupby("n_structure").size().reset_index(name="Structure Nb_Adherents")
 
-  df_adherent_DT = dt_rattachement(df_adherent_sans_doublons, df_ref_structure)
-  df_adherent_DT = df_adherent_DT.groupby("DT_de_rattachement").size().reset_index(name="Structure Nb_Adherents DT")
+  return df_adherent_sans_doublons
 
-  return df_adherent_sans_doublons, df_adherent_DT
+
+def indicateurs_adherent_DT(df_adherent_sans_doublons, rattachement_court):
+    df_adherent_sans_doublons['n_structure'] = df_adherent_sans_doublons['n_structure'].astype('float64')
+    # Merge données avec rattachement_court
+    adherent_sans_doublons = pd.merge(
+    df_adherent_sans_doublons,
+    rattachement_court,
+    on="n_structure",
+    how="left"
+    )
+
+    # Groupby sur DT_de_rattachement
+    Nb_adherent_DT = (adherent_sans_doublons.groupby('DT_de_rattachement')['Structure Nb_Adherents'].sum().reset_index())
+    return Nb_adherent_DT
+
+
+
