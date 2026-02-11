@@ -49,7 +49,7 @@ def filtres_mobilite(mobilite,mapping_df):
   mobilite = get_as_dataframe(mobilite.worksheet('Consolidation'), evaluate_formulas=True)
   mobilite = mobilite[(mobilite['Etat'] == 'Actif') & (mobilite['Code structure unifié'] != '') & (mobilite['Code structure unifié'].notna())]
   mobilite = renommer_par_nom_table(mobilite[["N Département ","Code structure unifié","Nombre Bénéficiaires/an", "Nombre de volontaires total"]], "Mobilité", mapping_df)
-  mobilite['n_structure'] = mobilite['n_structure'].astype(int).astype(str)
+  mobilite['n_structure'] = mobilite['n_structure'].astype(int)
 
 
 
