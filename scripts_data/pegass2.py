@@ -7,11 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1fJGUgPbA0pMt9_h4JrFtvJ98UzBDFpPk
 """
 
-!pip install PyPDF2
-!pip install reportlab
-!pip install PyMuPDF tools
-!pip install xlsxwriter
-
 import traceback
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
