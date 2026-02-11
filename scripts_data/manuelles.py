@@ -378,7 +378,7 @@ def indicateurs_redcall(df_RC_grouped, df_ref_structure):
 
     df = df.rename(
         columns={
-            "Utilisation_Redcall": "Dispositifs_d_urgence_Utilisation_RedCall"
+            "Utilisation_Redcall": "Dispositifs_d_urgence Utilisation_RedCall"
         }
     )
 
