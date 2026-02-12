@@ -13,7 +13,7 @@ def dt_rattachement(df, df_ref_structure):
     """
     df = df.rename(columns={"FORMATION_SESSION_STRUCTURE_ID_FK": "n_structure"})
     df_return = df.merge(
-        df_ref_structure[['n_structure', 'DT_de_rattachement']],
+        df_ref_structure[['n_structure', 'DT_de_rattachement']].drop_duplicates(),
         on='n_structure',
         how='left'
     )
@@ -248,9 +248,6 @@ def indicateurs_base_contact(df_formation_session_resultat, df_ref_structure):
         'PREVIC' : ['PREVIC']
     }
 
-    # Filtrer df_ref_structure
-    df_ref_structure = df_ref_structure[(df_ref_structure['type_structure'] != 'REGION - DR') &
-                                        (df_ref_structure['type_structure'] != 'INSTANCES NATIONALES - IN')]
 
     # Ajouter DT
     df_filtered = df_formation_session_resultat.copy()

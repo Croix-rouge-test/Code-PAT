@@ -56,6 +56,7 @@ def filtres_mobilite(mobilite,mapping_df):
 
   mobilite['nb_pa'] = mobilite['nb_pa'].astype(str).apply(keep_integer).str.replace('^$','0',regex = True).astype(int)
   mobilite['nb_bene'] = mobilite['nb_bene'].astype(str).apply(keep_integer).str.replace('^$','0',regex = True).astype(int)
+  mobilite = mobilite.drop(['nb_bene'], axis = 1)
 
   return mobilite
 
