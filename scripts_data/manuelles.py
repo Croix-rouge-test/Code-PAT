@@ -445,6 +445,7 @@ def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     ].copy()
     df = df[~df["Nom de la structure"].isin(["ANNUAIRE NATIONAL", "REGION OCCITANIE"])]
     df['Nom de la structure'] = df['Nom de la structure'].replace('UNITE LOCALE DU BRIONNAIS', 'UNITE LOCALE DE LA CLAYETTE - MARCIGNY')
+    df = df[df['Nom de la structure'] != 'INSTANCES NATIONALES']
     df["Utilisation_Redcall"] = df["Utilisation_Redcall"].astype(str)
 
 
@@ -534,7 +535,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
 
 
 def indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court):
-    df_OCR_Nb_deployees['n_structure'] = df_OCR_Nb_deployees['n_structure'].astype('float64')
+    df_OCR_Nb_deployees['n_structure'] = df_OCR_Nb_deployees['n_structure'].astype(int)
     # Merge données avec rattachement_court
     OCR_Nb_deployees = pd.merge(
     df_OCR_Nb_deployees,
@@ -556,7 +557,7 @@ def indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court):
 
 
 def indicateurs_redcall_DT(df_redcall2, rattachement_court):
-    df_redcall2['n_structure'] = df_redcall2['n_structure'].astype('float64')
+    df_redcall2['n_structure'] = df_redcall2['n_structure'].astype(int)
     # Merge données avec rattachement_court
     redcall = pd.merge(df_redcall2, rattachement_court, on="n_structure", how="left")
 

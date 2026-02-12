@@ -255,45 +255,59 @@ def rapprochement_libelles(df_ref, df_traiter, colonne_analyser, seuil_alerte=0.
 
 # Sauvegarder les données dans un sheet
 
-def save_dataframe_to_sheet(spreadsheet_id, client, df):
+def save_dataframe_to_sheet(spreadsheet_id, client, df, sheet_name=None):
     """
     Sauvegarde un DataFrame dans une feuille Google Sheets.
 
-    Cette fonction ouvre une feuille Google Sheets par son identifiant, sélectionne la première page,
-    supprime les données existantes, et enregistre le DataFrame fourni dans la feuille.
-
     Args:
-        spreadsheet_id (str): L'identifiant de la feuille Google Sheets (spreadsheet key).
+        spreadsheet_id (str): L'identifiant du Google Sheets.
         client (gspread.Client): Client Google Sheets autorisé.
-        df (pd.DataFrame): Le DataFrame Pandas contenant les données à sauvegarder.
-
-    Returns:
-        None
-
-    Raises:
-        gspread.exceptions.APIError: Si la feuille ou la page demandée ne peut être ouverte ou modifiée.
-        ValueError: Si le DataFrame fourni est vide ou invalide.
+        df (pd.DataFrame): DataFrame Pandas à sauvegarder.
+        sheet_name (str, optional): Nom de la feuille cible.
+                                     Si elle n'existe pas, elle sera créée.
+                                     Si None, la première feuille sera utilisée.
     """
-    # Étape 1: Ouvre la feuille Google Sheets par son identifiant
+
+    if df is None or df.empty:
+        raise ValueError("Le DataFrame est vide ou invalide.")
+
+    # 1️⃣ Ouvre le spreadsheet
     spreadsheet = client.open_by_key(spreadsheet_id)
 
-    # Étape 2: Sélectionne la première feuille
-    worksheet = spreadsheet.get_worksheet(0)
+    # 2️⃣ Sélectionne ou crée la feuille
+    if sheet_name:
+        try:
+            worksheet = spreadsheet.worksheet(sheet_name)
+            print(f"📄 Feuille existante '{sheet_name}' sélectionnée.")
+        except Exception:
+            print(f"➕ La feuille '{sheet_name}' n'existe pas. Création en cours...")
+            worksheet = spreadsheet.add_worksheet(
+                title=sheet_name,
+                rows=str(len(df) + 100),
+                cols=str(len(df.columns) + 10)
+            )
+            print(f"✅ Feuille '{sheet_name}' créée.")
+    else:
+        worksheet = spreadsheet.get_worksheet(0)
+        print(f"📄 Première feuille sélectionnée : '{worksheet.title}'")
 
-    # Étape 3: Supprime les données existantes dans la feuille
+    # 3️⃣ Nettoie la feuille
     worksheet.clear()
     print(f"🗑️ Les anciennes données ont été supprimées de la feuille '{worksheet.title}'")
 
-    # Étape 4: Convertit le DataFrame en chaînes de caractères pour éviter les erreurs de format
+    # 4️⃣ Conversion en string (sécurité format)
     df_to_save = df.copy().astype(str)
 
-    # Étape 5: Écrit le DataFrame dans la feuille Google Sheets
-    worksheet.update([df_to_save.columns.values.tolist()] + df_to_save.values.tolist())
+    # 5️⃣ Écriture des données
+    worksheet.update(
+        [df_to_save.columns.values.tolist()] + df_to_save.values.tolist()
+    )
 
-    # Confirmation de la sauvegarde
-    print(f"💾 Les nouvelles données ont été sauvegardées dans le fichier '{spreadsheet.title}', feuille '{worksheet.title}'")
-    print(f"    Nombre de lignes sauvegardées : {len(df_to_save)}")
-    print(f"    Nombre de colonnes sauvegardées : {len(df_to_save.columns)}")
+    # 6️⃣ Confirmation
+    print(f"💾 Données sauvegardées dans '{spreadsheet.title}' → feuille '{worksheet.title}'")
+    print(f"    Nombre de lignes : {len(df_to_save)}")
+    print(f"    Nombre de colonnes : {len(df_to_save.columns)}")
+
 
 # Vérifications
 
