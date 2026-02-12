@@ -35,6 +35,8 @@ import zipfile
 from google.colab import drive, files
 
 
+
+
 from google.colab import auth
 from google.auth import default
 import unicodedata
@@ -46,7 +48,11 @@ sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
 
+
+
 def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
+
+
 
 
   # Import
@@ -60,6 +66,8 @@ def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
   dt_ul_treso_brute = get_as_dataframe(financier.worksheet('DT-UL_Tréso brute'), skiprows=3, evaluate_formulas=True)
 
 
+
+
   # Renommer colonnes
   dt_prod = renommer_par_nom_table(dt_prod, "financier_DT", mapping_df)
   dt_resnet = renommer_par_nom_table(dt_resnet, "financier_DT", mapping_df)
@@ -71,6 +79,8 @@ def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
   dt_ul_treso_brute = renommer_par_nom_table(dt_ul_treso_brute, "financier_DT_UL", mapping_df)
 
 
+
+
   dt_prod = dt_prod[['n_dept','Réalisé 2024 Total Année','libelle_structure']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier Prod_2024'}).iloc[:dt_prod.shape[0]-2]
   dt_prod['libelle_structure'] = 'DT - ' + dt_prod['libelle_structure']
   dt_resnet = dt_resnet[['n_dept','Réalisé 2024 Total Année']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier ResNet_2024'}).iloc[:dt_resnet.shape[0]-2]
@@ -78,10 +88,14 @@ def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
   dt_treso_brute = dt_treso_brute[['n_dept','Tréso nette au 31/12/2024','Financier Mois_AvanceTreso_2024']].rename(columns = {'Tréso nette au 31/12/2024' : "Financier TresoBrute_2024"}).iloc[:dt_treso_brute.shape[0]-2]
 
 
+
+
   dt_ul_ant_prod = dt_ul_ant_prod[['n_structure','Réalisé 2024 Total Année','libelle_structure']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier Prod_2024'}).iloc[:dt_ul_ant_prod.shape[0]-1]
   dt_ul_ant_res_net = dt_ul_ant_res_net[['n_structure','Réalisé 2024 Total Année']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier ResNet_2024'}).iloc[:dt_ul_ant_res_net.shape[0]-1]
   dt_ul_res_net_corr_prod = dt_ul_res_net_corr_prod[['n_structure','Réalisé 2024 Total Année']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier ResCorrProd_2024'}).iloc[:dt_ul_res_net_corr_prod.shape[0]-1]
   dt_ul_treso_brute = dt_ul_treso_brute[['n_structure','Tréso nette au 31/12/2024','Financier Mois_AvanceTreso_2024']].rename(columns = {'Tréso nette au 31/12/2024' : "Financier TresoBrute_2024"}).iloc[:dt_ul_treso_brute.shape[0]-1]
+
+
 
 
   # Clean
@@ -95,13 +109,19 @@ def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
   dt_treso_brute['n_dept'] = dt_treso_brute['n_dept'].apply(dept_clean)
 
 
+
+
   dt_ul_ant_prod['n_structure'] = dt_ul_ant_prod['n_structure'].astype(int).astype(str)
   dt_ul_ant_res_net['n_structure'] = dt_ul_ant_res_net['n_structure'].astype(int).astype(str)
   dt_ul_res_net_corr_prod['n_structure'] = dt_ul_res_net_corr_prod['n_structure'].astype(int).astype(str)
   dt_ul_treso_brute['n_structure'] = dt_ul_treso_brute['n_structure'].astype(int).astype(str)
 
 
+
+
   # Normalement le seul doublon est DT de la dordogne Code structure : 3968, on garde la première occurence
+
+
 
 
   dt_ul_ant_prod = dt_ul_ant_prod.drop_duplicates(subset="n_structure", keep="first")
@@ -110,12 +130,20 @@ def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
   dt_ul_treso_brute = dt_ul_treso_brute.drop_duplicates(subset="n_structure", keep="first")
 
 
+
+
   # On garde seulement unités locales et DT
   mask = dt_ul_ant_prod['libelle_structure'].isin(set(df_ref_structure['n_structure'].drop_duplicates()))
   dt_ul_ant_prod = dt_ul_ant_prod[mask]
 
 
+
+
   return dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso_brute, dt_ul_ant_prod, dt_ul_ant_res_net, dt_ul_res_net_corr_prod, dt_ul_treso_brute
+
+
+
+
 
 
 
@@ -127,14 +155,20 @@ def fusion_donnees_financieres(dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso
   df_financier_DT = pd.merge(df_financier_DT, dt_treso_brute, on="n_dept", how="left")
 
 
+
+
   # Données par structures
   df_financier_DT_UL = pd.merge(dt_ul_ant_prod,dt_ul_ant_res_net, on="n_structure", how="left")
   df_financier_DT_UL = pd.merge(df_financier_DT_UL, dt_ul_res_net_corr_prod, on="n_structure", how="left")
   df_financier_DT_UL = pd.merge(df_financier_DT_UL, dt_ul_treso_brute, on="n_structure", how="left")
 
 
+
+
   # Pas de numéro de structure pour le dataframe contenant les DT, on fera le merge sur le numéro de département
   return df_financier_DT, df_financier_DT_UL
+
+
 
 
 def verifier_n_dept(df_financier_DT,df_ref_structure):
@@ -146,6 +180,8 @@ def verifier_n_dept(df_financier_DT,df_ref_structure):
     display(df_financier_DT[df_financier_DT.duplicated(subset=['n_dept'])])
   else :
     print(' ✅ Aucun doublon')
+
+
 
 
   # Taille des données
@@ -183,13 +219,43 @@ def verifier_n_dept(df_financier_DT,df_ref_structure):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def indicateur_financier_DPS(financier_DPS, df_ref_structure):
     # Filtrer sur la bonne année
   df_Secours_ProduitsDPS = financier_DPS[financier_DPS['annee'] == 2024]
 
 
+
+
   # Filtrer sur l'activité DPS
   df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[df_Secours_ProduitsDPS['imputation_comptable'] == "ACTA204"]
+
+
 
 
   # Extraire le département
@@ -200,22 +266,32 @@ def indicateur_financier_DPS(financier_DPS, df_ref_structure):
   df_Secours_ProduitsDPS['Code Département'] = df_Secours_ProduitsDPS['code_comptable'].apply(extraire_et_nettoyer_code_departement)
 
 
+
+
   # Suppression de la ligne nationnale
   df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[df_Secours_ProduitsDPS["libelle"] != "TOTAL DELEGATION"]
+
+
 
 
   # Suppression des doublons (corse)
   df_Secours_ProduitsDPS = df_Secours_ProduitsDPS.drop_duplicates(subset=['Code Département'], keep='first')
 
 
+
+
   # Conserver les colonnes utiles
   df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[["code_comptable","libelle","Code Département","annee","imputation_comptable","PRODUITS DES POSTES SECOURS"]]
+
+
 
 
   # Mapping sur le département
   mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
   df_Secours_ProduitsDPS['n_structure'] = df_Secours_ProduitsDPS['Code Département'].map(mapping_dict)
   verifier_mapping(df_Secours_ProduitsDPS, "n_structure", "libelle" ,df_ref_structure)
+
+
 
 
   # Transformation des str en int
@@ -233,15 +309,29 @@ def indicateur_financier_DPS(financier_DPS, df_ref_structure):
   )
 
 
+
+
   # Conserver les colonnes utiles
   df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[["n_structure","PRODUITS DES POSTES SECOURS"]]
+
+
 
 
   # Modification du nom de colonne
   df_Secours_ProduitsDPS = df_Secours_ProduitsDPS.rename(columns={"PRODUITS DES POSTES SECOURS":"Secours Produits_DPS_2024"})
 
 
+
+
   return df_Secours_ProduitsDPS
+
+
+
+
+
+
+
+
 
 
 
@@ -256,16 +346,32 @@ def indicateur_financier_FGP(financier_FGP, df_ref_structure):
 
   # Suppression de la ligne nationnale
   financier_FGP = financier_FGP[financier_FGP["Nom Structure"] != "Total"]
+  financier_FGP = financier_FGP[financier_FGP["N° Structure"] != "Source: Smartview-Mise à jour 24 mars 2025"]
+  financier_FGP = financier_FGP.dropna(subset=["Nom Structure"])
+   
+  financier_FGP["Nom Structure"] = "DT " + financier_FGP["Nom Structure"].astype(str)
+  financier_FGP = rapprochement_libelles(
+      df_ref_structure,
+      financier_FGP,
+      "Nom Structure"
+  )
   financier_FGP = financier_FGP.rename(columns={
     'Réalisé 2024 Total Année': 'Formation_grand_public CA_2024' ,
-    'N° Structure': 'n_structure'  
   })
   # Conserver les colonnes utiles
-  financier_FGP = financier_FGP[["n_structure","Nom Structure","Formation_grand_public CA_2024"]]
+  financier_FGP = financier_FGP[["n_structure","nom_structure","Formation_grand_public CA_2024"]]
+
+
 
 
   verifier_mapping(financier_FGP, "n_structure", "Nom Structure" ,df_ref_structure)
   return financier_FGP
+
+
+
+
+
+
 
 
 
@@ -283,9 +389,15 @@ def financier_FGP_DT(df_financier_FGP_indicateur, rattachement_court):
     )
 
 
+
+
     # Groupby sur DT_de_rattachement
     financier_FGP_DT = (df_financier_FGP.groupby('DT_de_rattachement')['Formation_grand_public CA_2024'].sum())
     return financier_FGP_DT
+
+
+
+
 
 
 
@@ -301,9 +413,25 @@ def financier_DPS_DT(df_financier_DPS_indicateur, rattachement_court):
     )
 
 
+
+
     # Groupby sur DT_de_rattachement
     financier_DPS_DT = (df_financier_DPS.groupby('DT_de_rattachement')['Secours Produits_DPS_2024'].sum())
     return financier_DPS_DT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

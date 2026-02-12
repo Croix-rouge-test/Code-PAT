@@ -69,6 +69,7 @@ def indicateurs_mobilite(df_mobilite, df_ref_structure, col_structure):
   mobilite_dt = pd.merge(mobilite_dt, df_ref_structure['n_structure'].drop_duplicates(), on='n_structure', how="inner")
   if col_structure != 'n_structure' :
     mobilite_dt = mobilite_dt.drop(['n_structure'], axis = 1).rename(columns = {col_structure : 'n_structure'})
+    mobilite_dt['n_structure'] = mobilite_dt['n_structure'].astype(int)
 
   mobilite_dt_n_struc = mobilite_dt.groupby('n_structure').size().rename("AEO Structure_activite_mobile")
 
