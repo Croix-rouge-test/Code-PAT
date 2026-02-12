@@ -476,3 +476,275 @@ def rows_not_in_merge(df_left: pd.DataFrame, df_right: pd.DataFrame, id_col: str
         right_only = right_only[[c for c in keep_cols_right if c in right_only.columns]]
 
     return left_only, right_only
+
+#CODE POUR IMPORTER LES TABLES
+
+def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2025"):
+    """
+    Charge les tables BigQuery nécessaires et renvoie tous les DataFrames importés
+    (et ref_structure1 calculé comme dans ton code).
+    """
+
+    # ---- Imports ----
+    query = f"""
+    SELECT *
+    FROM `{project_id}.{dataset_id}.crf_activite_ref_activite_benevole`
+    """
+    df_ref_activite_benevole = client.query(query).to_dataframe()
+
+    query = f"""
+    SELECT *
+    FROM `{project_id}.{dataset_id}.crf_pat_2025_pegass_activite`
+    """
+    df_pegass_activite = client.query(query).to_dataframe()
+
+    query = f"""
+    SELECT *
+    FROM `{project_id}.{dataset_id}.crf_pat_2025_pegass_activite_seance`
+    """
+    df_pegass_activite_seance = client.query(query).to_dataframe()
+
+    query = f"""
+    SELECT *
+    FROM `{project_id}.{dataset_id}.crf_pat_2025_pegass_activite_seance_inscription`
+    """
+    df_pegass_activite_seance_inscription = client.query(query).to_dataframe()
+
+    query = f"""
+    SELECT *
+    FROM `{project_id}.{dataset_id}.Ref_structure`
+    """
+    df_ref_structure = client.query(query).to_dataframe()
+
+    # Preparation ref structure (comme ton code)
+    ref_structure1 = df_ref_structure[
+        (df_ref_structure["type_structure"] == "UNITE LOCALE - UL")
+        | (df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT")
+    ]
+
+    query = f"""
+    SELECT *
+    FROM `{project_id}.{dataset_id}.rattachement_court`
+    """
+    df_rattachement_court = client.query(query).to_dataframe()
+
+    query = f"""
+    SELECT *
+    FROM `{project_id}.{dataset_id}.crf_as_ref_action_groupe_action`
+    """
+    df_ref_action_groupe_action = client.query(query).to_dataframe()
+
+    # Renommage colonnes (comme ton code)
+    df_ref_action_groupe_action.columns = ["action_id_fk", "ACTION_LIBELLE", "GROUPE_ACTION_ID_FK"]
+
+    return (
+        df_ref_activite_benevole,
+        df_pegass_activite,
+        df_pegass_activite_seance,
+        df_pegass_activite_seance_inscription,
+        df_ref_structure,
+        ref_structure1,
+        df_rattachement_court,
+        df_ref_action_groupe_action,
+    )
+
+
+# CODE DE CALCUL DES INDICATEURS 
+
+def calcul_PEGASS_indicateurs(
+    df_ref_structure,
+    ref_structure1,
+    df_ref_action_groupe_action,
+    df_ref_activite_benevole,
+    df_pegass_activite,
+    df_pegass_activite_seance,
+    df_pegass_activite_seance_inscription,
+    df_rattachement_court
+):
+    """
+    Reprend la séquence "Merge les tables" + calcul indicateurs (linéaire),
+    et renvoie tous les DataFrames créés pendant le process.
+
+    Entrées = les DF importés (issus de ta def load_pegass_dfs).
+    Sortie = dict avec tous les DF + listes de codes.
+    """
+
+    # #Merge les tables
+    Structure_de_rattachement1 = def_Structure_de_rattachement(df_ref_structure)
+    df_ref_structure = filter_ul_dt(df_ref_structure)
+    df_ref_structure = add_num_structure_rattachement(df_ref_structure, col_source="Structure_de_rattachement")
+
+    df_ref_action_activite = merge_action_activite(df_ref_action_groupe_action, df_ref_activite_benevole)
+
+    df_pegass_activite = rename_pegass_activite_id(df_pegass_activite)
+    df_pegass_activite = filter_df1_on_df2(
+        df_pegass_activite,
+        df_ref_structure,
+        col_df1="PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK",
+        col_df2="n_structure"
+    )
+
+    df_pegass_activite_merge = merge_activite_seance(df_pegass_activite_seance, df_pegass_activite)
+
+    df_pegass_ben_activite = build_ben_activite(df_pegass_activite, df_pegass_activite_seance_inscription)
+    df_pegass_ben_activite = filter_inscriptions_valides(df_pegass_ben_activite)
+
+    df_pegass_ben_activite_synthetique = build_ben_activite_synthetique(df_pegass_ben_activite)
+
+    codes_activite_ben = get_codes_activite_ben()
+
+    df_ref_action_activite_filtre = filter_ref_action_activite(df_ref_action_activite, codes_activite_ben)
+    df_ref_action_activite_filtre = rename_activite_benevole_id(df_ref_action_activite_filtre)
+
+    df_pegass_activite_merge2 = merge_on_activite_benevole(df_pegass_activite_merge, df_ref_action_activite_filtre, how="inner")
+    df_pegass_ben_activite    = merge_on_activite_benevole(df_pegass_ben_activite,    df_ref_action_activite_filtre, how="inner")
+
+    df_pegass_activite_merge2 = drop_duplicates_seance(df_pegass_activite_merge2, col="PEGASS_ACTIVITE_SEANCE_ID_FK")
+
+    Activite_maraude = get_codes_maraude()
+    Nb_Exercice      = get_codes_nb_exercice()
+    NB_operations    = get_codes_nb_operations()
+    AEO              = get_codes_aeo()
+    DPS              = get_codes_dps()
+    IS_actifs        = get_codes_is_actifs()
+
+    df_pegass_ben_activite_synthetique = rattache_structure(df_pegass_ben_activite_synthetique, Structure_de_rattachement1)
+    df_pegass_activite_merge2          = rattache_structure(df_pegass_activite_merge2,          Structure_de_rattachement1)
+
+    # #Calcul nb de bénévoles
+    nb_ben_Maraude_Pegass = compute_nb_benevoles_indicator(
+        df_pegass_ben_activite_synthetique,
+        Activite_maraude,
+        "Maraude Nb_benevoles_actifs"
+    )
+
+    nb_ben_AEO_Pegass = compute_nb_benevoles_indicator(
+        df_pegass_ben_activite_synthetique,
+        AEO,
+        "AEO Nb_benevoles_actifs"
+    )
+
+    nb_ben_IS_Pegass = compute_nb_benevoles_indicator(
+        df_pegass_ben_activite_synthetique,
+        IS_actifs,
+        "IS Nb_benevoles_actifs"
+    )
+
+    # base : nb d'activités par (structure, activité)
+    nb_activite_Pegass = calc_nb_activite_pegass(df_pegass_activite_merge2)
+
+    # Maraude
+    nb_Maraude_Pegass1 = indicator_nb_activites(
+        nb_activite_Pegass,
+        Activite_maraude,
+        "nb_Maraude_Pegass"
+    )
+
+    # Opérations
+    nb_operations_Pegass1 = indicator_nb_activites(
+        nb_activite_Pegass,
+        NB_operations,
+        "Dispositifs_d_urgence Nb_operations"
+    )
+
+    # Exercices
+    nb_Exercice_Pegass1 = indicator_nb_activites(
+        nb_activite_Pegass,
+        Nb_Exercice,
+        "Dispositifs_d_urgence Nb_exercices"
+    )
+
+    # AEO / AAD
+    nb_AEO_Pegass1 = indicator_nb_activites(
+        nb_activite_Pegass,
+        AEO,
+        "nb_activite_AEO"
+    )
+
+    nb_Maraude_Pegass_verif = nb_Maraude_Pegass1
+
+    ref_structure1 = filter_ul_dt(ref_structure1)
+    ref_structure2 = ref_structure1[["n_structure", "DT_de_rattachement"]]
+
+    # 1) merge avec ref struct et structure de ratachement
+    nb_Maraude_Pegass1 = pd.merge(nb_Maraude_Pegass1, ref_structure2, on="n_structure", how="inner")
+
+    # Calcul Action Menée et non menée pour chaque activités
+    nb_AEO_Pegass1 = add_statut_action(
+        nb_AEO_Pegass1,
+        col_nb="nb_activite_AEO",
+        out_col="AEO Structure_activite_fixe",
+        label_yes="Activités AEO/AAD menée en fixe",
+        treat_zero_as_no=True
+    )
+
+    # Merge global des 3 indicateurs
+    Indics_pegass = pd.merge(nb_Maraude_Pegass1, nb_operations_Pegass1, on="n_structure", how="outer")
+    Indics_pegass = pd.merge(Indics_pegass, nb_Exercice_Pegass1, on="n_structure", how="outer")
+
+    Indics_pegass_struct = pd.merge(Indics_pegass, nb_AEO_Pegass1, on="n_structure", how="outer")
+
+    ref_structure2 = filter_ul_dt(ref_structure1)
+    Indics_pegass_struct = pd.merge(Indics_pegass_struct, ref_structure2, on="n_structure", how="inner")
+
+    # Calcul DT
+    Indics_pegass_DT = Indics_pegass_struct[[
+        "n_structure",
+        "nb_Maraude_Pegass",
+        "Dispositifs_d_urgence Nb_operations",
+        "Dispositifs_d_urgence Nb_exercices",
+        "nb_activite_AEO"
+    ]]
+
+    Indics_pegass_DT = pd.merge(Indics_pegass_DT, df_rattachement_court, on="n_structure", how="inner")
+    Indics_pegass_DT = (Indics_pegass_DT.groupby("DT_de_rattachement", as_index=False).sum(numeric_only=True))
+    Indics_pegass_DT = Indics_pegass_DT.rename(columns={"nb_activite_AEO": "AEO Structure_activite_fixe"})
+
+    # netoyage DF structure => j'ai dupliqué et CALER APRES LES VERIFS
+    Indics_pegass_struct = Indics_pegass_struct[[
+        "n_structure",
+        "nb_Maraude_Pegass",
+        "Dispositifs_d_urgence Nb_operations",
+        "Dispositifs_d_urgence Nb_exercices",
+        "AEO Structure_activite_fixe"
+    ]]
+
+    return {
+        # tables ref / bases
+        "Structure_de_rattachement1": Structure_de_rattachement1,
+        "df_ref_structure": df_ref_structure,
+        "df_ref_action_activite": df_ref_action_activite,
+        "df_ref_action_activite_filtre": df_ref_action_activite_filtre,
+
+        # bases pegass
+        "df_pegass_activite": df_pegass_activite,
+        "df_pegass_activite_merge": df_pegass_activite_merge,
+        "df_pegass_activite_merge2": df_pegass_activite_merge2,
+        "df_pegass_ben_activite": df_pegass_ben_activite,
+        "df_pegass_ben_activite_synthetique": df_pegass_ben_activite_synthetique,
+
+        # indicateurs intermédiaires
+        "nb_ben_Maraude_Pegass": nb_ben_Maraude_Pegass,
+        "nb_ben_AEO_Pegass": nb_ben_AEO_Pegass,
+        "nb_ben_IS_Pegass": nb_ben_IS_Pegass,
+        "nb_activite_Pegass": nb_activite_Pegass,
+        "nb_Maraude_Pegass1": nb_Maraude_Pegass1,
+        "nb_operations_Pegass1": nb_operations_Pegass1,
+        "nb_Exercice_Pegass1": nb_Exercice_Pegass1,
+        "nb_AEO_Pegass1": nb_AEO_Pegass1,
+        "nb_Maraude_Pegass_verif": nb_Maraude_Pegass_verif,
+
+        # outputs finaux
+        "Indics_pegass": Indics_pegass,
+        "Indics_pegass_struct": Indics_pegass_struct,
+        "Indics_pegass_DT": Indics_pegass_DT,
+
+        # codes (utile à ressortir)
+        "codes_activite_ben": codes_activite_ben,
+        "Activite_maraude": Activite_maraude,
+        "Nb_Exercice": Nb_Exercice,
+        "NB_operations": NB_operations,
+        "AEO": AEO,
+        "DPS": DPS,
+        "IS_actifs": IS_actifs,
+    }
