@@ -40,6 +40,7 @@ import unicodedata
 import re
 import torch
 from sentence_transformers import SentenceTransformer, util
+from functools import reduce
 
 
 # Mensualisation 
@@ -388,3 +389,6 @@ def dt_rattachement(df, df_ref_structure):
   df_return = pd.merge(df, df_ref_structure[['n_structure','DT_de_rattachement']], on="n_structure", how="left")
   df_return['DT_de_rattachement'] = df_return['DT_de_rattachement'].astype(str).apply(keep_integer)
   return df_return
+
+def merge_left_on_df1(df1, l, on):
+  return reduce(lambda left, right: left.merge(right, how='left', on=on), l, df1)
