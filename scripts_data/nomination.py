@@ -98,6 +98,7 @@ def indicateurs_nomination_AEO(df_NOMINATION, annee=2025):
 
     # On compte le nb de RTAEO & RLAEO
     referents_AEO = (referents_AEO.groupby('nomination_structure_id_fk')['nomination_nivol_id_fk'].nunique().reset_index(name='AEO Nb_responsables'))
+    referents_AEO = referents_AEO.rename(columns ={'nomination_structure_id_fk': 'n_structure'})
    
     return referents_AEO
 
@@ -112,7 +113,7 @@ def indicateurs_nomination_OCR(df_NOMINATION, annee=2025):
     ]
     # On compte le nb de RTAEO & RLAEO
     referents_OCR = (referents_OCR.groupby('nomination_structure_id_fk')['nomination_nivol_id_fk'].nunique().reset_index(name='OCR Nb_referents'))
-
+    referents_OCR = referents_OCR.rename(columns ={'nomination_structure_id_fk': 'n_structure'})
 
     return referents_OCR
 
@@ -124,8 +125,7 @@ def indicateurs_nominationAEO_DT(referents_AEO, rattachement_court):
     df_referents_AEO = pd.merge(
     referents_AEO,
     rattachement_court,
-    left_on="nomination_structure_id_fk",
-    right_on="n_structure",
+    on="n_structure",
     how="left"
     )
 
@@ -142,8 +142,7 @@ def indicateurs_nominationOCR_DT(referents_OCR, rattachement_court):
     df_referents_OCR = pd.merge(
     referents_OCR,
     rattachement_court,
-    left_on="nomination_structure_id_fk",
-    right_on="n_structure",
+    on="n_structure",
     how="left"
     )
 

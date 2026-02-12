@@ -148,7 +148,7 @@ def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
 
 
 
-def fusion_donnees_financieres(dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso_brute,dt_ul_ant_prod, dt_ul_ant_res_net, dt_ul_res_net_corr_prod, dt_ul_treso_brute):
+def fusion_donnees_financieres(dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso_brute,dt_ul_ant_prod, dt_ul_ant_res_net, dt_ul_res_net_corr_prod, dt_ul_treso_brute, df_ref_structure):
   # Données par DT
   df_financier_DT = pd.merge(dt_prod, dt_resnet, on="n_dept", how="left")
   df_financier_DT = pd.merge(df_financier_DT, dt_resnet_corr_prod, on="n_dept", how="left")
@@ -161,6 +161,9 @@ def fusion_donnees_financieres(dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso
   df_financier_DT_UL = pd.merge(dt_ul_ant_prod,dt_ul_ant_res_net, on="n_structure", how="left")
   df_financier_DT_UL = pd.merge(df_financier_DT_UL, dt_ul_res_net_corr_prod, on="n_structure", how="left")
   df_financier_DT_UL = pd.merge(df_financier_DT_UL, dt_ul_treso_brute, on="n_structure", how="left")
+
+  df_financier_DT = pd.merge(df_ref_structure[['DT_de_rattachement','n_dept']].drop_duplicates(), df_financier_DT, on = 'n_dept', how = 'inner')
+  df_financier_DT = df_financier_DT.drop_duplicates(['DT_de_rattachement'])
 
 
 

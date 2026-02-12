@@ -116,6 +116,8 @@ def indicateurs_impact_ppc(df_IMPACT):
     IMPACT_ppc = (
     IMPACT_Urgences
     .groupby('impact_structure_id_fk')['impact_reponse'].sum().reset_index(name='Dispositifs_d_urgence Nb_personnes_prises_charge'))
+    IMPACT_ppc = IMPACT_ppc.rename(columns ={'impact_structure_id_fk': 'n_structure'})
+
    
     return IMPACT_ppc
 
@@ -151,6 +153,8 @@ def indicateurs_impact_agrementAB(df_IMPACT):
     IMPACT_agrementAB = (
     IMPACT_Urgences
     .groupby('impact_structure_id_fk')['impact_reponse'].sum().reset_index(name='Dispositifs_d_urgence Nb_agrements'))
+    IMPACT_agrementAB = IMPACT_agrementAB.rename(columns ={'impact_structure_id_fk': 'n_structure'})
+
 
 
     return IMPACT_agrementAB
@@ -185,6 +189,8 @@ def indicateurs_impact_agrementDPS(df_IMPACT):
     IMPACT_agrementDPS = (
     IMPACT_Urgences
     .groupby('impact_structure_id_fk')['impact_reponse'].sum().reset_index(name='Secours Nb_agrements_DPS_2025'))
+    IMPACT_agrementDPS = IMPACT_agrementDPS.rename(columns ={'impact_structure_id_fk': 'n_structure'})
+
 
 
     return IMPACT_agrementDPS
@@ -197,8 +203,7 @@ def indicateurs_IMPACTppc_DT(IMPACT_ppc, rattachement_court):
     df_IMPACT_ppc = pd.merge(
     IMPACT_ppc,
     rattachement_court,
-    left_on="impact_structure_id_fk",
-    right_on="n_structure",
+    on="n_structure",
     how="left"
     )
 
@@ -215,8 +220,7 @@ def indicateurs_IMPACTagrementAB_DT(IMPACT_agrementAB, rattachement_court):
     df_IMPACT_agrementAB = pd.merge(
     IMPACT_agrementAB,
     rattachement_court,
-    left_on="impact_structure_id_fk",
-    right_on="n_structure",
+    on="n_structure",
     how="left"
     )
 
@@ -233,8 +237,7 @@ def indicateurs_IMPACTagrementDPS_DT(IMPACT_agrementDPS, rattachement_court):
     df_IMPACT_agrementDPS = pd.merge(
     IMPACT_agrementDPS,
     rattachement_court,
-    left_on="impact_structure_id_fk",
-    right_on="n_structure",
+    on="n_structure",
     how="left"
     )
 
