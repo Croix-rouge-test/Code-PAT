@@ -74,6 +74,7 @@ def clean_alim(df_alim):
   df_alim_sans_doublons['n_structure'] = df_alim_sans_doublons['n_structure'].astype(str)
   # Supprimer le '.0' des chaînes si elles proviennent de nombres flottants
   df_alim_sans_doublons['n_structure'] = df_alim_sans_doublons['n_structure'].apply(lambda x: x[:-2] if x.endswith('.0') else x)
+  df_alim_sans_doublons['n_structure'] = df_alim_sans_doublons['n_structure'].astype(int)
 
   return df_alim_sans_doublons
 

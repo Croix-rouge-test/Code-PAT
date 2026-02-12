@@ -34,17 +34,21 @@ import shutil
 import zipfile
 from google.colab import drive, files
 
+
 from google.colab import auth
 from google.auth import default
 import unicodedata
 import re
 
+
 import torch
 from sentence_transformers import SentenceTransformer, util
+
 
 import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
+
 
 def clean_OCR(df_OCR):
     cols_OCR = [
@@ -55,7 +59,9 @@ def clean_OCR(df_OCR):
         "Nom Commune de l'établissement"
     ]
 
+
     df_OCR[cols_OCR] = df_OCR[cols_OCR].astype(str)
+
 
     df_OCR[["N° Département", "Nom du Département"]] = (
         df_OCR["Nom du Département"]
@@ -63,16 +69,21 @@ def clean_OCR(df_OCR):
         .str.split("-", n=1, expand=True)
     )
 
+
     df_OCR["N° Département"] = df_OCR["N° Département"].str.strip()
     df_OCR["Nom du Département"] = df_OCR["Nom du Département"].str.strip()
 
+
     return df_OCR
+
 
 def clean_PST(df_PST):
     df_PST = df_PST.rename(columns={"PST constitué ": "PST constitué"})
 
+
     df_PST["N° Département"] = df_PST["Territoire"].str.extract(r"DT\s+(\d+)")
     df_PST["Nom structure DT"] = "DT " + df_PST["Territoire"].str.extract(r"-\s*(.+)")
+
 
     cols_PST = [
         "Territoire",
@@ -81,12 +92,16 @@ def clean_PST(df_PST):
         "Nom structure DT"
     ]
 
+
     df_PST[cols_PST] = df_PST[cols_PST].astype(str)
+
 
     return df_PST
 
+
 def clean_declenchement(df_declenchement):
     df = df_declenchement.drop(df_declenchement.index[0]).copy()
+
 
     df.rename(
         columns={
@@ -100,17 +115,23 @@ def clean_declenchement(df_declenchement):
         inplace=True
     )
 
+
     df[['Grand Total', 'Exercice']] = df[['Grand Total', 'Exercice']].fillna(0)
 
+
     df["nb_declenchements"] = df["Grand Total"] - df["Exercice"]
+
 
     df[["n_dept", "DT"]] = df["Département"].str.split(" - ", expand=True)
     df["DT"] = "DT " + df["DT"]
 
+
     return df
+
 
 def clean_redcall(df_redcall):
     df = df_redcall.drop(columns=["Type", "Coûts", "Devise"])
+
 
     cols_to_sum = [
         "Déclenchements",
@@ -121,15 +142,18 @@ def clean_redcall(df_redcall):
         "Erreurs"
     ]
 
+
     df_grouped = (
         df
         .groupby("Nom de la structure", as_index=False)[cols_to_sum]
         .sum()
     )
 
+
     df_grouped["Total"] = df_grouped[
         ["Communications", "Messages", "Questions"]
     ].sum(axis=1)
+
 
     df_grouped["Utilisation_Redcall"] = (
         df_grouped["Total"]
@@ -137,10 +161,13 @@ def clean_redcall(df_redcall):
         .map({True: "Oui", False: "Non"})
     )
 
+
     return df_grouped
+
 
 def clean_CAICHUCMCC(df_CAICHUCMCC):
     first_valid_row = df_CAICHUCMCC.dropna(how="all").index[0]
+
 
     df_CAICHUCMCC.columns = df_CAICHUCMCC.loc[first_valid_row]
     df_CAICHUCMCC = (
@@ -149,9 +176,11 @@ def clean_CAICHUCMCC(df_CAICHUCMCC):
         .reset_index(drop=True)
     )
 
+
     df = df_CAICHUCMCC[
         ['Dépt', 'Région', 'Département', 'CAI 2023', 'CHU 2023', 'Lots CMCC 2023']
     ]
+
 
     df["Département"] = df["Département"].str.replace(
         "DELEGATION TERRITORIALE",
@@ -159,17 +188,22 @@ def clean_CAICHUCMCC(df_CAICHUCMCC):
         regex=False
     )
 
+
     codes_a_supprimer = [
         "NAT", "ARA", "BFC", "BRET", "CVDL", "GE",
         "HDF", "IDF", "NAQ", "NORM", "OCC",
         "PACAC", "PDLL", "OM"
     ]
 
+
     df = df[~df['Dépt'].isin(codes_a_supprimer)]
+
 
     df.loc[df['Dépt'] == 978, 'Département'] = 'DT DE ST MARTIN'
 
+
     return df
+
 
 def clean_conventions(df_conventions):
     df = df_conventions[
@@ -190,11 +224,13 @@ def clean_conventions(df_conventions):
         ]
     ]
 
+
     df["Departement"] = df["Departement"].str.replace(
         r"DELEGATION DEPARTEMENTALE|DELEGATION TERRITORIALE",
         "DT",
         regex=True
     )
+
 
     colonnes_oui_non = [
         'Prefecture',
@@ -210,18 +246,24 @@ def clean_conventions(df_conventions):
         'Autres'
     ]
 
+
     colonnes_conv_ope = colonnes_oui_non[1:]
+
 
     df[colonnes_oui_non] = df[colonnes_oui_non].applymap(
         lambda x: x[-3:] if isinstance(x, str) else x
     )
+
 
     df['Dispositifs_d_urgence Nb_conventions_operateurs'] = (
         df[colonnes_conv_ope]
         .apply(lambda row: (row == 'Oui').sum(), axis=1)
     )
 
+
     return df
+
+
 
 
 def clean_OCR_PST_DEC_RED_CAI_CONV(
@@ -239,6 +281,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_CAICHUCMCC_clean = clean_CAICHUCMCC(df_CAICHUCMCC)
     df_conventions_clean = clean_conventions(df_conventions)
 
+
     return (
         df_OCR_clean,
         df_PST_clean,
@@ -249,21 +292,27 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     )
 
 
+
+
 def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
     df = df_OCR.copy()
+
 
     df = df[df["Statut"].isin(["En cours"])]
     df = df[df["Année"] == "2025-2026"]
 
+
     df = df[
         ["Année", "Statut", "Nom du Département", "N° Département", "Structure CRf\n(Ville)"]
     ]
+
 
     df = rapprochement_libelles(
         df_ref_structure,
         df,
         "Structure CRf\n(Ville)"
     )
+
 
     mask = df["n_structure"] == ""
     mapping_dict = (
@@ -274,19 +323,25 @@ def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
         .to_dict()
     )
 
+
     df.loc[mask, "n_structure"] = df.loc[mask, "N° Département"].map(mapping_dict)
+
 
     df = df["n_structure"].value_counts().reset_index()
     df = df.rename(columns={"count": "OCR Nb_deployees"})
 
+
     return df
+
 
 def indicateurs_PST(df_PST, df_ref_structure):
     df = df_PST.copy()
 
+
     df = df[
         ["Territoire", "PST constitué", "Nom structure DT", "N° Département"]
     ]
+
 
     df = rapprochement_libelles(
         df_ref_structure,
@@ -294,11 +349,13 @@ def indicateurs_PST(df_PST, df_ref_structure):
         "Nom structure DT"
     )
 
+
     mask = df["n_structure"].isna() | (df["n_structure"] == "")
 
+
     df["N° Département"] = df["N° Département"].astype(str)
-    df["N° Département"] = df["N° Département"].apply(lambda x: x[:-2] if x.endswith('.0') else x)
     df_ref_structure["n_dept"] = df_ref_structure["n_dept"].astype(str)
+
 
     mapping_dict = (
         df_ref_structure[
@@ -308,7 +365,9 @@ def indicateurs_PST(df_PST, df_ref_structure):
         .to_dict()
     )
 
+
     df.loc[mask, "n_structure"] = df.loc[mask, "N° Département"].map(mapping_dict)
+
 
     df["PST constitué"] = (
         df["PST constitué"]
@@ -316,6 +375,7 @@ def indicateurs_PST(df_PST, df_ref_structure):
         .str.strip()
         .str.lower()
     )
+
 
     def statut_pst(valeur):
         if valeur == "oui":
@@ -325,22 +385,29 @@ def indicateurs_PST(df_PST, df_ref_structure):
         else:
             return "non"
 
+
     df["Dispositifs_d_urgence PST"] = df["PST constitué"].apply(statut_pst)
+
 
     df.loc[
         df["Territoire"] == "DT  42 - Loire",
         ["n_structure", "nom_structure"]
-    ] = ['47', "DT DE LA LOIRE"]
+    ] = [47, "DT DE LA LOIRE"]
+
 
     return df
+
 
 def indicateurs_declenchements(df_declenchement2, df_ref_structure):
     df = df_declenchement2.copy()
 
+
     df["DT"] = df["DT"].astype(str)
     df["n_dept"] = df["n_dept"].astype(str)
 
+
     df = rapprochement_libelles(df_ref_structure, df, "DT")
+
 
     mask = df["n_structure"] == ""
     mapping_dict = (
@@ -351,20 +418,26 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
         .to_dict()
     )
 
+
     df.loc[mask, "n_structure"] = df.loc[mask, "n_dept"].map(mapping_dict)
 
+
     df = df.dropna(subset=["n_structure"])
+
 
     df.loc[
         df["Département"] == "42 - Loire",
         ["n_structure", "nom_structure"]
-    ] = ['47', "DT DE LA LOIRE"]
+    ] = [47, "DT DE LA LOIRE"]
+
 
     df = df.rename(
         columns={"nb_declenchements": "Dispositifs_d_urgence Nb_declenchements"}
     )
 
+
     return df
+
 
 def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     df = df_RC_grouped[
@@ -374,15 +447,19 @@ def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     df['Nom de la structure'] = df['Nom de la structure'].replace('UNITE LOCALE DU BRIONNAIS', 'UNITE LOCALE DE LA CLAYETTE - MARCIGNY')
     df["Utilisation_Redcall"] = df["Utilisation_Redcall"].astype(str)
 
+
     df = rapprochement_libelles(df_ref_structure, df, "Nom de la structure")
+
 
     df = df.rename(
         columns={
-            "Utilisation_Redcall": "Dispositifs_d_urgence Utilisation_RedCall"
+            "Utilisation_Redcall": "Dispositifs_d_urgence_Utilisation_RedCall"
         }
     )
 
+
     return df
+
 
 def indicateurs_CAICHUCMCC(df_CAICHUCMCC2, df_ref_structure):
     df = rapprochement_libelles(
@@ -390,6 +467,7 @@ def indicateurs_CAICHUCMCC(df_CAICHUCMCC2, df_ref_structure):
         df_CAICHUCMCC2,
         "Département"
     )
+
 
     df = df.rename(
         columns={
@@ -399,12 +477,15 @@ def indicateurs_CAICHUCMCC(df_CAICHUCMCC2, df_ref_structure):
         }
     )
 
+
     return df
+
 
 def indicateurs_conventions(df_conventions, df_ref_structure):
     df = df_conventions[
         ["Departement", "Prefecture", "Dispositifs_d_urgence Nb_conventions_operateurs"]
     ].copy()
+
 
     df = rapprochement_libelles(
         df_ref_structure,
@@ -412,13 +493,16 @@ def indicateurs_conventions(df_conventions, df_ref_structure):
         "Departement"
     )
 
+
     df = df.rename(
         columns={
             "Prefecture": "Dispositifs_d_urgence Nb_conventions_prefecture"
         }
     )
 
+
     return df
+
 
 def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR,
@@ -436,6 +520,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_CAICHUCMCC_VF = indicateurs_CAICHUCMCC(df_CAICHUCMCC2, df_ref_structure)
     df_conventions2 = indicateurs_conventions(df_conventions, df_ref_structure)
 
+
     return (
         df_OCR_Nb_deployees,
         df_Dispositifs_d_urgence_PST,
@@ -444,6 +529,8 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
         df_CAICHUCMCC_VF,
         df_conventions2
     )
+
+
 
 
 def indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court):
@@ -457,9 +544,14 @@ def indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court):
     )
 
 
+
+
     # Groupby sur DT_de_rattachement
     Nb_OCR_DT = (OCR_Nb_deployees.groupby('DT_de_rattachement')['OCR Nb_deployees'].sum())
     return Nb_OCR_DT
+
+
+
 
 
 
@@ -468,9 +560,13 @@ def indicateurs_redcall_DT(df_redcall2, rattachement_court):
     # Merge données avec rattachement_court
     redcall = pd.merge(df_redcall2, rattachement_court, on="n_structure", how="left")
 
+
     # Groupby sur DT_de_rattachement
     RedCall_DT = (redcall.groupby('DT_de_rattachement')['Dispositifs_d_urgence_Utilisation_RedCall'].max())
     return RedCall_DT
+
+
+
 
 
 
@@ -478,32 +574,10 @@ def OCR_RedCall_DT(df_OCR_Nb_deployees, df_redcall2, rattachement_court):
     Nb_OCR_DT = indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court)
     RedCall_DT = indicateurs_redcall_DT(df_redcall2, rattachement_court)
 
+
     return (
         Nb_OCR_DT,
         RedCall_DT,
     )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
