@@ -542,7 +542,6 @@ def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2
         df_pegass_activite,
         df_pegass_activite_seance,
         df_pegass_activite_seance_inscription,
-        df_ref_structure,
         ref_structure1,
         df_rattachement_court,
         df_ref_action_groupe_action,
