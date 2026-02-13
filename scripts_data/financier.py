@@ -133,7 +133,13 @@ def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
 
 
   # On garde seulement unités locales et DT
-  mask = dt_ul_ant_prod['libelle_structure'].isin(set(df_ref_structure['n_structure'].drop_duplicates()))
+  
+  dt_ul_ant_prod['n_structure'] = dt_ul_ant_prod['n_structure'].astype(int)
+  dt_ul_ant_res_net['n_structure'] = dt_ul_ant_res_net['n_structure'].astype(int)
+  dt_ul_res_net_corr_prod['n_structure'] = dt_ul_res_net_corr_prod['n_structure'].astype(int)
+  dt_ul_treso_brute['n_structure'] = dt_ul_treso_brute['n_structure'].astype(int)
+
+  mask = dt_ul_ant_prod['n_structure'].isin(set(df_ref_structure['n_structure'].drop_duplicates().values))
   dt_ul_ant_prod = dt_ul_ant_prod[mask]
 
 
