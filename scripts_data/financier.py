@@ -327,7 +327,7 @@ def indicateur_financier_DPS(financier_DPS, df_ref_structure):
 
 
   # Modification du nom de colonne
-  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS.rename(columns={"PRODUITS DES POSTES SECOURS":"Secours Produits_DPS_2024"})
+  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS.rename(columns={"PRODUITS DES POSTES SECOURS":"Secours Produits_DPS_2025"})
 
 
 
@@ -369,6 +369,7 @@ def indicateur_financier_FGP(financier_FGP, df_ref_structure):
   })
   # Conserver les colonnes utiles
   financier_FGP = financier_FGP[["n_structure","nom_structure","Formation_grand_public CA_2024"]]
+  financier_FGP = financier_FGP.rename(columns = {'Formation_grand_public CA_2024' : 'Formation_grand_public Produits_2025'})
 
 
 
@@ -401,7 +402,7 @@ def financier_FGP_DT(df_financier_FGP_indicateur, rattachement_court):
 
 
     # Groupby sur DT_de_rattachement
-    financier_FGP_DT = (df_financier_FGP.groupby('DT_de_rattachement')['Formation_grand_public CA_2024'].sum())
+    financier_FGP_DT = (df_financier_FGP.groupby('DT_de_rattachement')['Formation_grand_public Produits_2025'].sum())
     return financier_FGP_DT
 
 
@@ -425,7 +426,7 @@ def financier_DPS_DT(df_financier_DPS_indicateur, rattachement_court):
 
 
     # Groupby sur DT_de_rattachement
-    financier_DPS_DT = (df_financier_DPS.groupby('DT_de_rattachement')['Secours Produits_DPS_2024'].sum())
+    financier_DPS_DT = (df_financier_DPS.groupby('DT_de_rattachement')['Secours Produits_DPS_2025'].sum())
     return financier_DPS_DT
 
 

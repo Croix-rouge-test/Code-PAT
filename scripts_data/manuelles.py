@@ -492,7 +492,7 @@ def indicateurs_redcall(df_RC_grouped, df_ref_structure):
 
     df = df.rename(
         columns={
-            "Utilisation_Redcall": "Dispositifs_d_urgence_Utilisation_RedCall"
+            "Utilisation_Redcall": "Dispositifs_d_urgence Utilisation_RedCall"
         }
     )
 
@@ -562,6 +562,7 @@ def indicateurs_ProdResTextile(df_raw_ProdResTextile, df_ref_structure):
     df['Textile Produit_2024'] = df['Textile Produit_2024'].str.replace("-", "")
     df['Textile Resultat_2024'] = df['Textile Resultat_2024'].str.replace(r"\s+", "", regex=True)
     df['Textile Resultat_2024'] = df['Textile Resultat_2024'].str.replace("-", "")
+    df = df.rename(columns = {'Textile Produit_2024' : 'Textile Produit_2025', 'Textile Resultat_2024' : 'Textile Resultat_2025'})
 
     return df
 
@@ -629,7 +630,7 @@ def indicateurs_redcall_DT(df_redcall2, rattachement_court):
 
 
     # Groupby sur DT_de_rattachement
-    RedCall_DT = (redcall.groupby('DT_de_rattachement')['Dispositifs_d_urgence_Utilisation_RedCall'].max())
+    RedCall_DT = (redcall.groupby('DT_de_rattachement')['Dispositifs_d_urgence Utilisation_RedCall'].max())
     return RedCall_DT
 
 
@@ -665,7 +666,7 @@ def Textile_financier_DT(df_raw_ProdResTextile, rattachement_court):
     # Groupby sur DT_de_rattachement
     Textile_financier__DT = (
     textile_financier
-        .groupby('DT_de_rattachement')[['Textile Produit_2024', 'Textile Resultat_2024']]
+        .groupby('DT_de_rattachement')[['Textile Produit_2025', 'Textile Resultat_2025']]
         .sum()
         .reset_index()
     )

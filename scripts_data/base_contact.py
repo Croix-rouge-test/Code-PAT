@@ -136,9 +136,9 @@ def taux_recy(df_2025, filtres_bc, col_groupby):
     result = pd.DataFrame({col_groupby: df_res[col_groupby].unique()})
     result.set_index(col_groupby, inplace=True)
 
-    for code, alias in [('PSE1', 'Secours_Taux_recy26_PSE1'),
-                        ('PSE2', 'Secours_Taux_recy26_PSE2'),
-                        ('CI', 'Secours_Taux_recy26_CI')]:
+    for code, alias in [('PSE1', 'Secours Taux_recy26_PSE1'),
+                        ('PSE2', 'Secours Taux_recy26_PSE2'),
+                        ('CI', 'Secours Taux_recy26_CI')]:
         taux = df_res.groupby(col_groupby).apply(
             lambda g: ((g[g['FORMATION_CODE'].isin(filtres_bc[code])]
                         ['FORMATION_DATE_RECYCLAGE'].dt.year == 2026).sum()
