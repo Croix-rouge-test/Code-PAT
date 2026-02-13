@@ -100,6 +100,12 @@ def indicateurs_nomination_AEO(df_NOMINATION, annee=2025):
     referents_AEO = (referents_AEO.groupby('nomination_structure_id_fk')['nomination_nivol_id_fk'].nunique().reset_index(name='AEO Nb_responsables'))
     referents_AEO = referents_AEO.rename(columns ={'nomination_structure_id_fk': 'n_structure'})
    
+    print(f"Nombre de structures agrégées : {len(referents_AEO)}")
+
+    # Somme totale nationale
+    total_responsables = referents_AEO['AEO Nb_responsables'].sum()
+    print(f"Nombre total de responsables AEO : {total_responsables}")
+    
     return referents_AEO
 
 
@@ -115,6 +121,12 @@ def indicateurs_nomination_OCR(df_NOMINATION, annee=2025):
     referents_OCR = (referents_OCR.groupby('nomination_structure_id_fk')['nomination_nivol_id_fk'].nunique().reset_index(name='OCR Nb_referents'))
     referents_OCR = referents_OCR.rename(columns ={'nomination_structure_id_fk': 'n_structure'})
 
+    print(f"Nombre de structures agrégées : {len(referents_OCR)}")
+
+    # Somme totale nationale
+    total_responsables = referents_OCR['OCR Nb_referents'].sum()
+    print(f"Nombre total de responsables OCR : {total_responsables}")
+    
     return referents_OCR
 
 
@@ -132,6 +144,13 @@ def indicateurs_nominationAEO_DT(referents_AEO, rattachement_court):
 
     # Groupby sur DT_de_rattachement
     referents_AEO_DT = (df_referents_AEO.groupby('DT_de_rattachement')['AEO Nb_responsables'].sum())
+    
+    print(f"Nombre de structures agrégées : {len(referents_AEO_DT)}")
+
+    # Somme totale nationale
+    total_responsables = referents_AEO_DT['AEO Nb_responsables'].sum()
+    print(f"Nombre total de responsables AEO DT : {total_responsables}")
+
     return referents_AEO_DT
 
 
@@ -149,6 +168,13 @@ def indicateurs_nominationOCR_DT(referents_OCR, rattachement_court):
 
     # Groupby sur DT_de_rattachement
     referents_OCR_DT = (df_referents_OCR.groupby('DT_de_rattachement')['OCR Nb_referents'].sum())
+    
+    print(f"Nombre de structures agrégées : {len(referents_OCR_DT)}")
+
+    # Somme totale nationale
+    total_responsables = referents_OCR_DT['OCR Nb_referents'].sum()
+    print(f"Nombre total de responsables OCR DT : {total_responsables}")
+
     return referents_OCR_DT
 
 

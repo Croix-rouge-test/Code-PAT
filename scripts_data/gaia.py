@@ -62,8 +62,6 @@ def clean_gaia(client):
 
 def indicateurs_gaia(df_gaia):
 
-
-
   # Filtrage : date nulle ou année = 2025
   df_gaia = df_gaia[
     (
@@ -83,6 +81,13 @@ def indicateurs_gaia(df_gaia):
   })
  # On compte le nb de volontaires de l'urgence
   nb_benevoles = (df_gaia.groupby('n_structure')['Structure Nb_Benevoles'].nunique())
+  
+  print(f"Nombre de structures agrégées : {len(nb_benevoles)}")
+
+  # Somme totale nationale
+  total_benevoles = nb_benevoles['Structure_Nb_Benevoles'].sum()
+  print(f"Nombre total de bénévoles uniques : {total_benevoles}")
+   
   return nb_benevoles
 
 
@@ -111,6 +116,13 @@ def indicateurs_gaia_nvx(df_gaia):
   })
  # On compte le nb de volontaires de l'urgence
   nb_nvx_benevoles = (df_gaia.groupby('n_structure')['Structure Nb_nvx_Benevoles_2025'].nunique())
+  
+  print(f"Nombre de structures agrégées : {len(nb_nvx_benevoles)}")
+
+  # Somme totale nationale
+  total_nvx_benevoles = nb_nvx_benevoles['Structure Nb_nvx_Benevoles_2025'].sum()
+  print(f"Nombre total de nouveaux bénévoles uniques : {total_nvx_benevoles}")
+  
   return nb_nvx_benevoles
 
 
@@ -134,6 +146,13 @@ def indicateurs_gaia_DT(nb_benevoles, rattachement_court):
 
     # Groupby sur DT_de_rattachement
     nb_benevoles_DT = (df_nb_benevoles.groupby('DT_de_rattachement')['Structure Nb_Benevoles'].sum())
+    
+    print(f"Nombre de structures agrégées : {len(nb_benevoles_DT)}")
+
+    # Somme totale nationale
+    total_benevoles_DT = nb_benevoles_DT['Structure Nb_Benevoles'].sum()
+    print(f"Nombre total de bénévoles uniques DT : {total_benevoles_DT}")
+
     return nb_benevoles_DT
 
 
@@ -155,6 +174,13 @@ def indicateurs_gaia_nvx_DT(nb_nvx_benevoles, rattachement_court):
 
     # Groupby sur DT_de_rattachement
     nb_nvx_benevoles_DT = (df_nb_nvx_benevoles.groupby('DT_de_rattachement')['Structure Nb_nvx_Benevoles_2025'].sum())
+    
+    print(f"Nombre de structures agrégées : {len(nb_nvx_benevoles_DT)}")
+
+    # Somme totale nationale
+    total_nvx_benevoles_DT = nb_nvx_benevoles_DT['Structure Nb_nvx_Benevoles_2025'].sum()
+    print(f"Nombre total de nouveaux bénévoles uniques DT : {total_nvx_benevoles_DT}")
+    
     return nb_nvx_benevoles_DT
 
 
