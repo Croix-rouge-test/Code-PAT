@@ -171,7 +171,7 @@ def add_nb_personnes(df,
     Ajoute une colonne out_col = somme (hommes+femmes+trans+mineurs+inconnus).
 
     Règle métier ajoutée :
-    - si la somme des 5 colonnes = 0 (toutes vides / 0), alors on force out_col = 1.
+    
     - sinon, on garde la somme.
     - et on conserve ton +1 si typologie == "individu".
     """
@@ -192,8 +192,8 @@ def add_nb_personnes(df,
     d[cols] = d[cols].apply(pd.to_numeric, errors="coerce").fillna(0)
     d[out_col] = d[cols].sum(axis=1)
 
-    # ✅ Nouvelle règle : si tout est à 0, on met 1
-    d.loc[d[out_col].eq(0), out_col] = 1
+    # # ✅ Nouvelle règle : si tout est à 0, on met 1
+    # d.loc[d[out_col].eq(0), out_col] = 1
 
     # +1 si typologie == "individu"
     d[out_col] += (d[col_typologie].astype(str).str.strip().str.lower() == "individu").astype(int)
