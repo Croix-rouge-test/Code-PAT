@@ -70,7 +70,17 @@ def import_maraude(client):
 
   df_rattachement_court = client.query(query).to_dataframe()
 
-  return df_maraude, df_rattachement_court
+
+  query = """
+  SELECT *
+  FROM `crf-pat.dataset_PAT_2025.Ref_structure`
+  """
+
+  df_ref_structure = client.query(query).to_dataframe()
+  df_ref_structure.head()
+
+  return df_maraude, df_rattachement_court, df_ref_structure
+
 
 # Clean
 
