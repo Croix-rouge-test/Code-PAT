@@ -80,6 +80,39 @@ def enrich_maraude_rattachement(df_ref_structure, df_maraude, col="maraude_struc
     """
     return apply_rattachement_successif(df_ref_structure, df_maraude, col=col)
 
+def filter_maraude_on_ref_structure(
+    df_maraude: pd.DataFrame,
+    df_ref_structure: pd.DataFrame,
+    col_maraude: str = "maraude_structure_id_fk",
+    col_ref: str = "n_structure",
+    verbose: bool = True
+) -> pd.DataFrame:
+    """
+    Conserve uniquement les lignes de df_maraude dont df_maraude[col_maraude] est présent
+    dans df_ref_structure[col_ref]. Retourne un nouveau df (ne modifie pas l'original).
+    """
+
+    if col_maraude not in df_maraude.columns:
+        raise ValueError(f"df_maraude doit contenir la colonne '{col_maraude}'.")
+    if col_ref not in df_ref_structure.columns:
+        raise ValueError(f"df_ref_structure doit contenir la colonne '{col_ref}'.")
+
+    d = df_maraude.copy()
+
+    # Normalisation des ids en Int64 nullable pour éviter les mismatches type str/int
+    d[col_maraude] = pd.to_numeric(d[col_maraude], errors="coerce").astype("Int64")
+    ref_ids = pd.to_numeric(df_ref_structure[col_ref], errors="coerce").astype("Int64")
+
+    ref_set = set(ref_ids.dropna().tolist())
+
+    n0 = len(d)
+    d = d[d[col_maraude].isin(ref_set)].copy()
+    n1 = len(d)
+
+    if verbose:
+        print(f"📌 Filtre structures ref: {n1:,}/{n0:,} lignes conservées (supprimées: {n0-n1:,}).")
+
+    return d
 
 
 def prep_nb_maraudes_sigma(df, filtre_annee_fn=None, df_ref_structure=None):
