@@ -114,14 +114,13 @@ def filter_maraude_on_ref_structure(
 
     return d
 
-
-def prep_nb_maraudes_sigma(df, filtre_annee_fn=None, df_ref_structure=None):
+def prep_nb_maraudes_sigma(df, filtre_annee_fn=None):
     cols_keep = [
         "maraude_id_fk",
         "maraude_structure_id_fk",
         "maraude_statut",
         "maraude_date_debut",
-        "maraude_date_fin"
+        "maraude_date_fin",
     ]
 
     missing = [c for c in cols_keep if c not in df.columns]
@@ -132,23 +131,7 @@ def prep_nb_maraudes_sigma(df, filtre_annee_fn=None, df_ref_structure=None):
 
     d = d.drop_duplicates()
 
-    # ✅ On ne conserve que les maraudes terminées
     d = d.loc[d["maraude_statut"] == "FINISHED"].copy()
-
-    # ✅ On ne conserve que les lignes dont la structure existe dans df_ref_structure["n_structure"]
-    if df_ref_structure is not None:
-        if "n_structure" not in df_ref_structure.columns:
-            raise ValueError("df_ref_structure doit contenir la colonne 'n_structure'.")
-
-        structures_valides = set(
-            pd.to_numeric(df_ref_structure["n_structure"], errors="coerce")
-              .dropna()
-              .astype("Int64")
-              .tolist()
-        )
-
-        d["maraude_structure_id_fk"] = pd.to_numeric(d["maraude_structure_id_fk"], errors="coerce").astype("Int64")
-        d = d[d["maraude_structure_id_fk"].isin(structures_valides)].copy()
 
     if filtre_annee_fn is not None:
         filtre_annee_fn(d, "maraude_date_debut")  # si ta fonction modifie d "in place"
