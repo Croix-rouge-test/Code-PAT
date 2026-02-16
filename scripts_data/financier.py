@@ -294,7 +294,6 @@ def indicateur_financier_DPS(financier_DPS, df_ref_structure):
 
 
 
-
   # Mapping sur le département
   mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
   df_Secours_ProduitsDPS['n_structure'] = df_Secours_ProduitsDPS['Code Département'].map(mapping_dict)
@@ -352,6 +351,23 @@ def indicateur_financier_DPS(financier_DPS, df_ref_structure):
 def indicateur_financier_FGP(financier_FGP, df_ref_structure):
   mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
 
+  financier_FGP["Nom Structure"] = "DT DE " + financier_FGP["Nom Structure"].astype(str)
+
+  # Sélection de la ligne Wallis et Futuna
+  ligne_wf = financier_FGP[financier_FGP["Nom Structure"].str.contains("WALLIS ET FUTUNA", case=False, na=False)]
+  
+  # Création des deux copies
+  ligne_wallis = ligne_wf.copy()
+  ligne_wallis["Nom Structure"] = "DT DE WALLIS"
+
+  ligne_futuna = ligne_wf.copy()
+  ligne_futuna["Nom Structure"] = "DT DE FUTUNA"
+
+  # Suppression de la ligne originale
+  financier_FGP = financier_FGP[~financier_FGP["Nom Structure"].str.contains("WALLIS ET FUTUNA", case=False, na=False)]
+
+  # Ajout des nouvelles lignes
+  financier_FGP = pd.concat([financier_FGP, ligne_wallis, ligne_futuna], ignore_index=True)
 
   # Suppression de la ligne nationnale
   financier_FGP = financier_FGP[financier_FGP["Nom Structure"] != "Total"]
@@ -369,13 +385,14 @@ def indicateur_financier_FGP(financier_FGP, df_ref_structure):
   })
   # Conserver les colonnes utiles
   financier_FGP = financier_FGP[["n_structure","nom_structure","Formation_grand_public CA_2024"]]
-  financier_FGP = financier_FGP.rename(columns = {'Formation_grand_public CA_2024' : 'Formation_grand_public Produits_2025'})
 
 
 
 
   verifier_mapping(financier_FGP, "n_structure", "Nom Structure" ,df_ref_structure)
   return financier_FGP
+
+
 
 
 
