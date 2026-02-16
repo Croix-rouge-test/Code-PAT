@@ -141,7 +141,7 @@ def taux_recy(df_2025, filtres_bc, col_groupby):
                         ('CI', 'Secours Taux_recy26_CI')]:
         taux = df_res.groupby(col_groupby).apply(
             lambda g: ((g[g['FORMATION_CODE'].isin(filtres_bc[code])]
-                        ['FORMATION_DATE_RECYCLAGE'].dt.year == 2026).sum()
+                        ['FORMATION_DATE_RECYCLAGE'].dt.year == 2025).sum()
                        / max(1, g[g['FORMATION_CODE'].isin(filtres_bc[code])].shape[0]))
         )
         result[alias] = taux
@@ -151,7 +151,7 @@ def taux_recy(df_2025, filtres_bc, col_groupby):
 
 def taux_ren(df_filtered, filtres_bc, col_groupby):
     df_2025 = df_filtered[df_filtered['FORMATION_DATE_OBTENTION'].dt.year == 2025].copy()
-    df_autres = df_filtered[df_filtered['FORMATION_DATE_OBTENTION'].dt.year != 2025].copy()
+    df_autres = df_filtered[df_filtered['FORMATION_DATE_OBTENTION'].dt.year == 2024].copy()
 
     result = pd.DataFrame({col_groupby: df_2025[col_groupby].unique()})
     result.set_index(col_groupby, inplace=True)
