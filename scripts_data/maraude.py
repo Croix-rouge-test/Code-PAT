@@ -77,11 +77,10 @@ def import_maraude(client):
   """
 
   df_ref_structure = client.query(query).to_dataframe()
-  df_ref_structure.head()
 
-  apply_rattachement_successif(df_ref_structure, df_maraude, col="maraude_structure_id_fk")
+  df_maraude = apply_rattachement_successif(df_ref_structure, df_maraude, col="maraude_structure_id_fk")[2]
     
-  return df_maraude, df_rattachement_court, df_ref_structure, rattachement_successif, c
+  return df_maraude, df_rattachement_court, df_ref_structure 
 
 
 # Clean
@@ -137,7 +136,7 @@ def clean_maraudes(client):
   
   df_nb_personnes_rencontrees_sigma = prep_nb_personnes_rencontrees_sigma(df_maraude)
   df_Nb_maraudes_SIGMA =prep_nb_maraudes_sigma(df_maraude)
-  df_Nb_maraudes_SIGMA =prep_nb_maraudes_sigma(df_maraude)
+ 
 
   return df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA, df_maraude, df_rattachement_court
 
@@ -255,7 +254,7 @@ def indicateurs_maraude(df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA,
 
   df_max_nb_personnes.columns = ["maraude_rencontre_beneficiaire_id_fk","n_structure", "Maraude Nb_personnes_rencontrees"]
 
-  df_max_nb_personnes_struct = df_max_nb_personnes.groupby("n_structure")["Maraude Nb_personnes_rencontrees"].sum() #a conserver dans le code principal
+  df_max_nb_personnes_struct = (df_max_nb_personnes.groupby("n_structure", as_index=False)["Maraude Nb_personnes_rencontrees"].sum()) #a conserver dans le code principal
 
   df_max_nb_personnes_struct = pd.merge(df_max_nb_personnes_struct , df_rattachement_court, on='n_structure', how="left") #a conserver dans le code principal
   
