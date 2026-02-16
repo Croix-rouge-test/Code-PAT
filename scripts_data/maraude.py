@@ -276,9 +276,9 @@ def indicateurs_maraude(df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA,
   #Calcul du nombre de contacts par DT
 
 
-  df_nb_personnes_rencontrees_SIGMA  = pd.merge(df_nb_personnes_rencontrees_SIGMA , df_rattachement_court, on='n_structure', how="left") #a conserver dans le code principal
+  df_nb_contacts_SIGMA_struct = pd.merge(df_nb_personnes_rencontrees_SIGMA , df_rattachement_court, on='n_structure', how="left") #a conserver dans le code principal
 
-  df_nb_personnes_rencontrees_SIGMA_DT = nb_contact_SIGMA_DT(df_nb_personnes_rencontrees_SIGMA)
+  df_nb_contacts_SIGMA_DT = nb_contact_SIGMA_DT(df_nb_personnes_rencontrees_SIGMA)
 
   #Calcul du nombre de personnes différentes rencontrées
 
@@ -291,12 +291,12 @@ def indicateurs_maraude(df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA,
 
   df_max_nb_personnes_struct = df_max_nb_personnes.groupby("n_structure")["Maraude Nb_personnes_rencontrees"].sum() #a conserver dans le code principal
 
-  df_max_nb_personnes_struct = pd.merge(df_max_nb_personnes_struct , df_rattachement_court, on='n_structure', how="left") #a conserver dans le code principal
+  df_nb_personnes_rencontrees_SIGMA_Struct = pd.merge(df_max_nb_personnes_struct , df_rattachement_court, on='n_structure', how="left") #a conserver dans le code principal
   
   #Calcul du nombre de personnes différentes rencontrées par DT
-  df_nb_personnes_rencontrees_SIGMA_DT = nb_personnes_rencontrees_SIGMA_DT(df_max_nb_personnes_struct)
+  df_nb_personnes_rencontrees_SIGMA_DT = nb_personnes_rencontrees_SIGMA_DT(df_nb_personnes_rencontrees_SIGMA_Struct)
 
-  return df_Nb_maraudes_SIGMA, df_Nb_maraudes_SIGMA_DT, df_nb_personnes_rencontrees_SIGMA, df_nb_personnes_rencontrees_SIGMA_DT, df_max_nb_personnes, df_max_nb_personnes_struct
+  return df_Nb_maraudes_SIGMA, df_Nb_maraudes_SIGMA_DT, df_nb_contacts_SIGMA_struct, df_nb_contacts_SIGMA_DT, df_nb_personnes_rencontrees_SIGMA_Struct,   df_nb_personnes_rencontrees_SIGMA_DT
 
 def lignes_vides(df, col_code_structure, label=None, raise_error=False):
 
