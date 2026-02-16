@@ -79,7 +79,9 @@ def import_maraude(client):
   df_ref_structure = client.query(query).to_dataframe()
   df_ref_structure.head()
 
-  return df_maraude, df_rattachement_court, df_ref_structure
+  apply_rattachement_successif(df_ref_structure, df_maraude, col="maraude_structure_id_fk")
+    
+  return df_maraude, df_rattachement_court, df_ref_structure, rattachement_successif, c
 
 
 # Clean
@@ -131,8 +133,8 @@ def prep_nb_personnes_rencontrees_sigma(df, filtre_annee_fn=None):
 
 def clean_maraudes(client):
 
-  df_maraude, df_rattachement_court = import_maraude(client)
-
+  df_maraude, df_rattachement_court, df_ref_structure = import_maraude(client)
+  
   df_nb_personnes_rencontrees_sigma = prep_nb_personnes_rencontrees_sigma(df_maraude)
   df_Nb_maraudes_SIGMA =prep_nb_maraudes_sigma(df_maraude)
   df_Nb_maraudes_SIGMA =prep_nb_maraudes_sigma(df_maraude)
