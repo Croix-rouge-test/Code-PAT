@@ -41,6 +41,8 @@ import re
 import torch
 from sentence_transformers import SentenceTransformer, util
 from functools import reduce
+from typing import List, Dict
+import pandas as pd
 
 
 # Mensualisation 
@@ -404,5 +406,299 @@ def dt_rattachement(df, df_ref_structure):
   df_return['DT_de_rattachement'] = df_return['DT_de_rattachement'].astype(str).apply(keep_integer)
   return df_return
 
+
 def merge_left_on_df1(df1, l, on):
-  return reduce(lambda left, right: left.merge(right, how='left', on=on), l, df1)
+
+    def safe_merge(left, right):
+        # Supprime les colonnes déjà présentes (sauf la clé)
+        cols_to_drop = [col for col in right.columns if col in left.columns and col != on]
+        right_clean = right.drop(columns=cols_to_drop)
+
+        return left.merge(right_clean, how='left', on=on)
+
+    return reduce(safe_merge, l, df1)
+
+def find_duplicates_in_list_of_dfs(dfs, column):
+    """
+    Pour chaque DataFrame dans une liste, trouve les doublons dans la colonne spécifiée.
+
+    Args:
+        dfs (list of pd.DataFrame): Liste de DataFrames à analyser
+        column (str): Nom de la colonne sur laquelle chercher les doublons
+
+    Returns:
+        dict: Clé = index du DataFrame, Valeur = DataFrame des doublons
+    """
+    duplicates_dict = {}
+
+    for i, df in enumerate(dfs):
+        if column not in df.columns:
+            print(f"⚠️ DataFrame {i} : la colonne '{column}' n'existe pas.")
+            continue
+
+        # Trouve les doublons
+        df_duplicates = df[df.duplicated(subset=[column], keep=False)]
+
+        if not df_duplicates.empty:
+            duplicates_dict[i] = df_duplicates
+            print(f"🔹 DataFrame {i} : {len(df_duplicates)} doublons trouvés dans '{column}'")
+        else:
+            print(f"✅ DataFrame {i} : aucun doublon dans '{column}'")
+
+    return duplicates_dict
+
+def check_sums_against_final(
+    df_final: pd.DataFrame,
+    list_of_dfs: List[pd.DataFrame],
+    key_col: str = "n_structure",
+    dropna: bool = True,
+    atol: float = 0.0,
+    rtol: float = 0.0
+) -> List[Dict]:
+
+    report = []
+
+    for i, df in enumerate(list_of_dfs):
+        print(f"\n🔎 Vérification DataFrame {i}")
+
+        cols_to_check = [col for col in df.columns if col != key_col]
+
+        for col in cols_to_check:
+
+            if col not in df_final.columns:
+                print(f"   ⚠️ Colonne '{col}' absente du df_final → ignorée")
+                continue
+
+            try:
+                result, ok = check_same_col_sum(
+                    df_left=df,
+                    df_right=df_final,
+                    col=col,
+                    dropna=dropna,
+                    atol=atol,
+                    rtol=rtol
+                )
+
+                summary = {
+                    "df_index": i,
+                    "col": col,
+                    "sum_df_individual": result["sum_df_left"],
+                    "sum_df_final": result["sum_df_right"],
+                    "atol": atol,
+                    "rtol": rtol,
+                    "ok": ok
+                }
+
+                report.append(summary)
+
+                if ok:
+                    print(
+                        f"   ✅ '{col}' OK | "
+                        f"individuel = {summary['sum_df_individual']} | "
+                        f"final = {summary['sum_df_final']}"
+                    )
+                else:
+                    print(
+                        f"   ❌ '{col}' KO | "
+                        f"individuel = {summary['sum_df_individual']} | "
+                        f"final = {summary['sum_df_final']}"
+                    )
+
+            except Exception as e:
+                print(f"   ⚠️ Erreur sur '{col}' : {e}")
+
+    return report
+
+
+def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusionner_DT, df_ref_structure,df_ref_structure_DT):
+  colonnes_indicateurs = ['n_structure',
+    "Financier Prod_2024",
+    "Financier ResNet_2024",
+    "Financier ResCorrProd_2024",
+    "Financier TresoBrute_2024",
+    "Financier Mois_AvanceTreso_2024",
+    "Structure Nb_Benevoles",
+    "Structure Nb_nvx_Benevoles_2025",
+    "Structure Nb_Adherents",
+    "Structure Nb_formes_TCAS_2025",
+    "Structure Nb_formes_CRB_2025",
+    "Structure Taux_formation_CRB",
+    "Structure Nb_nvx_formes_CRB_2025",
+    "Structure Nb_formateurs_CRB_2025",
+    "Dispositifs_d_urgence Structures_menant_activite_TCAU",
+    "Dispositifs_d_urgence Structures_menant_activite_PSP",
+    "Dispositifs_d_urgence Structures_menant_activite_GQS",
+    "Dispositifs_d_urgence Nb_conventions_prefecture",
+    "Dispositifs_d_urgence Nb_conventions_operateurs",
+    "Dispositifs_d_urgence Nb_agrements",
+    "Dispositifs_d_urgence Nb_declenchements",
+    "Dispositifs_d_urgence Nb_operations",
+    "Dispositifs_d_urgence Nb_personnes_prises_charge",
+    "Dispositifs_d_urgence Nb_lots_CAI",
+    "Dispositifs_d_urgence Nb_lots_CHU",
+    "Dispositifs_d_urgence Nb_lots_CMCC",
+    "Dispositifs_d_urgence Utilisation_RedCall",
+    "Dispositifs_d_urgence Utilisation_Minutis",
+    "Dispositifs_d_urgence Nb_exercices",
+    "Dispositifs_d_urgence PST",
+    "Dispositifs_d_urgence Taux_formation_TCAU_2025",
+    "Dispositifs_d_urgence Taux_formation_IPSP_2025",
+    "Dispositifs_d_urgence Taux_formation_GQS_2025",
+    "Dispositifs_d_urgence Taux_formation_TCEO_2025",
+    "Dispositifs_d_urgence Taux_formation_IRR_2025",
+    "Formation_grand_public Nb_FPSC",
+    "Formation_grand_public Structures_menant_activite",
+    "Formation_grand_public Produits_2025",
+    "Formation_grand_public Nb_formes_PSC_2025",
+    "Formation_grand_public Nb_sessions_PSC_2025",
+    "Formation_grand_public Nb_FPSC",
+    "Formation_grand_public Nb_formes_GQS_2025",
+    "Formation_grand-public Nb_sessions_GQS_2025",
+    "Formation_grand_public Nb_AGQS",
+    "Formation_grand_public Nb_formes_IPSEN_2025",
+    "Formation_grand-public Nb_sessions_IPSEN_2025",
+    "Formation_grand_public Nb_FIPSEN",
+    "Formation_grand_public Nb_formes_IPS_2025",
+    "Formation_grand-public Nb_sessions_IPS_2025",
+    "Formation_grand_public Nb_formes_PREVIC_2025",
+    "Formation_grand-public Nb_sessions_PREVIC_2025",
+    "Formation_grand_public Activite_Conso_Etat",
+    "Formation_grand_public Activite_Conso_Non_Etat",
+    "OCR Structures_menant_activite",
+    "OCR Nb_deployees",
+    "OCR Nb_referents",
+    "nb_Maraude_Pegass",
+    "Maraude Nb_maraudes_SIGMA",
+    "Maraudes Structures_menant_activite",
+    "Maraude Nb_benevoles_actifs",
+    "Maraude Nb_benevoles_actifs_formes",
+    "Maraude Nb_SOLIDAR",
+    "Maraude Nb_SOLIDAR2020",
+    "Maraude Nb_contacts",
+    "Maraude Nb_personnes_rencontrees",
+    "Secours Produits_DPS_2025",
+    "Secours Structures_menant_activite",
+    "Secours Nb_DPS_2025",
+    "Secours Nb_agrements_DPS_2025",
+    "Secours Taux_IS_actifs",
+    "Secours Nb_PAPS_2025",
+    "Secours Nb_DPS_PE_2025",
+    "Secours Nb_DPS_ME_2025",
+    "Secours Nb_DPS_GE_2025",
+    "Secours Nb_PSE1",
+    "Secours Nb_PSE2",
+    "Secours Nb_CI",
+    "Secours Taux_recy26_PSE1",
+    "Secours Taux_recy26_PSE2",
+    "Secours Taux_recy26_CI",
+    "Secours Taux_ren25_PSE1",
+    "Secours Taux_ren25_PSE2",
+    "Secours Taux_ren25_CI",
+    "Secours Nb_sessions_PSE",
+    "Secours Nb_sessions_CI",
+    "Secours Nb_sessions_FPSE",
+    "AEO Structures_menant_activite",
+    "AEO Structure_activite_fixe",
+    "AEO Structure_activite_mobile",
+    "AEO Nb_benevoles_actifs",
+    "AEO Nb_responsables",
+    "AEO Nb_AAD",
+    "AEO Nb_FAAD",
+    "AEO Nb_PA_AEO_AAD",
+    "AEO Nb_personnes_domiciliees_crf",
+    "AEO Nb_PA_dispos_mobiles",
+    "Aide_alimentaire Nb_U2A",
+    "Aide_alimentaire Nb_Centre_distribution_alimentaire",
+    "Aide_alimentaire Nb_epiceries_sociales",
+    "Aide_alimentaire Nb_crsr",
+    "Textile Nb_dispositifs",
+    "Textile Produit_2025",
+    "Textile Resultat_2025"
+  ]
+
+  mask = df_ref_structure['n_structure'].to_list()
+
+  print("TRAITEMENT DES INDICATEURS POUR TOUTES LES STRUCTURES")
+  print('')
+  for i,df in enumerate(liste_df_a_fusionner_toutes_structures):
+
+    # Transformation des Series en DataFrame
+    if type(df) != type(df_ref_structure):
+      liste_df_a_fusionner_toutes_structures[i] = liste_df_a_fusionner_toutes_structures[i].to_frame()
+    if len(liste_df_a_fusionner_toutes_structures[i].columns) < 2:
+      liste_df_a_fusionner_toutes_structures[i] = liste_df_a_fusionner_toutes_structures[i].reset_index()
+
+    # Uniformisation des types pour la clé n_structure
+    
+    if liste_df_a_fusionner_toutes_structures[i]['n_structure'].dtype != df_ref_structure['n_structure'].dtype:
+      liste_df_a_fusionner_toutes_structures[i]['n_structure'] = liste_df_a_fusionner_toutes_structures[i]['n_structure'].astype(int)
+    cleaned_dfs = []
+
+    # Colonnes à supprimer
+    cols_to_drop = [col for col in liste_df_a_fusionner_toutes_structures[i].columns if col not in colonnes_indicateurs]
+
+    if cols_to_drop:
+        print(f"🧹 DataFrame {i} : suppression des colonnes {cols_to_drop}")
+
+    df_clean = liste_df_a_fusionner_toutes_structures[i].drop(columns=cols_to_drop)
+
+    liste_df_a_fusionner_toutes_structures[i] = df_clean
+
+    # Filtre des n_structure
+    
+    liste_df_a_fusionner_toutes_structures[i] = liste_df_a_fusionner_toutes_structures[i][liste_df_a_fusionner_toutes_structures[i]['n_structure'].isin(mask)]
+
+    all_data  = merge_left_on_df1(df_ref_structure, liste_df_a_fusionner_toutes_structures, on = 'n_structure')
+
+  
+  print("TRAITEMENT DES INDICATEURS POUR LES DTs")
+  print('')
+  for i,df in enumerate(liste_df_a_fusionner_DT):
+
+    # Transformation des Series en DataFrame
+    if type(df) != type(df_ref_structure):
+      liste_df_a_fusionner_DT[i] = liste_df_a_fusionner_DT[i].to_frame()
+    if len(liste_df_a_fusionner_DT[i].columns) < 2:
+      liste_df_a_fusionner_DT[i] = liste_df_a_fusionner_DT[i].reset_index()
+
+    # Uniformisation des types pour la clé n_structure
+    if 'n_structure' not in df.columns:
+      print(i)
+      if 'DT_de_rattachement' in df.columns:
+        liste_df_a_fusionner_DT[i] = liste_df_a_fusionner_DT[i].rename(columns={'DT_de_rattachement': 'n_structure'})
+    duplicates = find_duplicates_in_list_of_dfs(liste_df_a_fusionner_toutes_structures, column='n_structure')
+
+    # Garder seulement les nombres
+    if liste_df_a_fusionner_DT[i]['n_structure'].dtype == 'object':
+      contient_lettres = liste_df_a_fusionner_DT[i]['n_structure'].astype(str).str.contains(r'[A-Za-z]', na=False).any()
+      if contient_lettres:
+        print(i)
+        display(liste_df_a_fusionner_DT[i]['n_structure'])
+        liste_df_a_fusionner_DT[i]['n_structure'] = liste_df_a_fusionner_DT[i]['n_structure'].apply(keep_integer).astype(int)
+    
+    if liste_df_a_fusionner_DT[i]['n_structure'].dtype != df_ref_structure['n_structure'].dtype:
+      liste_df_a_fusionner_DT[i]['n_structure'] = liste_df_a_fusionner_DT[i]['n_structure'].astype(int)
+
+    duplicates = find_duplicates_in_list_of_dfs(liste_df_a_fusionner_DT, column='n_structure')
+
+    # Colonnes à supprimer
+    cols_to_drop = [col for col in liste_df_a_fusionner_DT[i].columns if col not in colonnes_indicateurs]
+
+    if cols_to_drop:
+        print(f"🧹 DataFrame {i} : suppression des colonnes {cols_to_drop}")
+
+    df_clean = liste_df_a_fusionner_DT[i].drop(columns=cols_to_drop)
+
+   
+    liste_df_a_fusionner_DT[i] = df_clean
+
+    # Filtre des n_structure
+    liste_df_a_fusionner_DT[i] = liste_df_a_fusionner_DT[i][liste_df_a_fusionner_DT[i]['n_structure'].isin(mask)]
+
+    all_data_DT  = merge_left_on_df1(df_ref_structure_DT, liste_df_a_fusionner_DT, on = 'n_structure')
+
+    return all_data, all_data_DT, liste_df_a_fusionner_toutes_structures, liste_df_a_fusionner_DT
+
+
+
+  
