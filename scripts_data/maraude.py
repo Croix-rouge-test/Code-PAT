@@ -62,7 +62,16 @@ def import_maraude(client):
   FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_maraude`
   """
   df_maraude = client.query(query).to_dataframe()
+    
+  if df_ref_structure is not None:
+        df_maraude = apply_rattachement_successif(
+            df_ref_structure,
+            df_maraude,
+            col="maraude_structure_id_fk"
+        )
 
+
+    
   query = """
   SELECT *
   FROM `crf-pat.dataset_PAT_2025.rattachement_court`
@@ -119,15 +128,14 @@ def prep_nb_personnes_rencontrees_sigma(df, filtre_annee_fn=None):
 
     return d
 
-def clean_maraudes(client):
+def clean_maraudes(client, df_ref_structure=None):
+    df_maraude, df_rattachement_court = import_maraude(client, df_ref_structure=df_ref_structure)
 
-  df_maraude, df_rattachement_court = import_maraude(client)
+    df_nb_personnes_rencontrees_sigma = prep_nb_personnes_rencontrees_sigma(df_maraude)
+    df_Nb_maraudes_SIGMA = prep_nb_maraudes_sigma(df_maraude)
 
-  df_nb_personnes_rencontrees_sigma = prep_nb_personnes_rencontrees_sigma(df_maraude)
-  df_Nb_maraudes_SIGMA =prep_nb_maraudes_sigma(df_maraude)
-  df_Nb_maraudes_SIGMA =prep_nb_maraudes_sigma(df_maraude)
+    return df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA, df_maraude, df_rattachement_court
 
-  return df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA, df_maraude, df_rattachement_court
 
 #Calcul Structure
 
