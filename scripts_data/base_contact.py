@@ -226,8 +226,8 @@ def indicateurs_base_contact(df_formation_session_resultat, df_ref_structure):
     filtres_bc = {
         'CRB' : ['CRB', 'eCRB', 'VI'],
         'ACRB' : ['AVI','ACRB2','ACRB3','ACRB2024'],
-        'TCAS' : ['TCAS','TCAS2'],
-        'TCAU' : ['TCAU'],
+        'TCAS' : ['TCAS','TCAS2', 'ETCAS'],
+        'TCAU' : ['TCAU', 'ETCAU'],
         'TCEO' : ['TCEO'],
         'IPSP' : ['PSP','PSP1'],
         'IRR' : ['IRR','IRRA','IRRJ'],
@@ -244,7 +244,7 @@ def indicateurs_base_contact(df_formation_session_resultat, df_ref_structure):
         'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC"],
         'GQS' : ['GQS'],
         'IPSEN' : ['IPSEN'],
-        'IPS' : ['IPS'],
+        'IPS' : ['IPS', 'IPS SR', 'ISPE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
         'PREVIC' : ['PREVIC']
     }
 
