@@ -56,30 +56,28 @@ from utils import *
 
 # Import
 
-def import_maraude(client):
-  query = """
-  SELECT *
-  FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_maraude`
-  """
-  df_maraude = client.query(query).to_dataframe()
-    
-  if df_ref_structure is not None:
+def import_maraude(client, df_ref_structure=None):
+    query = """
+    SELECT *
+    FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_maraude`
+    """
+    df_maraude = client.query(query).to_dataframe()
+
+    # ✅ Enrichissement dès l'import (optionnel)
+    if df_ref_structure is not None:
         df_maraude = apply_rattachement_successif(
             df_ref_structure,
             df_maraude,
             col="maraude_structure_id_fk"
         )
 
+    query = """
+    SELECT *
+    FROM `crf-pat.dataset_PAT_2025.rattachement_court`
+    """
+    df_rattachement_court = client.query(query).to_dataframe()
 
-    
-  query = """
-  SELECT *
-  FROM `crf-pat.dataset_PAT_2025.rattachement_court`
-  """
-
-  df_rattachement_court = client.query(query).to_dataframe()
-
-  return df_maraude, df_rattachement_court
+    return df_maraude, df_rattachement_court
 
 # Clean
 
