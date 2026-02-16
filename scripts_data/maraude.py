@@ -78,8 +78,9 @@ def import_maraude(client):
 
   df_ref_structure = client.query(query).to_dataframe()
 
-  df_maraude = apply_rattachement_successif(df_ref_structure, df_maraude, col="maraude_structure_id_fk")[3]
-    
+  #df_maraude = apply_rattachement_successif(df_ref_structure, df_maraude, col="maraude_structure_id_fk")[3]
+  _, _, _, df_maraude = apply_rattachement_successif(df_ref_structure, df_maraude, col="maraude_structure_id_fk")
+ 
   return df_maraude, df_rattachement_court, df_ref_structure 
 
 
