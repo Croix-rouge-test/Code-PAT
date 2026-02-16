@@ -47,7 +47,11 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
-
+# Clean
+def dept_clean(x):
+  if x == '2A' or x == '2B':
+    return str(x)
+  else : return str(int(x))
 
 
 def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
@@ -98,11 +102,7 @@ def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
 
 
 
-  # Clean
-  def dept_clean(x):
-    if x == '2A' or x == '2B':
-      return str(x)
-    else : return str(int(x))
+
   dt_prod['n_dept'] = dt_prod['n_dept'].apply(dept_clean)
   dt_resnet['n_dept'] = dt_resnet['n_dept'].apply(dept_clean)
   dt_resnet_corr_prod['n_dept'] = dt_resnet_corr_prod['n_dept'].apply(dept_clean)
@@ -370,27 +370,43 @@ def indicateur_financier_FGP(financier_FGP, df_ref_structure):
   financier_FGP = pd.concat([financier_FGP, ligne_wallis, ligne_futuna], ignore_index=True)
 
   # Suppression de la ligne nationnale
-  financier_FGP = financier_FGP[financier_FGP["Nom Structure"] != "Total"]
-  financier_FGP = financier_FGP[financier_FGP["N° Structure"] != "Source: Smartview-Mise à jour 24 mars 2025"]
-  financier_FGP = financier_FGP.dropna(subset=["Nom Structure"])
-   
-  financier_FGP["Nom Structure"] = "DT " + financier_FGP["Nom Structure"].astype(str)
-  financier_FGP = rapprochement_libelles(
-      df_ref_structure,
-      financier_FGP,
-      "Nom Structure"
-  )
-  financier_FGP = financier_FGP.rename(columns={
+  df_financier_FGP_DT = financier_FGP[financier_FGP["Nom Structure"] != "Total"]
+  df_financier_FGP_DT = df_financier_FGP_DT[df_financier_FGP_DT["N° Structure"] != "Source: Smartview-Mise à jour 24 mars 2025"]
+  df_financier_FGP_DT = df_financier_FGP_DT.dropna(subset=["Nom Structure"])
+  df_financier_FGP_DT = df_financier_FGP_DT.rename(columns={"N° Structure": "n_dept"})
+  df_financier_FGP_DT = df_financier_FGP_DT.iloc[:df_financier_FGP_DT.shape[0]-2]
+  df_financier_FGP_DT["n_dept"] = df_financier_FGP_DT["n_dept"].astype('str')
+
+  df_ref_structure["n_dept"] = df_ref_structure["n_dept"].astype('str')
+
+    
+  df_financier_FGP_DT["Nom Structure"] = "DT " + df_financier_FGP_DT["Nom Structure"].astype(str)
+  df_financier_FGP_DT['n_dept'] = df_financier_FGP_DT['n_dept'].apply(dept_clean)
+  df_financier_FGP_DT = pd.merge(df_ref_structure[['DT_de_rattachement','n_dept']].drop_duplicates(), df_financier_FGP_DT, on = 'n_dept', how = 'inner')
+
+  df_financier_FGP_DT = df_financier_FGP_DT.drop_duplicates(['DT_de_rattachement'])
+  # financier_FGP = rapprochement_libelles(
+  #     df_ref_structure,
+  #     financier_FGP,
+  #     "Nom Structure"
+  # )
+  df_financier_FGP_DT = df_financier_FGP_DT.rename(columns={
     'Réalisé 2024 Total Année': 'Formation_grand_public CA_2024' ,
+    'DT_de_rattachement' : 'n_structure'
   })
   # Conserver les colonnes utiles
+<<<<<<< HEAD
   financier_FGP = financier_FGP[["n_structure","nom_structure","Formation_grand_public CA_2024"]]
+=======
+  df_financier_FGP_DT = df_financier_FGP_DT[["n_structure",'n_dept',"Formation_grand_public CA_2024"]]
+  df_financier_FGP_DT = df_financier_FGP_DT.rename(columns = {'Formation_grand_public CA_2024' : 'Formation_grand_public Produits_2025'})
+>>>>>>> b5b565a (Modifications financier FGP)
 
 
 
 
-  verifier_mapping(financier_FGP, "n_structure", "Nom Structure" ,df_ref_structure)
-  return financier_FGP
+  #verifier_mapping(financier_FGP, "n_structure", "Nom Structure" ,df_ref_structure)
+  return df_financier_FGP_DT
 
 
 
