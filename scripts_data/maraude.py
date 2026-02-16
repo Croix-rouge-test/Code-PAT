@@ -209,21 +209,24 @@ def nb_personnes_rencontrees_SIGMA_DT(df, filtre=None,
 def indicateurs_maraude(df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA,df_rattachement_court):
 
   #calcul Nombre de maraude par structure
+  df_Nb_maraudes_SIGMA = df_Nb_maraudes_SIGMA.rename(columns = {'maraude_structure_id_fk' : 'n_structure'})
 
-  df_Nb_maraudes_SIGMA = df_Nb_maraudes_SIGMA.groupby("maraude_structure_id_fk", as_index=False)["maraude_id_fk"].count()
+  df_Nb_maraudes_SIGMA = df_Nb_maraudes_SIGMA.groupby("n_structure", as_index=False)["maraude_id_fk"].count()
   df_Nb_maraudes_SIGMA.columns = ["n_structure", "Maraude Nb_maraudes_SIGMA"]
 
   #calcul Nombre de maraude par DT
 
   df_Nb_maraudes_SIGMA.columns = ["n_structure", "Maraude Nb_maraudes_SIGMA"]
   df_Nb_maraudes_SIGMA = pd.merge(df_Nb_maraudes_SIGMA, df_rattachement_court, on='n_structure', how="left")
+  
   df_Nb_maraudes_SIGMA_DT = Nb_maraudes_SIGMA_DT(df_Nb_maraudes_SIGMA)
   #Calcul du nombre de contacts par structure
+  df_nb_personnes_rencontrees_sigma = df_nb_personnes_rencontrees_sigma.rename(columns = {'maraude_structure_id_fk' : 'n_structure'})
   df_nb_personnes_rencontrees_sigma = add_nb_personnes(df_nb_personnes_rencontrees_sigma)
 
   df_nb_personnes_rencontrees_SIGMA = (
       df_nb_personnes_rencontrees_sigma
-      .groupby("maraude_structure_id_fk", as_index=False)["nb personnes"]
+      .groupby("n_structure", as_index=False)["nb personnes"]
       .sum()
   )
   df_nb_personnes_rencontrees_SIGMA.columns = ["n_structure", "Maraude Nb_contacts"]
@@ -238,7 +241,7 @@ def indicateurs_maraude(df_nb_personnes_rencontrees_sigma, df_Nb_maraudes_SIGMA,
 
   df_max_nb_personnes = df_nb_personnes_rencontrees_sigma.loc[
       df_nb_personnes_rencontrees_sigma.groupby("maraude_rencontre_beneficiaire_id_fk")["nb personnes"].idxmax(),
-      ["maraude_rencontre_beneficiaire_id_fk", "maraude_structure_id_fk", "nb personnes"]
+      ["maraude_rencontre_beneficiaire_id_fk", "n_structure", "nb personnes"]
   ].reset_index(drop=True)
 
   df_max_nb_personnes.columns = ["maraude_rencontre_beneficiaire_id_fk","n_structure", "Maraude Nb_personnes_rencontrees"]

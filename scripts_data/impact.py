@@ -126,7 +126,7 @@ def indicateurs_impact_ppc(df_IMPACT):
     print(f"Nombre de structures agrégées : {len(IMPACT_ppc)}")
 
     # 🔎 Somme totale nationale
-    total_ppc = IMPACT_ppc['Dispositifs_d_urgence_Nb_personnes_prises_charge'].sum()
+    total_ppc = IMPACT_ppc['Dispositifs_d_urgence Nb_personnes_prises_charge'].sum()
     print(f"Somme totale Dispositifs d'urgence - Nb personnes prises en charge : {total_ppc}")
    
     return IMPACT_ppc
@@ -168,7 +168,7 @@ def indicateurs_impact_agrementAB(df_IMPACT):
     print(f"Nombre de structures agrégées : {len(IMPACT_agrementAB)}")
 
     # Somme totale nationale
-    total_agrements = IMPACT_agrementAB['Dispositifs_d_urgence_Nb_agrements'].sum()
+    total_agrements = IMPACT_agrementAB['Dispositifs_d_urgence Nb_agrements'].sum()
     print(f"Somme totale agréments AB : {total_agrements}")
 
     return IMPACT_agrementAB
@@ -207,7 +207,7 @@ def indicateurs_impact_agrementDPS(df_IMPACT):
     print(f"Nombre de structures agrégées : {len(IMPACT_agrementDPS)}")
 
     # Somme totale nationale
-    total_agrements = IMPACT_agrementDPS['Dispositifs_d_urgence_Nb_agrements_DPS'].sum()
+    total_agrements = IMPACT_agrementDPS['Secours Nb_agrements_DPS_2025'].sum()
     print(f"Somme totale agréments DPS : {total_agrements}")
 
     return IMPACT_agrementDPS
@@ -226,7 +226,7 @@ def indicateurs_IMPACTppc_DT(IMPACT_ppc, rattachement_court):
 
 
     # Groupby sur DT_de_rattachement
-    IMPACT_ppc_DT = (df_IMPACT_ppc.groupby('DT_de_rattachement')['Dispositifs_d_urgence Nb_personnes_prises_charge'].sum())
+    IMPACT_ppc_DT = (df_IMPACT_ppc.groupby('DT_de_rattachement')['Dispositifs_d_urgence Nb_personnes_prises_charge'].sum()).reset_index()
     
     print(f"Nombre de structures agrégées : {len(IMPACT_ppc_DT)}")
 
@@ -250,7 +250,7 @@ def indicateurs_IMPACTagrementAB_DT(IMPACT_agrementAB, rattachement_court):
 
 
     # Groupby sur DT_de_rattachement
-    IMPACT_agrementAB_DT = (df_IMPACT_agrementAB.groupby('DT_de_rattachement')['Dispositifs_d_urgence Nb_agrements'].sum())
+    IMPACT_agrementAB_DT = (df_IMPACT_agrementAB.groupby('DT_de_rattachement')['Dispositifs_d_urgence Nb_agrements'].sum()).reset_index()
     
     print(f"Nombre de structures agrégées : {len(IMPACT_agrementAB_DT)}")
 
@@ -274,12 +274,12 @@ def indicateurs_IMPACTagrementDPS_DT(IMPACT_agrementDPS, rattachement_court):
 
 
     # Groupby sur DT_de_rattachement
-    IMPACT_agrementDPS_DT = (df_IMPACT_agrementDPS.groupby('DT_de_rattachement')['Secours Nb_agrements_DPS_2025'].sum())
+    IMPACT_agrementDPS_DT = (df_IMPACT_agrementDPS.groupby('DT_de_rattachement')['Secours Nb_agrements_DPS_2025'].sum()).reset_index()
     
     print(f"Nombre de structures agrégées : {len(IMPACT_agrementDPS_DT)}")
 
     # Somme totale nationale
-    total_agrementDPS_DT = IMPACT_agrementDPS_DT['Dispositifs_d_urgence Nb_agrements_DPS_2025'].sum()
+    total_agrementDPS_DT = IMPACT_agrementDPS_DT['Secours Nb_agrements_DPS_2025'].sum()
     print(f"Somme totale agréments DPS DT: {total_agrementDPS_DT}")
     
     return IMPACT_agrementDPS_DT

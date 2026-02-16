@@ -143,7 +143,7 @@ def indicateurs_nominationAEO_DT(referents_AEO, rattachement_court):
 
 
     # Groupby sur DT_de_rattachement
-    referents_AEO_DT = (df_referents_AEO.groupby('DT_de_rattachement')['AEO Nb_responsables'].sum())
+    referents_AEO_DT = (df_referents_AEO.groupby('DT_de_rattachement')['AEO Nb_responsables'].sum()).reset_index()
     
     print(f"Nombre de structures agrégées : {len(referents_AEO_DT)}")
 
@@ -167,7 +167,7 @@ def indicateurs_nominationOCR_DT(referents_OCR, rattachement_court):
 
 
     # Groupby sur DT_de_rattachement
-    referents_OCR_DT = (df_referents_OCR.groupby('DT_de_rattachement')['OCR Nb_referents'].sum())
+    referents_OCR_DT = (df_referents_OCR.groupby('DT_de_rattachement')['OCR Nb_referents'].sum()).reset_index()
     
     print(f"Nombre de structures agrégées : {len(referents_OCR_DT)}")
 

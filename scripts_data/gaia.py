@@ -80,12 +80,12 @@ def indicateurs_gaia(df_gaia):
     'rattachement_benevole_nivol_id_fk': 'Structure Nb_Benevoles'
   })
  # On compte le nb de volontaires de l'urgence
-  nb_benevoles = (df_gaia.groupby('n_structure')['Structure Nb_Benevoles'].nunique())
+  nb_benevoles = (df_gaia.groupby('n_structure')['Structure Nb_Benevoles'].nunique()).reset_index()
   
   print(f"Nombre de structures agrégées : {len(nb_benevoles)}")
 
   # Somme totale nationale
-  total_benevoles = nb_benevoles['Structure_Nb_Benevoles'].sum()
+  total_benevoles = nb_benevoles['Structure Nb_Benevoles'].sum()
   print(f"Nombre total de bénévoles uniques : {total_benevoles}")
    
   return nb_benevoles
@@ -115,7 +115,7 @@ def indicateurs_gaia_nvx(df_gaia):
     'rattachement_benevole_nivol_id_fk': 'Structure Nb_nvx_Benevoles_2025'
   })
  # On compte le nb de volontaires de l'urgence
-  nb_nvx_benevoles = (df_gaia.groupby('n_structure')['Structure Nb_nvx_Benevoles_2025'].nunique())
+  nb_nvx_benevoles = (df_gaia.groupby('n_structure')['Structure Nb_nvx_Benevoles_2025'].nunique()).reset_index()
   
   print(f"Nombre de structures agrégées : {len(nb_nvx_benevoles)}")
 
@@ -145,7 +145,7 @@ def indicateurs_gaia_DT(nb_benevoles, rattachement_court):
 
 
     # Groupby sur DT_de_rattachement
-    nb_benevoles_DT = (df_nb_benevoles.groupby('DT_de_rattachement')['Structure Nb_Benevoles'].sum())
+    nb_benevoles_DT = (df_nb_benevoles.groupby('DT_de_rattachement')['Structure Nb_Benevoles'].sum()).reset_index()
     
     print(f"Nombre de structures agrégées : {len(nb_benevoles_DT)}")
 
@@ -173,7 +173,7 @@ def indicateurs_gaia_nvx_DT(nb_nvx_benevoles, rattachement_court):
 
 
     # Groupby sur DT_de_rattachement
-    nb_nvx_benevoles_DT = (df_nb_nvx_benevoles.groupby('DT_de_rattachement')['Structure Nb_nvx_Benevoles_2025'].sum())
+    nb_nvx_benevoles_DT = (df_nb_nvx_benevoles.groupby('DT_de_rattachement')['Structure Nb_nvx_Benevoles_2025'].sum()).reset_index()
     
     print(f"Nombre de structures agrégées : {len(nb_nvx_benevoles_DT)}")
 
