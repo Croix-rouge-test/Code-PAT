@@ -98,10 +98,10 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
 
     result = df_res.groupby(col_groupby).apply(
         lambda g: pd.Series({col: count_unique(g, col) for col in ['Formation_grand_public Nb_sessions_PSC_2025',
-                                                                  'Formation_grand-public Nb_sessions_GQS_2025',
-                                                                  'Formation_grand-public Nb_sessions_IPS_2025',
-                                                                  'Formation_grand-public Nb_sessions_IPSEN_2025',
-                                                                  'Formation_grand-public Nb_sessions_PREVIC_2025']})
+                                                                  'Formation_grand_public Nb_sessions_GQS_2025',
+                                                                  'Formation_grand_public Nb_sessions_IPS_2025',
+                                                                  'Formation_grand_public Nb_sessions_IPSEN_2025',
+                                                                  'Formation_grand_public Nb_sessions_PREVIC_2025']})
     ).reset_index()
     return result
 
