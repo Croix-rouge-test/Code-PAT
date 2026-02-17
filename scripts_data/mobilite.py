@@ -58,7 +58,7 @@ def filtres_mobilite(mobilite,mapping_df, df_ref_structure):
   mobilite['nb_bene'] = mobilite['nb_bene'].astype(str).apply(keep_integer).str.replace('^$','0',regex = True).astype(int)
   mobilite = mobilite.drop(['nb_bene'], axis = 1)
 
-  _ , _ , _, df_mobilite = apply_rattachement_successif(df_ref_structure, df_mobilite, col = 'n_structure')
+  _ , _ , _, mobilite = apply_rattachement_successif(df_ref_structure, mobilite, col = 'n_structure')
 
   return mobilite
 
