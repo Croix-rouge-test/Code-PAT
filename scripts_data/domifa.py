@@ -114,27 +114,45 @@ def indicateurs_domifa(df_domiciliation):
 
   # commit domifa
 
-def verificiation_domifa(df_domiciliation,df_personnes_domiciliees_struct,df_personnes_domiciliees_DT,ref_structure1,df_rattachement_court):
-  #1. Vérification des NaN ou valeurs vides
-  #2. Vérification des doublons (uniquement les codes)
-  #3Vérification des codes absents du référentiel
-  verifier_colonne_structure(df_personnes_domiciliees_struct, "n_structure", ref_structure1)
-  verifier_colonne_structure(df_personnes_domiciliees_DT, "DT_de_rattachement", df_rattachement_court)
+def verifs_domifa(
+    client,
+    df_personnes_domiciliees_struct,
+    df_personnes_domiciliees_DT,
+    df_ref_structure,
+    df_rattachement_court
+):
+    #Vérif domifa 
+     # Import
+    query = """
+      SELECT *
+      FROM `crf-pat.dataset_PAT_2025.Domifa`
+      """
+    df_domiciliation_verif = client.query(query).to_dataframe()
 
-  verifier_mapping(df_personnes_domiciliees_struct, "n_structure", "Structure", ref_structure1)
+    print('#1 Vérification qu on a bien la même somme de personnes domiciliées entre le fichier de base et le fichier df_personnes_domiciliees_struct')
+    check_sum_equal(
+          df_personnes_domiciliees_struct, "AEO Nb_personnes_domiciliees_crf",
+          df_domiciliation_verif, "Nombre total de domiciliations",
+          label_left="table struct", label_right="table source"
+      )
 
-  #Vérification qu'on a bien la même somme de personnes domiciliées entre le fichier de base et le fichier df_personnes_domiciliees_struct
-  check_sum_equal(
-      df_personnes_domiciliees_struct, "AEO Nb_personnes_domiciliees_crf",
-      df_domiciliation, "AEO Nb_personnes_domiciliees_crf",
-      label_left="table struct", label_right="table source"
-  )
+    print('#2 Vérification qu on a bien la même somme de personnes domiciliées entre le fichier structure et le fichier df_personnes_domiciliees_DT')
+    check_sum_equal(
+          df_personnes_domiciliees_struct, "AEO Nb_personnes_domiciliees_crf",
+          df_personnes_domiciliees_DT, "AEO Nb_personnes_domiciliees_crf",
+          label_left="table struct", label_right="table DT"
+      )
 
+    print('#3 on vérifie que l ensemble des N° structure du nb personnes domicilées correspnd au ref structure')
+    verifier_colonne_structure(df_personnes_domiciliees_struct, "n_structure", df_ref_structure)
 
+    print('#4 on vérifie que l ensemble des N° DTdu nb personnes domicilées correspnd au ref structure')
+    verifier_colonne_structure(df_personnes_domiciliees_DT, "DT_de_rattachement", df_rattachement_court)
 
-  #Vérification qu'on a bien la même somme de personnes domiciliées entre le fichier de base et le fichier df_personnes_domiciliees_DT
-  check_sum_equal(
-      df_personnes_domiciliees_DT, "AEO Nb_personnes_domiciliees_crf",
-      df_domiciliation, "AEO Nb_personnes_domiciliees_crf",
-      label_left="table struct", label_right="table source"
-  )
+    def check_longueur_2_tables(df1, col1, df2, col2):
+        n1 = df1[col1].notna().sum()
+        n2 = df2[col2].notna().sum()
+        print(f" ✅ n ligne = {n1}" if n1 == n2 else f"problème  n ligne Table 1 = {n1} et n ligne table 2 = {n2}")
+
+    print('#5 On verifie que le nb de structure du df_personnes_domiciliees_struct est bien égal au nombre de ligne du df source ')
+    check_longueur_2_tables(df_personnes_domiciliees_struct, "n_structure", df_domiciliation_verif, "Structure")

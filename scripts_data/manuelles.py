@@ -685,7 +685,7 @@ def TEXTILE_DT(df_raw_Textile, df_raw_ProdResTextile, rattachement_court):
         df_Textile_financier__DT,
     )
 
-def verif_textile(df_raw_Textile_c, df_raw_ProdResTextile_c, df_raw_Textile, df_Textile_DT,df_raw_ProdResTextile, df_Textile_financier_DT, df_ref_structure):
+def verif_textile(df_raw_Textile_c, df_raw_ProdResTextile_c, df_raw_Textile, df_Textile_DT,df_raw_ProdResTextile, df_Textile_financier_DT, df_ref_structure,rattachement_court):
   df_t = df_raw_Textile_c[df_raw_Textile_c["statut"] == "A jour"]
   df_t = df_t[df_t["Type de point apport"].isin(['Boutique - La Boutique','Vestiaire','Boutique  - Mobile', 'Boutique - Bébé','Boutique - Chez Henry','Boutique - Recylcerie / Meuble','La Boutique'])]
 
