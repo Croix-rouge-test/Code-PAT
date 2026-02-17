@@ -389,6 +389,96 @@ def check_sum_equal(df_left, col_left, df_right, col_right, label_left="DF1", la
     print(f"OK ✅ : sommes égales ({s_left}) entre {label_left}[{col_left}] et {label_right}[{col_right}]")
     return True
 
+
+def def_Structure_de_rattachement(df_ref_structure):
+  rattachement_successif =   df_ref_structure[
+        df_ref_structure["type_structure"].isin([ 'IMPLANTATION LOCALE HORS AL - IL'])
+    ].copy()
+  rattachement_successif = rattachement_successif [[
+        "n_structure",
+        "type_structure",
+        "Structure_de_rattachement"
+    ]].copy()
+
+  rattachement_successif["N structure de rattachement"] = (
+        rattachement_successif ["Structure_de_rattachement"]
+        .astype("string")
+        .str.split("-", n=1, expand=True)[0]
+        .str.strip()
+    )
+  rattachement_successif .loc[rattachement_successif ["Structure_de_rattachement"].isna(), "N structure de rattachement"] = pd.NA
+
+
+  return rattachement_successif
+
+def add_num_structure_rattachement(
+    df: pd.DataFrame,
+    col_source: str,
+    col_out: str = "N structure de rattachement"
+) -> pd.DataFrame:
+    """
+    Crée une colonne col_out = partie avant le 1er '-' dans col_source.
+    Exemple: '10 - DT DES ALPES MARITIMES' -> '10'
+
+    - Gère NaN
+    - Trim espaces
+    - Ne modifie pas le df original (retourne une copie)
+    """
+    out = df.copy()
+
+    out[col_out] = (
+        out[col_source]
+        .astype("string")
+        .str.split("-", n=1, expand=True)[0]
+        .str.strip()
+    )
+
+    # Optionnel : remettre <NA> si la source est vide/NA
+    out.loc[out[col_source].isna(), col_out] = pd.NA
+
+    return out
+
+def rattache_structure(df1, df_ratt,col):
+    # mapping : n_structure -> N structure de rattachement
+    mapping = (
+        df_ratt.set_index(df_ratt["n_structure"].astype("string"))["N structure de rattachement"]
+        .astype("string")
+    )
+
+    col = col
+
+    s = df1[col].astype("string")
+    s2 = s.map(mapping)
+
+    # si pas trouvé dans le mapping, on garde l'original
+    df1[col] = s2.fillna(s)
+
+    # optionnel : repasser en entier nullable
+    df1[col] = pd.to_numeric(df1[col], errors="coerce").astype("Int64")
+
+    return df1
+
+    
+def apply_rattachement_successif(df_ref_structure, df_maraude, col="maraude_structure_id_fk"):
+    # 1) Ajout "N structure de rattachement" dans le ref structure
+    df_ref_structure = add_num_structure_rattachement(
+        df=df_ref_structure,
+        col_source="Structure_de_rattachement",
+        col_out="N structure de rattachement"
+    )
+
+    # 2) Création du référentiel "rattachement successif"
+    rattachement_successif = def_Structure_de_rattachement(df_ref_structure)
+
+    # Vérif : nb de rattachements manquants
+    c = rattachement_successif["N structure de rattachement"].isna().sum()
+
+    # 3) Application du rattachement sur le df de travail
+    df_maraude = rattache_structure(df_maraude, rattachement_successif, col=col)
+
+    return df_ref_structure , c , rattachement_successif, df_maraude
+
+
 def keep_integer(x):
   """
   En utilisant avec .apply() sur une colonne d'un dataframe,
