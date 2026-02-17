@@ -63,6 +63,7 @@ def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
                        ('Formation_grand_public Nb_formes_GQS_2025', 'GQS'),
                        ('Formation_grand_public Nb_formes_IPS_2025', 'IPS'),
                        ('Formation_grand_public Nb_formes_IPSEN_2025', 'IPSEN'),
+                       ('Formation_grand_public Nb_formes_PREVIC_2025', 'PREVIC'),
                        ('Structure Nb_formes_CRB_2025', 'CRB'),
                        ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
                        ('Structure Nb_formes_TCAS_2025', 'TCAS')]:
@@ -76,6 +77,7 @@ def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
                                                                   'Formation_grand_public Nb_formes_GQS_2025',
                                                                   'Formation_grand_public Nb_formes_IPS_2025',
                                                                   'Formation_grand_public Nb_formes_IPSEN_2025',
+                                                                  'Formation_grand_public Nb_formes_PREVIC_2025'
                                                                   'Structure Nb_formes_CRB_2025',
                                                                   'Structure Nb_formateurs_CRB_2025',
                                                                   'Structure Nb_formes_TCAS_2025']})
