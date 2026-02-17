@@ -206,7 +206,8 @@ def clean_CAICHUCMCC(df_CAICHUCMCC):
 
 
 def clean_conventions(df_conventions):
-    df = df_conventions[
+    df = df_conventions.rename(columns = {'Préfecture': 'Prefecture', 'Tripartite' : 'Tri partite'})
+    df = df[
         [
             'DT Annuaire Opé',
             'Departement',
@@ -272,7 +273,7 @@ def clean_raw_Textile(df_raw_Textile, df_ref_structure):
     df = df[df["Type de point apport"].isin(['Boutique - La Boutique','Vestiaire','Boutique  - Mobile', 'Boutique - Bébé','Boutique - Chez Henry','Boutique - Recylcerie / Meuble','La Boutique'])]
     df = df.rename(columns={'Code structure': 'n_structure'})
 
-    _ , _ , _, df_raw_Textile = apply_rattachement_successif(df_ref_structure, df_raw_Textile, col = 'n_structure')
+    _ , _ , _, df = apply_rattachement_successif(df_ref_structure, df, col = 'n_structure')
 
     
     return df
@@ -484,7 +485,7 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
 def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     df = df_RC_grouped[
         ["Nom de la structure", "Utilisation_Redcall"]
-    ].copy()
+    ]
     df = df[~df["Nom de la structure"].isin(["ANNUAIRE NATIONAL", "REGION OCCITANIE"])]
     df['Nom de la structure'] = df['Nom de la structure'].replace('UNITE LOCALE DU BRIONNAIS', 'UNITE LOCALE DE LA CLAYETTE - MARCIGNY')
     df = df[df['Nom de la structure'] != 'INSTANCES NATIONALES']
@@ -497,6 +498,7 @@ def indicateurs_redcall(df_RC_grouped, df_ref_structure):
         Utilisation_Redcall=("Utilisation_Redcall", lambda s: "Oui" if (s == "Oui").any() else "")
     )
 
+    df = df.rename(columns = {"Utilisation_Redcall" : "Dispositifs_d_urgence Utilisation_RedCall"})
 
     return df
 
