@@ -447,6 +447,63 @@ def find_duplicates_in_list_of_dfs(dfs, column):
 
     return duplicates_dict
 
+
+def check_same_col_sum(df_left: pd.DataFrame,
+                       df_right: pd.DataFrame,
+                       col: str,
+                       dropna: bool = True,
+                       atol: float = 0.0,
+                       rtol: float = 0.0):
+    """
+    Vérifie que la somme de la colonne `col` est la même dans 2 DataFrames.
+
+    Parameters
+    ----------
+    df_left, df_right : pd.DataFrame
+        DataFrames à comparer
+    col : str
+        Nom de la colonne (même intitulé dans les 2 df)
+    dropna : bool
+        Si True, les NaN sont traités comme 0 (via fillna(0))
+    atol, rtol : float
+        Tolérances absolue et relative (utile si float)
+
+    Returns
+    -------
+    result : dict
+        Résumé des sommes + delta
+    ok : bool
+        True si égalité (avec tolérances), sinon False
+    """
+    if col not in df_left.columns:
+        raise KeyError(f"Colonne '{col}' absente de df_left")
+    if col not in df_right.columns:
+        raise KeyError(f"Colonne '{col}' absente de df_right")
+
+    s1 = pd.to_numeric(df_left[col], errors="coerce")
+    s2 = pd.to_numeric(df_right[col], errors="coerce")
+
+    if dropna:
+        s1 = s1.fillna(0)
+        s2 = s2.fillna(0)
+
+    sum1 = float(s1.sum())
+    sum2 = float(s2.sum())
+    delta = sum1 - sum2
+
+    ok = abs(delta) <= (atol + rtol * abs(sum2))
+
+    result = {
+        "col": col,
+        "sum_df_left": sum1,
+        "sum_df_right": sum2,
+        "delta_left_minus_right": delta,
+        "atol": atol,
+        "rtol": rtol,
+        "ok": ok
+    }
+    return result, ok
+
 def check_sums_against_final(
     df_final: pd.DataFrame,
     list_of_dfs: List[pd.DataFrame],
@@ -652,8 +709,9 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     # Filtre des n_structure
     
     liste_df_a_fusionner_toutes_structures[i] = liste_df_a_fusionner_toutes_structures[i][liste_df_a_fusionner_toutes_structures[i]['n_structure'].isin(mask)]
+  duplicates = find_duplicates_in_list_of_dfs(liste_df_a_fusionner_toutes_structures, column='n_structure')
 
-    all_data  = merge_left_on_df1(df_ref_structure, liste_df_a_fusionner_toutes_structures, on = 'n_structure')
+  all_data  = merge_left_on_df1(df_ref_structure, liste_df_a_fusionner_toutes_structures, on = 'n_structure')
 
   
   print("TRAITEMENT DES INDICATEURS POUR LES DTs")
@@ -671,7 +729,6 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
       print(i)
       if 'DT_de_rattachement' in df.columns:
         liste_df_a_fusionner_DT[i] = liste_df_a_fusionner_DT[i].rename(columns={'DT_de_rattachement': 'n_structure'})
-    duplicates = find_duplicates_in_list_of_dfs(liste_df_a_fusionner_toutes_structures, column='n_structure')
 
     # Garder seulement les nombres
     if liste_df_a_fusionner_DT[i]['n_structure'].dtype == 'object':
@@ -684,7 +741,6 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     if liste_df_a_fusionner_DT[i]['n_structure'].dtype != df_ref_structure['n_structure'].dtype:
       liste_df_a_fusionner_DT[i]['n_structure'] = liste_df_a_fusionner_DT[i]['n_structure'].astype(int)
 
-    duplicates = find_duplicates_in_list_of_dfs(liste_df_a_fusionner_DT, column='n_structure')
 
     # Colonnes à supprimer
     cols_to_drop = [col for col in liste_df_a_fusionner_DT[i].columns if col not in colonnes_indicateurs]
@@ -700,9 +756,12 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     # Filtre des n_structure
     liste_df_a_fusionner_DT[i] = liste_df_a_fusionner_DT[i][liste_df_a_fusionner_DT[i]['n_structure'].isin(mask)]
 
-    all_data_DT  = merge_left_on_df1(df_ref_structure_DT, liste_df_a_fusionner_DT, on = 'n_structure')
+  duplicates = find_duplicates_in_list_of_dfs(liste_df_a_fusionner_DT, column='n_structure')
+  all_data_DT  = merge_left_on_df1(df_ref_structure_DT, liste_df_a_fusionner_DT, on = 'n_structure')
+  
 
-    return all_data, all_data_DT, liste_df_a_fusionner_toutes_structures, liste_df_a_fusionner_DT
+
+  return all_data, all_data_DT, liste_df_a_fusionner_toutes_structures, liste_df_a_fusionner_DT
 
 import pandas as pd
 
