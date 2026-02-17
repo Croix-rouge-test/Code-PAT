@@ -37,11 +37,36 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
                        ('AEO Nb_FAAD', 'FAAD'),
                        ('Dispositifs_d_urgence Nb_formes_TCAU_2025', 'TCAU'),
                        ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
-                       ('Dispositifs_d_urgence Nb_formes_IPSP_2025', 'IPSP'),
+                       ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
                        ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
                        ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
+    # Vérification des codes
+    print("\n===== Vérification des codes =====")
+    codes_df = set(df_res['FORMATION_CODE'].unique())
+
+    for name, code in [('Maraude Nb_SOLIDAR', 'solidar'),
+                       ('Maraude Nb_SOLIDAR2020', 'solidar20'),
+                       ('AEO Nb_AAD', 'AAD'),
+                       ('AEO Nb_FAAD', 'FAAD'),
+                       ('Dispositifs_d_urgence Nb_formes_TCAU_2025', 'TCAU'),
+                       ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
+                       ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
+                       ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
+                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS')]:
+        codes_attendus = set(filtres_bc.get(code, []))
+        codes_trouves = codes_df.intersection(codes_attendus)
+        codes_manquants = codes_attendus - codes_df
+
+        print(f"\nIndicateur : {name}")
+        print(f"  Codes attendus : {codes_attendus}")
+        print(f"  Codes trouvés  : {codes_trouves}")
+        print(f"  Codes manquants: {codes_manquants}")
+
+        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
+    
+    
     # Groupby et count distinct
     def count_unique(group, col_name):
         return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
@@ -51,10 +76,25 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
                                                                   'AEO Nb_AAD', 'AEO Nb_FAAD',
                                                                   'Dispositifs_d_urgence Nb_formes_TCAU_2025',
                                                                   'Dispositifs_d_urgence Nb_formes_TCEO_2025',
-                                                                  'Dispositifs_d_urgence Nb_formes_IPSP_2025',
+                                                                  'Dispositifs_d_urgence Nb_formes_PSP_2025',
                                                                   'Dispositifs_d_urgence Nb_formes_IRR_2025',
                                                                   'Dispositifs_d_urgence Nb_formes_GQS_2025']})
     ).reset_index()
+
+    # Somme globale par indicateur
+    print("\n===== Somme globale par indicateur =====")
+    totaux = result[[col for col, _ in [('Maraude Nb_SOLIDAR', 'solidar'),
+                       ('Maraude Nb_SOLIDAR2020', 'solidar20'),
+                       ('AEO Nb_AAD', 'AAD'),
+                       ('AEO Nb_FAAD', 'FAAD'),
+                       ('Dispositifs_d_urgence Nb_formes_TCAU_2025', 'TCAU'),
+                       ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
+                       ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
+                       ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
+                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS')]]].sum()
+    for col in totaux.index:
+        print(f"{col} : {totaux[col]}")
+
     return result
 
 def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
@@ -63,11 +103,35 @@ def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
                        ('Formation_grand_public Nb_formes_GQS_2025', 'GQS'),
                        ('Formation_grand_public Nb_formes_IPS_2025', 'IPS'),
                        ('Formation_grand_public Nb_formes_IPSEN_2025', 'IPSEN'),
+                       ('Formation_grand_public Nb_formes_PREVIC_2025', 'PREVIC'),
                        ('Structure Nb_formes_CRB_2025', 'CRB'),
                        ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
                        ('Structure Nb_formes_TCAS_2025', 'TCAS')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
+    # Vérification des codes
+    print("\n===== Vérification des codes =====")
+    codes_df = set(df_res['FORMATION_CODE'].unique())
+
+    for name, code in [('Formation_grand_public Nb_formes_PSC_2025', 'PSC'),
+                       ('Formation_grand_public Nb_formes_GQS_2025', 'GQS'),
+                       ('Formation_grand_public Nb_formes_IPS_2025', 'IPS'),
+                       ('Formation_grand_public Nb_formes_IPSEN_2025', 'IPSEN'),
+                       ('Formation_grand_public Nb_formes_PREVIC_2025', 'PREVIC'),
+                       ('Structure Nb_formes_CRB_2025', 'CRB'),
+                       ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
+                       ('Structure Nb_formes_TCAS_2025', 'TCAS')]:
+        codes_attendus = set(filtres_bc.get(code, []))
+        codes_trouves = codes_df.intersection(codes_attendus)
+        codes_manquants = codes_attendus - codes_df
+
+        print(f"\nIndicateur : {name}")
+        print(f"  Codes attendus : {codes_attendus}")
+        print(f"  Codes trouvés  : {codes_trouves}")
+        print(f"  Codes manquants: {codes_manquants}")
+
+        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
+    
     def count_unique(group, col_name):
         return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
 
@@ -76,44 +140,157 @@ def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
                                                                   'Formation_grand_public Nb_formes_GQS_2025',
                                                                   'Formation_grand_public Nb_formes_IPS_2025',
                                                                   'Formation_grand_public Nb_formes_IPSEN_2025',
+                                                                  'Formation_grand_public Nb_formes_PREVIC_2025',
                                                                   'Structure Nb_formes_CRB_2025',
                                                                   'Structure Nb_formateurs_CRB_2025',
                                                                   'Structure Nb_formes_TCAS_2025']})
     ).reset_index()
+
+    # Somme globale par indicateur
+    print("\n===== Somme globale par indicateur =====")
+    totaux = result[[col for col, _ in [('Formation_grand_public Nb_formes_PSC_2025', 'PSC'),
+                       ('Formation_grand_public Nb_formes_GQS_2025', 'GQS'),
+                       ('Formation_grand_public Nb_formes_IPS_2025', 'IPS'),
+                       ('Formation_grand_public Nb_formes_IPSEN_2025', 'IPSEN'),
+                       ('Formation_grand_public Nb_formes_PREVIC_2025', 'PREVIC'),
+                       ('Structure Nb_formes_CRB_2025', 'CRB'),
+                       ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
+                       ('Structure Nb_formes_TCAS_2025', 'TCAS')]]].sum()
+    for col in totaux.index:
+        print(f"{col} : {totaux[col]}")
+
     return result
+
+
+
 
 def nb_session_form(df_2025, filtres_bc, col_groupby):
     df_res = df_2025[df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui'].copy()
     for name, code in [('Formation_grand_public Nb_sessions_PSC_2025', 'PSC'),
+                       ('Formation_grand_public Nb_sessions_GQS_2025', 'GQS'),
+                       ('Formation_grand_public Nb_sessions_IPS_2025', 'IPS'),
+                       ('Formation_grand_public Nb_sessions_IPSEN_2025', 'IPSEN'),
+                       ('Formation_grand_public Nb_sessions_PREVIC_2025', 'PREVIC'),
+                       ('Formation_grand_public Nb_sessions_PSE', 'PSE'),
+                       ('Formation_grand_public Nb sessions_CI', 'CI'),
+                       ('Formation_grand_public Nb_sessions_FPSE', 'FPS')]:
+        df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
+
+        # Vérification des codes
+    print("\n===== Vérification des codes =====")
+    codes_df = set(df_res['FORMATION_CODE'].unique())
+
+    for name, code in [('Formation_grand_public Nb_sessions_PSC_2025', 'PSC'),
                        ('Formation_grand-public Nb_sessions_GQS_2025', 'GQS'),
                        ('Formation_grand-public Nb_sessions_IPS_2025', 'IPS'),
                        ('Formation_grand-public Nb_sessions_IPSEN_2025', 'IPSEN'),
-                       ('Formation_grand-public Nb_sessions_PREVIC_2025', 'PREVIC')]:
-        df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
+                       ('Formation_grand-public Nb_sessions_PREVIC_2025', 'PREVIC'),
+                       ('Formation_grand_public Nb_sessions_PSE', 'PSE'),
+                       ('Formation_grand_public Nb sessions_CI', 'CI'),
+                       ('Formation_grand_public Nb_sessions_FPSE', 'FPS')]:
+        codes_attendus = set(filtres_bc.get(code, []))
+        codes_trouves = codes_df.intersection(codes_attendus)
+        codes_manquants = codes_attendus - codes_df
+
+        print(f"\nIndicateur : {name}")
+        print(f"  Codes attendus : {codes_attendus}")
+        print(f"  Codes trouvés  : {codes_trouves}")
+        print(f"  Codes manquants: {codes_manquants}")
+
+        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)  
 
     def count_unique(group, col_name):
         return group.loc[group[col_name], 'SESSION_ID_FK'].nunique()
 
     result = df_res.groupby(col_groupby).apply(
         lambda g: pd.Series({col: count_unique(g, col) for col in ['Formation_grand_public Nb_sessions_PSC_2025',
-                                                                  'Formation_grand-public Nb_sessions_GQS_2025',
-                                                                  'Formation_grand-public Nb_sessions_IPS_2025',
-                                                                  'Formation_grand-public Nb_sessions_IPSEN_2025',
-                                                                  'Formation_grand-public Nb_sessions_PREVIC_2025']})
+                                                                  'Formation_grand_public Nb_sessions_GQS_2025',
+                                                                  'Formation_grand_public Nb_sessions_IPS_2025',
+                                                                  'Formation_grand_public Nb_sessions_IPSEN_2025',
+                                                                  'Formation_grand_public Nb_sessions_PREVIC_2025',
+                                                                  'Formation_grand_public Nb_sessions_PSE',
+                                                                  'Formation_grand_public Nb sessions_CI',
+                                                                  'Formation_grand_public Nb_sessions_FPSE']})
     ).reset_index()
+
+    # Somme globale par indicateur
+    print("\n===== Somme globale par indicateur =====")
+    totaux = result[[col for col, _ in [('Formation_grand_public Nb_sessions_PSC_2025', 'PSC'),
+                       ('Formation_grand_public Nb_sessions_GQS_2025', 'GQS'),
+                       ('Formation_grand_public Nb_sessions_IPS_2025', 'IPS'),
+                       ('Formation_grand_public Nb_sessions_IPSEN_2025', 'IPSEN'),
+                       ('Formation_grand_public Nb_sessions_PREVIC_2025', 'PREVIC'),
+                       ('Formation_grand_public Nb_sessions_PSE', 'PSE'),
+                       ('Formation_grand_public Nb sessions_CI', 'CI'),
+                       ('Formation_grand_public Nb_sessions_FPSE', 'FPS')]]].sum()
+    for col in totaux.index:
+        print(f"{col} : {totaux[col]}")
+
     return result
+
+
+
 
 def nb_bene_aptes(df_2025, filtres_bc, col_groupby):
     df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte') &
                      (df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
+    
+    for name, code in [('Formation_grand_public Nb_FPSC', 'FPSC'),
+                       ('Formation_grand_public Nb_AGQS', 'AGQS'),
+                       ('Formation_grand_public Nb_FIPSEN', 'FIPSEN')]:
+        df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
+
+        # PARTIE SECOURS (corrigée hiérarchie)  
+    # Attribution d’un niveau hiérarchique
+    def get_level(code):
+        if code in filtres_bc['CI']:
+            return 3
+        elif code in filtres_bc['PSE2']:
+            return 2
+        elif code in filtres_bc['PSE1']:
+            return 1
+        else:
+            return 0
+    
+    df_res['SECOURS_LEVEL'] = df_res['FORMATION_CODE'].apply(get_level)
+    
+    # Niveau maximum par bénévole
+    max_level = (
+        df_res.groupby('NIVOL_ID_FK')['SECOURS_LEVEL']
+        .max()
+        .reset_index()
+    )
+    
+    df_res = df_res.merge(max_level, on='NIVOL_ID_FK', suffixes=('', '_MAX'))
+    
+    # Colonnes exclusives
+    df_res['Secours Nb_PSE1'] = df_res['SECOURS_LEVEL_MAX'] == 1
+    df_res['Secours Nb_PSE2'] = df_res['SECOURS_LEVEL_MAX'] == 2
+    df_res['Secours Nb_CI'] = df_res['SECOURS_LEVEL_MAX'] == 3
+    
+    
+    # Vérification des codes
+    print("\n===== Vérification des codes =====")
+    codes_df = set(df_res['FORMATION_CODE'].unique())
+
     for name, code in [('Formation_grand_public Nb_FPSC', 'FPSC'),
                        ('Formation_grand_public Nb_AGQS', 'AGQS'),
                        ('Formation_grand_public Nb_FIPSEN', 'FIPSEN'),
-                       ('Secours Nb_PSE1', 'PSE1'),
-                       ('Secours Nb_PSE2', 'PSE2'),
-                       ('Secours Nb_CI', 'CI')]:
-        df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
+                                        ('Secours Nb_PSE1', 'PSE1'),
+                                        ('Secours Nb_PSE2', 'PSE2'),
+                                        ('Secours Nb_CI', 'CI')]:
+        codes_attendus = set(filtres_bc.get(code, []))
+        codes_trouves = codes_df.intersection(codes_attendus)
+        codes_manquants = codes_attendus - codes_df
 
+        print(f"\nIndicateur : {name}")
+        print(f"  Codes attendus : {codes_attendus}")
+        print(f"  Codes trouvés  : {codes_trouves}")
+        print(f"  Codes manquants: {codes_manquants}")
+
+        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)    
+
+    # Fonction de comptage
     def count_unique(group, col_name):
         return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
 
@@ -125,7 +302,24 @@ def nb_bene_aptes(df_2025, filtres_bc, col_groupby):
                                                                   'Secours Nb_PSE2',
                                                                   'Secours Nb_CI']})
     ).reset_index()
+
+    # Somme globale par indicateur
+    print("\n===== Somme globale par indicateur =====")
+    totaux = result[[col for col, _ in [('Formation_grand_public Nb_FPSC', 'FPSC'),
+                       ('Formation_grand_public Nb_AGQS', 'AGQS'),
+                       ('Formation_grand_public Nb_FIPSEN', 'FIPSEN'),
+                                        ('Secours Nb_PSE1', 'PSE1'),
+                                        ('Secours Nb_PSE2', 'PSE2'),
+                                        ('Secours Nb_CI', 'CI')]]].sum()
+
+    for col in totaux.index:
+        print(f"{col} : {totaux[col]}")
+
     return result
+
+
+
+
 
 # ------------------------------
 # Fonctions taux
@@ -141,7 +335,7 @@ def taux_recy(df_2025, filtres_bc, col_groupby):
                         ('CI', 'Secours Taux_recy26_CI')]:
         taux = df_res.groupby(col_groupby).apply(
             lambda g: ((g[g['FORMATION_CODE'].isin(filtres_bc[code])]
-                        ['FORMATION_DATE_RECYCLAGE'].dt.year == 2026).sum()
+                        ['FORMATION_DATE_RECYCLAGE'].dt.year == 2025).sum()
                        / max(1, g[g['FORMATION_CODE'].isin(filtres_bc[code])].shape[0]))
         )
         result[alias] = taux
@@ -151,7 +345,7 @@ def taux_recy(df_2025, filtres_bc, col_groupby):
 
 def taux_ren(df_filtered, filtres_bc, col_groupby):
     df_2025 = df_filtered[df_filtered['FORMATION_DATE_OBTENTION'].dt.year == 2025].copy()
-    df_autres = df_filtered[df_filtered['FORMATION_DATE_OBTENTION'].dt.year != 2025].copy()
+    df_autres = df_filtered[df_filtered['FORMATION_DATE_OBTENTION'].dt.year == 2024].copy()
 
     result = pd.DataFrame({col_groupby: df_2025[col_groupby].unique()})
     result.set_index(col_groupby, inplace=True)
@@ -226,26 +420,28 @@ def indicateurs_base_contact(df_formation_session_resultat, df_ref_structure):
     filtres_bc = {
         'CRB' : ['CRB', 'eCRB', 'VI'],
         'ACRB' : ['AVI','ACRB2','ACRB3','ACRB2024'],
-        'TCAS' : ['TCAS','TCAS2'],
-        'TCAU' : ['TCAU'],
+        'TCAS' : ['TCAS','TCAS2', 'ETCAS'],
+        'TCAU' : ['TCAU', 'ETCAU'],
         'TCEO' : ['TCEO'],
-        'IPSP' : ['PSP','PSP1'],
+        'PSP' : ['PSP','PSP1'],
         'IRR' : ['IRR','IRRA','IRRJ'],
         'solidar' : ['SOLIDAR2','SOLIDAR1','SOLIDAR'],
         'solidar20' : ['PASSSOLIDAR2020','PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'],
         'AAD' : ['AAD','IAD','MAO'],
         'FAAD' : ['FAAD','FAAAD','EPIAF FAAD'],
-        'FPSC' : ['RECFFPSC','RATFCFFPSC','FCFPSC','RATFCFPSC'],
+        'FPSC' : ['FCFPSC','RATFCFPSC'],
         'AGQS' : ['AGQS','RATAGQS'],
         'FIPSEN' : ['FIPSEN','RECFIPSEN'],
-        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1'],
-        'PSE2' : ['RECPSE2','PSE2','RECPSE2'],
-        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CIP3', 'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI'],
+        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1'],
+        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2'],
+        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CIP3', 'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI'],
         'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC"],
         'GQS' : ['GQS'],
         'IPSEN' : ['IPSEN'],
-        'IPS' : ['IPS'],
-        'PREVIC' : ['PREVIC']
+        'IPS' : ['IPS', 'IPS SR', 'ISPE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
+        'PREVIC' : ['PREVIC'],
+        'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE'],
+        'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2']
     }
 
 
