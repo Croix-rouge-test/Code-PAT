@@ -541,6 +541,11 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Dispositifs_d_urgence Utilisation_Minutis",
     "Dispositifs_d_urgence Nb_exercices",
     "Dispositifs_d_urgence PST",
+    "Dispositifs_d_urgence Nb_formes_TCAU_2025",
+    "Dispositifs_d_urgence Nb_formes_TCEO_2025",
+    "Dispositifs_d_urgence Nb_formes_IPSP_2025",
+    "Dispositifs_d_urgence Nb_formes_IRR_2025",
+    "Dispositifs_d_urgence Nb_formes_GQS_2025",
     "Dispositifs_d_urgence Taux_formation_TCAU_2025",
     "Dispositifs_d_urgence Taux_formation_IPSP_2025",
     "Dispositifs_d_urgence Taux_formation_GQS_2025",
@@ -698,6 +703,41 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     all_data_DT  = merge_left_on_df1(df_ref_structure_DT, liste_df_a_fusionner_DT, on = 'n_structure')
 
     return all_data, all_data_DT, liste_df_a_fusionner_toutes_structures, liste_df_a_fusionner_DT
+
+import pandas as pd
+
+def ajouter_colonnes_taux(df: pd.DataFrame, denominateur: str) -> pd.DataFrame:
+    """
+    Ajoute des colonnes calculées comme (colonne / denominateur).
+
+    Les noms des nouvelles colonnes sont définis en dur dans la fonction.
+    """
+    colonnes = ["Dispositifs_d_urgence Nb_formes_TCAU_2025","Dispositifs_d_urgence Nb_formes_TCEO_2025",
+    "Dispositifs_d_urgence Nb_formes_IPSP_2025", "Dispositifs_d_urgence Nb_formes_IRR_2025", "Dispositifs_d_urgence Nb_formes_GQS_2025",
+    "Structure Nb_formes_CRB_2025"]
+    # ⚠️ noms hardcodés (modifie-les ici selon ton besoin)
+    mapping_noms = {
+        "Dispositifs_d_urgence Nb_formes_TCAU_2025": "Dispositifs_d_urgence Taux_formation_TCAU_2025",
+        "Dispositifs_d_urgence Nb_formes_TCEO_2025": "Dispositifs_d_urgence Taux_formation_TCEO_2025",
+        "Dispositifs_d_urgence Nb_formes_IPSP_2025": "Dispositifs_d_urgence Taux_formation_IPSP_2025",
+        "Dispositifs_d_urgence Nb_formes_IRR_2025" : "Dispositifs_d_urgence Taux_formation_IRR_2025",
+        "Dispositifs_d_urgence Nb_formes_GQS_2025" : "Dispositifs_d_urgence Taux_formation_GQS_2025",
+        "Structure Nb_formes_CRB_2025" : "Structure Taux_formation_CRB"
+    }
+
+    for col in colonnes:
+        if col not in df.columns:
+            raise ValueError(f"Colonne absente du dataframe : {col}")
+        if denominateur not in df.columns:
+            raise ValueError(f"Colonne denominateur absente : {denominateur}")
+
+        if col not in mapping_noms:
+            raise ValueError(f"Aucun nom hardcodé prévu pour {col}")
+
+        nouveau_nom = mapping_noms[col]
+        df[nouveau_nom] = df[col] / df[denominateur]
+
+    return df
 
 
 
