@@ -90,7 +90,7 @@ def fusion_nomination(df_nomination, df_ref_nomination):
 
 def indicateurs_nomination_AEO(df_NOMINATION, annee=2025):
     # Filtre sur les libellés appropriés
-    libelles_AEO = ["RTAAD", "RLAAD"]
+    libelles_AEO = ["RTAAD", "RLAAD", "RLACOR", "RLDOM", "RLACORA", "RLDOMA"]
     referents_AEO = df_NOMINATION[
         df_NOMINATION["nomination_libcourt"].isin(libelles_AEO)
     ]
@@ -176,6 +176,7 @@ def indicateurs_nominationOCR_DT(referents_OCR, rattachement_court):
     print(f"Nombre total de responsables OCR DT : {total_responsables}")
 
     return referents_OCR_DT
+
 
 
 
