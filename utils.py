@@ -794,6 +794,12 @@ def ajouter_colonnes_taux(df: pd.DataFrame, denominateur: str) -> pd.DataFrame:
 
     return df
 
-
+def ajouter_colonne_somme(df: pd.DataFrame, col1: str, col2: str) -> pd.DataFrame:
+  
+    # nom hardcodé de la nouvelle colonne
+    nom_nouvelle_colonne = "AEO Nb_PA_AEO_AAD"
+    
+    df[nom_nouvelle_colonne] = df[col1] + df[col2]
+    return df
 
   
