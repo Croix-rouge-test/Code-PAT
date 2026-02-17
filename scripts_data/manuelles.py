@@ -250,9 +250,9 @@ def clean_conventions(df_conventions):
     colonnes_conv_ope = colonnes_oui_non[1:]
 
 
-    df[colonnes_oui_non] = df[colonnes_oui_non].applymap(
-        lambda x: x[-3:] if isinstance(x, str) else x
-    )
+    # df[colonnes_oui_non] = df[colonnes_oui_non].applymap(
+    #     lambda x: x[-3:] if isinstance(x, str) else x
+    # )
 
 
     df['Dispositifs_d_urgence Nb_conventions_operateurs'] = (
