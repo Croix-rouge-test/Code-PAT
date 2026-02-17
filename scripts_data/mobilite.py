@@ -44,7 +44,7 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
-def filtres_mobilite(mobilite,mapping_df):
+def filtres_mobilite(mobilite,mapping_df, df_ref_structure):
   # Filtres et traitement de données
   mobilite = get_as_dataframe(mobilite.worksheet('Consolidation'), evaluate_formulas=True)
   mobilite = mobilite[(mobilite['Etat'] == 'Actif') & (mobilite['Code structure unifié'] != '') & (mobilite['Code structure unifié'].notna())]
@@ -57,6 +57,8 @@ def filtres_mobilite(mobilite,mapping_df):
   mobilite['nb_pa'] = mobilite['nb_pa'].astype(str).apply(keep_integer).str.replace('^$','0',regex = True).astype(int)
   mobilite['nb_bene'] = mobilite['nb_bene'].astype(str).apply(keep_integer).str.replace('^$','0',regex = True).astype(int)
   mobilite = mobilite.drop(['nb_bene'], axis = 1)
+
+  _ , _ , _, df_mobilite = apply_rattachement_successif(df_ref_structure, df_mobilite, col = 'n_structure')
 
   return mobilite
 

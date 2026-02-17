@@ -263,7 +263,7 @@ def clean_conventions(df_conventions):
 
     return df
 
-def clean_raw_Textile(df_raw_Textile):
+def clean_raw_Textile(df_raw_Textile, df_ref_structure):
     # Filtre sur le statut
     df = df_raw_Textile[df_raw_Textile["statut"] == "A jour"]
 
@@ -271,6 +271,9 @@ def clean_raw_Textile(df_raw_Textile):
     print("Point d'apport possible : ",df["Type de point apport"].unique())
     df = df[df["Type de point apport"].isin(['Boutique - La Boutique','Vestiaire','Boutique  - Mobile', 'Boutique - Bébé','Boutique - Chez Henry','Boutique - Recylcerie / Meuble','La Boutique'])]
     df = df.rename(columns={'Code structure': 'n_structure'})
+
+    _ , _ , _, df_raw_Textile = apply_rattachement_successif(df_ref_structure, df_raw_Textile, col = 'n_structure')
+
     
     return df
 
@@ -307,7 +310,8 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_CAICHUCMCC,
     df_conventions,
     df_raw_Textile,
-    df_raw_ProdResTextile
+    df_raw_ProdResTextile,
+    df_ref_structure
 ):
     df_OCR_clean = clean_OCR(df_OCR)
     df_PST_clean = clean_PST(df_PST)
@@ -315,7 +319,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_redcall_clean = clean_redcall(df_redcall)
     df_CAICHUCMCC_clean = clean_CAICHUCMCC(df_CAICHUCMCC)
     df_conventions_clean = clean_conventions(df_conventions)
-    df_raw_Textile = clean_raw_Textile(df_raw_Textile)
+    df_raw_Textile = clean_raw_Textile(df_raw_Textile, df_ref_structure)
     df_raw_ProdResTextile = clean_ProdResTextile(df_raw_ProdResTextile)
 
     return (
@@ -485,15 +489,12 @@ def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     df['Nom de la structure'] = df['Nom de la structure'].replace('UNITE LOCALE DU BRIONNAIS', 'UNITE LOCALE DE LA CLAYETTE - MARCIGNY')
     df = df[df['Nom de la structure'] != 'INSTANCES NATIONALES']
     df["Utilisation_Redcall"] = df["Utilisation_Redcall"].astype(str)
-
-
     df = rapprochement_libelles(df_ref_structure, df, "Nom de la structure")
 
+    _ , _ , _, df = apply_rattachement_successif(df_ref_structure, df, col = 'n_structure')
 
-    df = df.rename(
-        columns={
-            "Utilisation_Redcall": "Dispositifs_d_urgence Utilisation_RedCall"
-        }
+    df = df.groupby("n_structure", as_index=False).agg(
+        Utilisation_Redcall=("Utilisation_Redcall", lambda s: "Oui" if (s == "Oui").any() else "")
     )
 
 

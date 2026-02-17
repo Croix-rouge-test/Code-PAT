@@ -46,7 +46,7 @@ sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
 
-def clean_impact(client):
+def clean_impact(client,df_ref_structure):
 
   query_ref_impact = """
   SELECT *
@@ -64,6 +64,8 @@ def clean_impact(client):
   # Vérification que la colonne est au format datetime
   df_impact['impact_date_fin'] = pd.to_datetime(df_impact['impact_date_fin'], errors='coerce')
   df_impact['impact_date_debut'] = pd.to_datetime(df_impact['impact_date_debut'], errors='coerce')
+  _ , _ , _, df_impact = apply_rattachement_successif(df_ref_structure, df_impact, col = 'impact_structure_id_fk')
+
 
   return df_ref_impact, df_impact
 

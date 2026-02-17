@@ -171,6 +171,7 @@ def fusion_donnees_financieres(dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso
   df_financier_DT = pd.merge(df_ref_structure[['DT_de_rattachement','n_dept']].drop_duplicates(), df_financier_DT, on = 'n_dept', how = 'inner')
   df_financier_DT = df_financier_DT.drop_duplicates(['DT_de_rattachement'])
 
+  _ , _ , _, df_financier_DT_UL = apply_rattachement_successif(df_ref_structure, df_financier_DT_UL, col = 'n_structure')
 
 
 

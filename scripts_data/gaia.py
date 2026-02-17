@@ -46,7 +46,7 @@ sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
 
-def clean_gaia(client):
+def clean_gaia(client, df_ref_structure):
   query_gaia = """
   SELECT *
   FROM crf-pat.dataset_PAT_2025.crf_pat_2025_rattachement_benevole
@@ -55,6 +55,8 @@ def clean_gaia(client):
   # Vérification que la colonne est au format datetime
   df_gaia_rattachement_benevole['rattachement_benevole_date_fin'] = pd.to_datetime(df_gaia_rattachement_benevole['rattachement_benevole_date_fin'], errors='coerce')
   df_gaia_rattachement_benevole['rattachement_benevole_date_debut'] = pd.to_datetime(df_gaia_rattachement_benevole['rattachement_benevole_date_debut'], errors='coerce')
+
+  _ , _ , _, df_gaia_rattachement_benevole = apply_rattachement_successif(df_ref_structure, df_gaia_rattachement_benevole, col = 'rattachement_benevole_structure_id_fk')
 
   return df_gaia_rattachement_benevole
 

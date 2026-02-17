@@ -46,7 +46,7 @@ sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
 
-def clean_nomination(client):
+def clean_nomination(client, df_ref_structure):
   query_ref_nomination = """
   SELECT *
   FROM crf-pat.dataset_PAT_2025.crf_nomination_ref_nomination
@@ -61,6 +61,7 @@ def clean_nomination(client):
   # Vérification que la colonne est au format datetime
   df_nomination['nomination_date_fin_nomination'] = pd.to_datetime(df_nomination['nomination_date_fin_nomination'], errors='coerce')
   df_nomination['nomination_date_debut_nomination'] = pd.to_datetime(df_nomination['nomination_date_debut_nomination'], errors='coerce')
+  _ , _ , _, df_nomination = apply_rattachement_successif(df_ref_structure, df_nomination, col = 'nomination_structure_id_fk')
   return df_ref_nomination, df_nomination
 
 
