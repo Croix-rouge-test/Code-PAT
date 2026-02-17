@@ -3,10 +3,10 @@ def clean_dps(df_conventions):
         [
             'DT Annuaire Opé',
             'Departement',
-            'Nb de vacations de 4H effectuées PAPS',
-            'Nb de vacations de 4H effectuées PE',
-            'Nb de vacations de 4H effectuées ME',
-            'Nb de vacations de 4H effectuées GE'
+            'Nb de vacations de 4h effectuées PAPS',
+            'Nb de vacations de 4h effectuées PE',
+            'Nb de vacations de 4h effectuées ME',
+            'Nb de vacations de 4h effectuées GE'
         ]
     ]
 
@@ -25,10 +25,10 @@ def clean_dps(df_conventions):
 
 def indicateurs_dps(df_dps, df_ref_structure):
     df = df_dps[
-        ["Departement", 'Nb de vacations de 4H effectuées PAPS',
-            'Nb de vacations de 4H effectuées PE',
-            'Nb de vacations de 4H effectuées ME',
-            'Nb de vacations de 4H effectuées GE'
+        ["Departement", 'Nb de vacations de 4h effectuées PAPS',
+            'Nb de vacations de 4h effectuées PE',
+            'Nb de vacations de 4h effectuées ME',
+            'Nb de vacations de 4h effectuées GE'
 ]
     ].copy()
 
@@ -40,13 +40,13 @@ def indicateurs_dps(df_dps, df_ref_structure):
 
     df = df.rename(
         columns={
-            "Nb de vacations de 4H effectuées PAPS": "Secours Nb_PAPS_2025",
-	    "Nb de vacations de 4H effectuées PE": "Secours Nb_DPS_PE_2025",
-	    "Nb de vacations de 4H effectuées ME": "Secours Nb_DPS_ME_2025",
-	    "Nb de vacations de 4H effectuées GE": "Secours Nb_DPS_GE_2025"
+            "Nb de vacations de 4h effectuées PAPS": "Secours Nb_PAPS_2025",
+	    "Nb de vacations de 4h effectuées PE": "Secours Nb_DPS_PE_2025",
+	    "Nb de vacations de 4h effectuées ME": "Secours Nb_DPS_ME_2025",
+	    "Nb de vacations de 4h effectuées GE": "Secours Nb_DPS_GE_2025"
         }
     )
 
-    df['Secours Nb_DPS_2025'] = df['Nb de vacations de 4H effectuées PAPS', 'Nb de vacations de 4H effectuées PE', 'Nb de vacations de 4H effectuées ME', 'Nb de vacations de 4H effectuées GE'].sum(axis=1)
+    df['Secours Nb_DPS_2025'] = df['Nb de vacations de 4h effectuées PAPS', 'Nb de vacations de 4h effectuées PE', 'Nb de vacations de 4h effectuées ME', 'Nb de vacations de 4h effectuées GE'].sum(axis=1)
 
     return df
