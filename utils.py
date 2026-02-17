@@ -701,6 +701,10 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Formation_grand_public Nb_FPSC",
     "Formation_grand_public Structures_menant_activite",
     "Formation_grand_public Produits_2025",
+    "Dispositifs_d_urgence Nb_formes_PSP_2025",
+    "Formation_grand_public Nb_sessions_PSE",
+    "Formation_grand_public Nb sessions_CI",
+    "Formation_grand_public Nb_sessions_FPSE",
     "Formation_grand_public Nb_formes_PSC_2025",
     "Formation_grand_public Nb_sessions_PSC_2025",
     "Formation_grand_public Nb_FPSC",
@@ -864,7 +868,7 @@ def ajouter_colonnes_taux(df: pd.DataFrame, denominateur: str) -> pd.DataFrame:
     mapping_noms = {
         "Dispositifs_d_urgence Nb_formes_TCAU_2025": "Dispositifs_d_urgence Taux_formation_TCAU_2025",
         "Dispositifs_d_urgence Nb_formes_TCEO_2025": "Dispositifs_d_urgence Taux_formation_TCEO_2025",
-        "Dispositifs_d_urgence Nb_formes_IPSP_2025": "Dispositifs_d_urgence Taux_formation_IPSP_2025",
+        "Dispositifs_d_urgence Nb_formes_PSP_2025": "Dispositifs_d_urgence Taux_formation_PSP_2025",
         "Dispositifs_d_urgence Nb_formes_IRR_2025" : "Dispositifs_d_urgence Taux_formation_IRR_2025",
         "Dispositifs_d_urgence Nb_formes_GQS_2025" : "Dispositifs_d_urgence Taux_formation_GQS_2025",
         "Structure Nb_formes_CRB_2025" : "Structure Taux_formation_CRB"
