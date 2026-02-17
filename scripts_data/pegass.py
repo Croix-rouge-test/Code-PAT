@@ -697,7 +697,7 @@ def calcul_PEGASS_indicateurs(
 
     Indics_pegass_DT = pd.merge(Indics_pegass_DT, df_rattachement_court, on="n_structure", how="inner")
     Indics_pegass_DT = (Indics_pegass_DT.groupby("DT_de_rattachement", as_index=False).sum(numeric_only=True))
-    Indics_pegass_DT = Indics_pegass_DT.rename(columns={"nb_activite_AEO": "AEO Structure_activite_fixe"})
+    Indics_pegass_DT = Indics_pegass_DT.rename(columns={"nb_activite_AEO": "AEO Structure_activite_fixe"}).drop('n_structure')
 
     # netoyage DF structure => j'ai dupliqué et CALER APRES LES VERIFS
     Indics_pegass_struct = Indics_pegass_struct[[

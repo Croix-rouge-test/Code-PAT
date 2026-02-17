@@ -685,3 +685,24 @@ def TEXTILE_DT(df_raw_Textile, df_raw_ProdResTextile, rattachement_court):
         df_Textile_financier__DT,
     )
 
+def verif_textile(df_raw_Textile_c, df_raw_ProdResTextile_c, df_raw_Textile, df_Textile_DT,df_raw_ProdResTextile, df_Textile_financier_DT ):
+  df_t = df_raw_Textile_c[df_raw_Textile_c["statut"] == "A jour"]
+  df_t = df_t[df_t["Type de point apport"].isin(['Boutique - La Boutique','Vestiaire','Boutique  - Mobile', 'Boutique - Bébé','Boutique - Chez Henry','Boutique - Recylcerie / Meuble','La Boutique'])]
+
+
+
+  if df_Textile_DT.reset_index()['Textile Nb_dispositifs'].sum() == df_t.shape[0]:
+    print('✅ df_Textile_DT est bien calculé (suomme de l indicateur == au nombre de lignes des données)')
+  else:
+    print('❌ df_Textile_DT n\'est pas bien calculé (suomme de l indicateur != au nombre de lignes des données), différence :', df_Textile_DT.reset_index()['Textile Nb_dispositifs'].sum() - df_raw_Textile_c.shape[0])
+
+  if df_raw_Textile['Textile Nb_dispositifs'].sum() == df_t.shape[0]:
+    print('✅ df_Textile_DT est bien calculé (suomme de l indicateur == au nombre de lignes des données)')
+  else:
+    print('❌ df_Textile_DT n\'est pas bien calculé (suomme de l indicateur != au nombre de lignes des données), différence :', df_Textile_DT.reset_index()['Textile Nb_dispositifs'].sum() - df_raw_Textile_c.shape[0])
+
+  verifier_colonne_structure(df_raw_Textile, "n_structure", df_ref_structure)
+  verifier_colonne_structure(df_raw_ProdResTextile, "n_structure", df_ref_structure)
+  verifier_colonne_structure(df_Textile_DT.reset_index(), "DT_de_rattachement", rattachement_court)
+  verifier_colonne_structure(df_Textile_financier_DT, "DT_de_rattachement", rattachement_court)
+
