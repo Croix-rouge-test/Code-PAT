@@ -685,7 +685,7 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
   for i,df in enumerate(liste_df_a_fusionner_toutes_structures):
 
     # Transformation des Series en DataFrame
-    if type(df) != type(df_ref_structure):
+    if type(liste_df_a_fusionner_toutes_structures[i]) != type(df_ref_structure):
       liste_df_a_fusionner_toutes_structures[i] = liste_df_a_fusionner_toutes_structures[i].to_frame()
     if len(liste_df_a_fusionner_toutes_structures[i].columns) < 2:
       liste_df_a_fusionner_toutes_structures[i] = liste_df_a_fusionner_toutes_structures[i].reset_index()
@@ -719,23 +719,20 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
   for i,df in enumerate(liste_df_a_fusionner_DT):
 
     # Transformation des Series en DataFrame
-    if type(df) != type(df_ref_structure):
+    if type(liste_df_a_fusionner_DT[i]) != type(df_ref_structure):
       liste_df_a_fusionner_DT[i] = liste_df_a_fusionner_DT[i].to_frame()
     if len(liste_df_a_fusionner_DT[i].columns) < 2:
       liste_df_a_fusionner_DT[i] = liste_df_a_fusionner_DT[i].reset_index()
 
     # Uniformisation des types pour la clé n_structure
-    if 'n_structure' not in df.columns:
-      print(i)
-      if 'DT_de_rattachement' in df.columns:
+    if 'n_structure' not in liste_df_a_fusionner_DT[i].columns:
+      if 'DT_de_rattachement' in liste_df_a_fusionner_DT[i].columns:
         liste_df_a_fusionner_DT[i] = liste_df_a_fusionner_DT[i].rename(columns={'DT_de_rattachement': 'n_structure'})
 
     # Garder seulement les nombres
     if liste_df_a_fusionner_DT[i]['n_structure'].dtype == 'object':
       contient_lettres = liste_df_a_fusionner_DT[i]['n_structure'].astype(str).str.contains(r'[A-Za-z]', na=False).any()
       if contient_lettres:
-        print(i)
-        display(liste_df_a_fusionner_DT[i]['n_structure'])
         liste_df_a_fusionner_DT[i]['n_structure'] = liste_df_a_fusionner_DT[i]['n_structure'].apply(keep_integer).astype(int)
     
     if liste_df_a_fusionner_DT[i]['n_structure'].dtype != df_ref_structure['n_structure'].dtype:
@@ -763,7 +760,6 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
 
   return all_data, all_data_DT, liste_df_a_fusionner_toutes_structures, liste_df_a_fusionner_DT
 
-import pandas as pd
 
 def ajouter_colonnes_taux(df: pd.DataFrame, denominateur: str) -> pd.DataFrame:
     """
