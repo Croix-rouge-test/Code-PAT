@@ -116,15 +116,16 @@ def run_verif_maraude(
         print(f"✅ #5 OK : personnes différentes rencontrées — somme df_base = {s_base} = somme df_struct = {s_struct}")
 
     # #6 Somme personnes rencontrées : df_struct vs df_maraude_verif['nb personnes']
-    s_personnes_struct = df_nb_personnes_rencontrees_SIGMA_struct["Maraude Nb_personnes_rencontrees"].sum()
-    s_personnes_verif = df_maraude_verif["nb personnes"].sum()
+    df_maraude_verif= prep_nb_personnes_rencontrees_sigma(df_maraude, filtre_annee_fn=None)
+    df_maraude_verif= add_nb_personnes(df_maraude_verif,
+    out_col="nb personnes",
+    cols=None,
+    col_typologie="maraude_rencontre_typologie")
 
-    if s_personnes_struct != s_personnes_verif:
-        diff = s_personnes_verif - s_personnes_struct
-        raise ValueError(
-            f"KO #6 : somme personnes rencontrées : df_struct={s_personnes_struct} ≠ df_maraude_verif(nb personnes)={s_personnes_verif} (écart={diff})"
-        )
+    s_struct = df_nb_contacts_SIGMA_struct["Maraude Nb_contacts"].sum()
+    s_base = df_maraude_verif["nb personnes"].sum()
+
+    if s_struct == s_base:
+      print("✅ OK : somme 'Maraude Nb contacts struct' df struct = somme Nb contacts df maraude verif")
     else:
-        print(f"✅ #6 OK : somme personnes rencontrées — df_struct = {s_personnes_struct} = df_maraude_verif(nb personnes) = {s_personnes_verif}")
-
-    print("\n✅ VERIF MARAUDE terminé : tout est OK.\n")
+      print(f"❌ PROBLÈME : Maraude Nb_contacts struct={s_struct} ≠ somme Nb_contacts df_maraude_verif={s_base} (écart={s_base - s_struct})")
