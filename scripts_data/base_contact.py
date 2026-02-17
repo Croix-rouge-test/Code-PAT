@@ -166,7 +166,10 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
                        ('Formation_grand-public Nb_sessions_GQS_2025', 'GQS'),
                        ('Formation_grand-public Nb_sessions_IPS_2025', 'IPS'),
                        ('Formation_grand-public Nb_sessions_IPSEN_2025', 'IPSEN'),
-                       ('Formation_grand-public Nb_sessions_PREVIC_2025', 'PREVIC')]:
+                       ('Formation_grand-public Nb_sessions_PREVIC_2025', 'PREVIC'),
+                       ('Formation_grand_public Nb_sessions_PSE', 'PSE'),
+                       ('Formation_grand_public Nb sessions_CI', 'CI'),
+                       ('Formation_grand_public Nb_sessions_FPSE', 'FPS')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
         # Vérification des codes
@@ -177,7 +180,10 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
                        'Formation_grand_public Nb_sessions_GQS_2025',
                        'Formation_grand_public Nb_sessions_IPS_2025',
                        'Formation_grand_public Nb_sessions_IPSEN_2025',
-                       'Formation_grand_public Nb_sessions_PREVIC_2025']:
+                       'Formation_grand_public Nb_sessions_PREVIC_2025',
+                       'Formation_grand_public Nb_sessions_PSE',
+                       'Formation_grand_public Nb sessions_CI',
+                       'Formation_grand_public Nb_sessions_FPSE']:
         codes_attendus = set(filtres_bc.get(code, []))
         codes_trouves = codes_df.intersection(codes_attendus)
         codes_manquants = codes_attendus - codes_df
@@ -197,7 +203,10 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
                                                                   'Formation_grand_public Nb_sessions_GQS_2025',
                                                                   'Formation_grand_public Nb_sessions_IPS_2025',
                                                                   'Formation_grand_public Nb_sessions_IPSEN_2025',
-                                                                  'Formation_grand_public Nb_sessions_PREVIC_2025']})
+                                                                  'Formation_grand_public Nb_sessions_PREVIC_2025',
+                                                                  'Formation_grand_public Nb_sessions_PSE',
+                                                                  'Formation_grand_public Nb sessions_CI',
+                                                                  'Formation_grand_public Nb_sessions_FPSE']})
     ).reset_index()
 
     # Somme globale par indicateur
@@ -206,7 +215,10 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
                                         'Formation_grand_public Nb_sessions_GQS_2025',
                                         'Formation_grand_public Nb_sessions_IPS_2025',
                                         'Formation_grand_public Nb_sessions_IPSEN_2025',
-                                        'Formation_grand_public Nb_sessions_PREVIC_2025']]].sum()
+                                        'Formation_grand_public Nb_sessions_PREVIC_2025',
+                                        'Formation_grand_public Nb_sessions_PSE',
+                                        'Formation_grand_public Nb sessions_CI',
+                                        'Formation_grand_public Nb_sessions_FPSE']]].sum()
     for col in totaux.index:
         print(f"{col} : {totaux[col]}")
 
@@ -221,12 +233,38 @@ def nb_bene_aptes(df_2025, filtres_bc, col_groupby):
     
     for name, code in [('Formation_grand_public Nb_FPSC', 'FPSC'),
                        ('Formation_grand_public Nb_AGQS', 'AGQS'),
-                       ('Formation_grand_public Nb_FIPSEN', 'FIPSEN'),
-                       ('Secours Nb_PSE1', 'PSE1'),
-                       ('Secours Nb_PSE2', 'PSE2'),
-                       ('Secours Nb_CI', 'CI')]:
+                       ('Formation_grand_public Nb_FIPSEN', 'FIPSEN')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
+        # PARTIE SECOURS (corrigée hiérarchie)  
+    # Attribution d’un niveau hiérarchique
+    def get_level(code):
+        if code in filtres_bc['CI']:
+            return 3
+        elif code in filtres_bc['PSE2']:
+            return 2
+        elif code in filtres_bc['PSE1']:
+            return 1
+        else:
+            return 0
+    
+    df_res['SECOURS_LEVEL'] = df_res['FORMATION_CODE'].apply(get_level)
+    
+    # Niveau maximum par bénévole
+    max_level = (
+        df_res.groupby('NIVOL_ID_FK')['SECOURS_LEVEL']
+        .max()
+        .reset_index()
+    )
+    
+    df_res = df_res.merge(max_level, on='NIVOL_ID_FK', suffixes=('', '_MAX'))
+    
+    # Colonnes exclusives
+    df_res['Secours Nb_PSE1'] = df_res['SECOURS_LEVEL_MAX'] == 1
+    df_res['Secours Nb_PSE2'] = df_res['SECOURS_LEVEL_MAX'] == 2
+    df_res['Secours Nb_CI'] = df_res['SECOURS_LEVEL_MAX'] == 3
+    
+    
     # Vérification des codes
     print("\n===== Vérification des codes =====")
     codes_df = set(df_res['FORMATION_CODE'].unique())
@@ -387,17 +425,19 @@ def indicateurs_base_contact(df_formation_session_resultat, df_ref_structure):
         'solidar20' : ['PASSSOLIDAR2020','PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'],
         'AAD' : ['AAD','IAD','MAO'],
         'FAAD' : ['FAAD','FAAAD','EPIAF FAAD'],
-        'FPSC' : ['RECFFPSC','RATFCFFPSC','FCFPSC','RATFCFPSC'],
+        'FPSC' : ['FCFPSC','RATFCFPSC'],
         'AGQS' : ['AGQS','RATAGQS'],
         'FIPSEN' : ['FIPSEN','RECFIPSEN'],
-        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1'],
-        'PSE2' : ['RECPSE2','PSE2','RECPSE2'],
-        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CIP3', 'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI'],
+        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1'],
+        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2'],
+        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CIP3', 'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI'],
         'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC"],
         'GQS' : ['GQS'],
         'IPSEN' : ['IPSEN'],
         'IPS' : ['IPS', 'IPS SR', 'ISPE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
-        'PREVIC' : ['PREVIC']
+        'PREVIC' : ['PREVIC'],
+        'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE'],
+        'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2']
     }
 
 
