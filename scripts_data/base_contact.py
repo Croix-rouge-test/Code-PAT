@@ -405,7 +405,7 @@ def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
 # Fonction principale
 # ------------------------------
 
-def clean_base_contact(client):
+def clean_base_contact(client, df_ref_structure):
     query_formation_session_resultat = """
     SELECT * FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_formation_session_resultat`
     """
@@ -413,6 +413,8 @@ def clean_base_contact(client):
     df_formation_session_resultat['FORMATION_DATE_OBTENTION'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_OBTENTION'], errors='coerce')
     df_formation_session_resultat['FORMATION_DATE_RECYCLAGE'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_RECYCLAGE'], errors='coerce')
     df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['FORMATION_SESSION_STRUCTURE_ID_FK'] != 1]
+    _ , _ , _, df_formation_session_resultat = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat, col = 'FORMATION_SESSION_STRUCTURE_ID_FK')
+
     return df_formation_session_resultat
 
 def indicateurs_base_contact(df_formation_session_resultat, df_ref_structure):
