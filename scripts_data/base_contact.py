@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
 import re
+import sys
+import os
+sys.path.append(os.path.abspath("/Code-PAT"))
+from utils import *
 
 def keep_integer(x):
     if x is None:
@@ -482,5 +486,7 @@ def indicateurs_base_contact(df_formation_session_resultat, df_ref_structure):
         taux_nouveau_form, taux_nouveau_form_DT,
         'n_structure'
     )
+
+    indicateurs_base_contact_DT_pd = indicateurs_base_contact_DT_pd[indicateurs_base_contact_DT_pd['n_structure'] != '']
 
     return indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd
