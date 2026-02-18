@@ -173,6 +173,37 @@ def fusion_donnees_financieres(dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso
 
   _ , _ , _, df_financier_DT_UL = apply_rattachement_successif(df_ref_structure, df_financier_DT_UL, col = 'n_structure')
 
+  # masque sur le groupe particulier
+  mask = df_financier_DT_UL['n_structure'] == 4381
+  df_subset = df_financier_DT_UL.loc[mask].copy()
+
+  # filtrer la ligne UL ou DT pour Treso et Mois_Avance
+  mask_dt_ul = df_subset['libelle_structure'].str.contains('DT|UL', case=False, na=False)
+  df_dt_ul = df_subset.loc[mask_dt_ul]
+
+  # récupérer la valeur si elle existe, sinon NaN
+  treso_non_na = df_dt_ul['Financier TresoBrute_2024'].dropna()
+  treso_value = treso_non_na.iloc[0] if not treso_non_na.empty else np.nan
+
+  avance_non_na = df_dt_ul['Financier Mois_AvanceTreso_2024'].dropna()
+  avance_value = avance_non_na.iloc[0] if not avance_non_na.empty else np.nan
+
+  # somme pour Prod et ResNet
+  prod_sum = df_subset['Financier Prod_2024'].sum()
+  resnet_sum = df_subset['Financier ResNet_2024'].sum()
+
+  # recalcul du ratio uniquement si agrégation réelle
+  rescorr = resnet_sum / prod_sum if len(df_subset) > 1 and prod_sum != 0 else df_subset['Financier ResCorrProd_2024'].iloc[0]
+
+  # mise à jour du dataframe original
+  df_financier_DT_UL.loc[mask, 'Financier Prod_2024'] = prod_sum
+  df_financier_DT_UL.loc[mask, 'Financier ResNet_2024'] = resnet_sum
+  df_financier_DT_UL.loc[mask, 'Financier ResCorrProd_2024'] = rescorr
+  df_financier_DT_UL.loc[mask, 'Financier TresoBrute_2024'] = treso_value
+  df_financier_DT_UL.loc[mask, 'Financier Mois_AvanceTreso_2024'] = avance_value
+
+  df_financier_DT_UL = df_financier_DT_UL.drop_duplicates(subset=['n_structure'], keep='first')
+
 
 
   # Pas de numéro de structure pour le dataframe contenant les DT, on fera le merge sur le numéro de département
