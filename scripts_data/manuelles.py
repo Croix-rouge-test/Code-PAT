@@ -341,7 +341,7 @@ def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
     df = df_OCR.copy()
 
 
-    df = df[df["Statut"].isin(["En cours"])]
+    df = df[df["Statut"].isin(["En cours", "Projet"])]
     df = df[df["Année"] == "2025-2026"]
 
 
