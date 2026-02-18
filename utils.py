@@ -896,4 +896,140 @@ def ajouter_colonne_somme(df: pd.DataFrame, col1: str, col2: str) -> pd.DataFram
     df[nom_nouvelle_colonne] = df[col1] + df[col2]
     return df
 
+def vision_conso(df_alldata, df_alldata_DT):
+  # sélection des colonnes pour vision consolidée FPG
+
+  formations_certifiantes = [
+      'Formation_grand_public Nb_formes_PSC_2025',
+      'Formation_grand_public Nb_formes_GQS_2025',
+      'Formation_grand_public Nb_sessions_PSC_2025',
+      'Formation_grand_public Nb_sessions_GQS_2025'
+  ]
+
+  df_alldata['vision_conso_FGP_certifiantes'] = (
+      df_alldata[formations_certifiantes]
+      .fillna(0)
+      .sum(axis=1)
+      .gt(0)
+      .map({True: 'Action menée', False: 'Non menée'})
+  )
+
+
+
+  formations_non_certifiantes = [
+      'Formation_grand_public Nb_formes_IPSEN_2025',
+      'Formation_grand_public Nb_formes_IPS_2025',
+      'Formation_grand_public Nb_formes_PREVIC_2025',
+      'Formation_grand_public Nb_sessions_IPSEN_2025',
+      'Formation_grand_public Nb_sessions_IPS_2025',
+      'Formation_grand_public Nb_sessions_PREVIC_2025'
+  ]
+
+  df_alldata['vision_conso_FGP_noncertifiantes'] = (
+      df_alldata[formations_non_certifiantes]
+      .fillna(0)
+      .sum(axis=1)
+      .gt(0)
+      .map({True: 'Action menée', False: 'Non menée'})
+  )
+
+
+
+  # df_alldata['vision_territoriale_activite_DPS'] = (
+  #     df_alldata['Secours Nb_DPS_2025']
+  #     .fillna(0)
+  #     .sum(axis=1)
+  #     .gt(0)
+  #     .map({True: 'Action menée', False: 'Non menée'})
+  # )
+
+
+  formations_secours = [
+      'Secours Nb_PSE1',
+      'Secours Nb_PSE2',
+      'Secours Nb_CI'
+  ]
+
+  # df_alldata['vision_territoriale_formation_DPS'] = (
+  #     df_alldata['formations_secours']
+  #     .fillna(0)
+  #     .sum(axis=1)
+  #     .gt(0)
+  #     .map({True: 'Action menée', False: 'Non menée'})
+  # )
+
+
+
+
+  # Ajout du 'Action non menée' sur les autres colonnes
+
+  colonnes_non_menee = [
+      'OCR Nb_deployees',
+      'Maraude Nb_maraudes_SIGMA',
+      # 'Secours Nb_DPS_2025',
+      'Textile Nb_dispositifs',
+      'Aide_alimentaire Nb_U2A'
+  ]
+
+  df_alldata[colonnes_non_menee] = df_alldata[colonnes_non_menee].astype(str)
+  df_alldata[colonnes_non_menee] = (
+      df_alldata[colonnes_non_menee]
+      .fillna('Non menée')
+  )
+
+
+
+  # Nb de structures menant l'activité
+
+  colonnes_nb_structure = [
+      ('OCR Nb_deployees', 'OCR Structures_menant_activite'),
+      ('Maraude Nb_maraudes_SIGMA', 'Maraudes Structures_menant_activite'),
+      #('Secours Nb_DPS_2025', 'Secours Structures_menant_activite'),
+      # 'AEO Structure_activite_fixe',
+      # 'AEO Structure_activite_mobile',
+      ('Dispositifs_d_urgence Nb_formes_TCAU_2025','Dispositifs_d_urgence Structures_menant_activite_TCAU'),
+      ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'Dispositifs_d_urgence Structures_menant_activite_PSP'),
+      ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'Dispositifs_d_urgence Structures_menant_activite_GQS')
+  ]
+  colonnes_actions = [col_output for _, col_output in colonnes_nb_structure]
+  def action(x):
+    if x == ''  or x == 'nan' or x == '<NA>':
+      return 'Action non menée'
+    else :
+      if float(str(x)) > 0 : 
+        return 'Action menée'
+      else : 
+        return 'Action non menée'
+
+  for col_input, col_output in colonnes_nb_structure:
+      
+      # Conversion en numérique (force les erreurs en NaN)
+      df_alldata[col_input] = pd.to_numeric(df_alldata[col_input], errors='coerce')
+      
+      # 1 si > 0 sinon 0
+      df_alldata[col_output] = (df_alldata[col_input] > 0).astype(int)
+
+
+  df_grouped = (
+      df_alldata
+      .groupby('DT_de_rattachement')[colonnes_actions]
+      .sum()
+      .reset_index()
+  )
+
+
+
+  for col_input, col_output in colonnes_nb_structure:
+
+
+      df_alldata[col_output] = df_alldata[col_output].map({1: 'Action menée', 0: 'Non menée'})
+
+ 
+
+  df_grouped = df_grouped[colonnes_actions + ['DT_de_rattachement']]
+
+  df_alldata_DT = pd.merge(df_alldata_DT, df_grouped, on='DT_de_rattachement', how='left')
+
+
+  return df_alldata, df_alldata_DT
   
