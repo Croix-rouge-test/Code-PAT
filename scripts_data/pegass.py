@@ -680,6 +680,9 @@ def calcul_PEGASS_indicateurs(
     # Merge global des 3 indicateurs
     Indics_pegass = pd.merge(nb_Maraude_Pegass1, nb_operations_Pegass1, on="n_structure", how="outer")
     Indics_pegass = pd.merge(Indics_pegass, nb_Exercice_Pegass1, on="n_structure", how="outer")
+    Indics_pegass = pd.merge(Indics_pegass, nb_ben_Maraude_Pegass, on="n_structure", how="outer")
+    Indics_pegass = pd.merge(Indics_pegass, nb_ben_IS_Pegass, on="n_structure", how="outer")
+    Indics_pegass = pd.merge(Indics_pegass, nb_ben_AEO_Pegass, on="n_structure", how="outer")
 
     Indics_pegass_struct = pd.merge(Indics_pegass, nb_AEO_Pegass1, on="n_structure", how="outer")
 
@@ -692,7 +695,10 @@ def calcul_PEGASS_indicateurs(
         "nb_Maraude_Pegass",
         "Dispositifs_d_urgence Nb_operations",
         "Dispositifs_d_urgence Nb_exercices",
-        "nb_activite_AEO"
+        "nb_activite_AEO",
+        "Maraude Nb_benevoles_actifs",
+        "AEO Nb_benevoles_actifs",
+        "IS Nb_benevoles_actifs"
     ]]
 
     Indics_pegass_DT = pd.merge(Indics_pegass_DT, df_rattachement_court, on="n_structure", how="inner")
@@ -705,7 +711,10 @@ def calcul_PEGASS_indicateurs(
         "nb_Maraude_Pegass",
         "Dispositifs_d_urgence Nb_operations",
         "Dispositifs_d_urgence Nb_exercices",
-        "AEO Structure_activite_fixe"
+        "AEO Structure_activite_fixe",
+        "Maraude Nb_benevoles_actifs",
+        "AEO Nb_benevoles_actifs",
+        "IS Nb_benevoles_actifs"
     ]]
 
     return {
