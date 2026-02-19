@@ -1030,6 +1030,27 @@ def vision_conso(df_alldata, df_alldata_DT):
 
   df_alldata_DT = pd.merge(df_alldata_DT, df_grouped, on='DT_de_rattachement', how='left')
 
+  #Partie structure menant activite AEO
+
+  df_alldata["AEO Structure_activite_mobile"] = df_alldata["AEO Structure_activite_mobile"].astype(object)
+  df_alldata.loc[df_alldata["AEO Structure_activite_mobile"].notna(), ["AEO Structure_activite_mobile"]] = "Activité AEO/AAD en dispositif mobile"
+  
+  
+  fixe = df_alldata["AEO Structure_activite_fixe"]
+  mobile = df_alldata["AEO Structure_activite_mobile"]
+  
+  df_alldata["AEO Structures_menant_activite"] = (
+      fixe.fillna("").astype(str).str.strip()
+      + " | " +
+      mobile.fillna("").astype(str).str.strip()
+  ).str.strip(" |")
+  
+  df_alldata["AEO Structures_menant_activite"] =df_alldata["AEO Structures_menant_activite"].replace('Activités AEO/AAD menée en fixe | Activité AEO/AAD en dispositif mobile',"Activité AEO/AAD en site fixe et en dispositif mobile")
+  
+  df_alldata["AEO Structures_menant_activite"] =df_alldata["AEO Structures_menant_activite"].replace('Activités AEO/AAD menée en fixe',"Activité AEO/AAD en site fixe")
+  
+  df_alldata["AEO Structures_menant_activite"] =df_alldata["AEO Structures_menant_activite"].replace('','Activité AEO/AAD non menée')
 
   return df_alldata, df_alldata_DT
   
+
