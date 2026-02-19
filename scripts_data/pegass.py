@@ -168,7 +168,7 @@ def get_codes_nb_operations():
     return [10132, 10133, 10134, 10135, 10136, 10137, 10119, 10125, 10126, 10127, 10128, 10129]
 
 def get_codes_aeo():
-    return [10015, 10046, 10047, 11126]
+    return [10015]
 
 def get_codes_dps():
     return [10105, 10106, 11007, 10108, 10113]
