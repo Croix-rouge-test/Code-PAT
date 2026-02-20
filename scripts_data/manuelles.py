@@ -422,11 +422,11 @@ def indicateurs_PST(df_PST, df_ref_structure):
 
     def statut_pst(valeur):
         if valeur == "oui":
-            return "oui"
+            return "Oui"
         elif valeur == "en cours":
-            return "en cours"
+            return "En cours"
         else:
-            return "non"
+            return "Non"
 
 
     df["Dispositifs_d_urgence PST"] = df["PST constitué"].apply(statut_pst)
@@ -708,4 +708,5 @@ def verif_textile(df_raw_Textile_c, df_raw_ProdResTextile_c, df_raw_Textile, df_
   verifier_colonne_structure(df_raw_ProdResTextile, "n_structure", df_ref_structure)
   verifier_colonne_structure(df_Textile_DT.reset_index(), "DT_de_rattachement", rattachement_court)
   verifier_colonne_structure(df_Textile_financier_DT, "DT_de_rattachement", rattachement_court)
+
 
