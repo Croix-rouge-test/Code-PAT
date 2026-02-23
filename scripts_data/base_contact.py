@@ -425,30 +425,31 @@ def indicateurs_base_contact(df_formation_session_resultat, df_ref_structure):
     # Définition filtres
     filtres_bc = {
         'CRB' : ['CRB', 'eCRB', 'VI'],
-        'ACRB' : ['AVI','ACRB2','ACRB3','ACRB2024'],
-        'TCAS' : ['TCAS','TCAS2', 'ETCAS'],
+        'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], #'AVI', enlevé sur recco Patrick Baastos
+        'TCAS' : ['TCAS', 'ETCAS'], #'TCAS2', enlevé sur recco Patrick Baastos
         'TCAU' : ['TCAU', 'ETCAU'],
-        'TCEO' : ['TCEO'],
-        'PSP' : ['PSP','PSP1'],
+        'TCEO' : ['TCEO','ESE'],
+        'PSP' : ['PSP'], #'PSP1' enlevé sur recco Patrick Baastos
         'IRR' : ['IRR','IRRA','IRRJ'],
         'solidar' : ['SOLIDAR2','SOLIDAR1','SOLIDAR'],
         'solidar20' : ['PASSSOLIDAR2020','PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'],
-        'AAD' : ['AAD','IAD','MAO'],
+        'AAD' : ['AAD'], #,'IAD','MAO' enlevé sur recco Patrick Baastos
         'FAAD' : ['FAAD','FAAAD','EPIAF FAAD'],
         'FPSC' : ['FCFPSC','RATFCFPSC'],
         'AGQS' : ['AGQS','RATAGQS'],
         'FIPSEN' : ['FIPSEN','RECFIPSEN'],
         'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1'],
         'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2'],
-        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CIP3', 'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI'],
-        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC"],
-        'GQS' : ['GQS'],
+        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'], #'CIP3',  enlevé sur recco Patrick Baastos
+        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC", 'PSC','PSC IRR','EPSC','PSC AC'],
+        'GQS' : ['GQS', 'GQS AC'],
         'IPSEN' : ['IPSEN'],
         'IPS' : ['IPS', 'IPS SR', 'ISPE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
         'PREVIC' : ['PREVIC'],
         'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE'],
         'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2']
     }
+
 
 
     # Ajouter DT
@@ -490,3 +491,4 @@ def indicateurs_base_contact(df_formation_session_resultat, df_ref_structure):
     indicateurs_base_contact_DT_pd = indicateurs_base_contact_DT_pd[indicateurs_base_contact_DT_pd['n_structure'] != '']
 
     return indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd
+
