@@ -906,7 +906,7 @@ def vision_conso(df_alldata, df_alldata_DT):
       'Formation_grand_public Nb_sessions_GQS_2025'
   ]
 
-  df_alldata['vision_conso_FGP_certifiantes'] = (
+  df_alldata['Formation_grand_public Activite_Conso_Etat'] = (
       df_alldata[formations_certifiantes]
       .fillna(0)
       .sum(axis=1)
@@ -925,7 +925,7 @@ def vision_conso(df_alldata, df_alldata_DT):
       'Formation_grand_public Nb_sessions_PREVIC_2025'
   ]
 
-  df_alldata['vision_conso_FGP_noncertifiantes'] = (
+  df_alldata['Formation_grand_public Activite_Conso_Non_Etat'] = (
       df_alldata[formations_non_certifiantes]
       .fillna(0)
       .sum(axis=1)
@@ -983,10 +983,8 @@ def vision_conso(df_alldata, df_alldata_DT):
 
   colonnes_nb_structure = [
       ('OCR Nb_deployees', 'OCR Structures_menant_activite'),
-      ('Maraude Nb_maraudes_SIGMA', 'Maraudes Structures_menant_activite'),
-      #('Secours Nb_DPS_2025', 'Secours Structures_menant_activite'),
-      # 'AEO Structure_activite_fixe',
-      # 'AEO Structure_activite_mobile',
+      ('Secours Nb_DPS_2025', 'Secours Structures_menant_activite'),
+      ('nb_Maraude_Pegass', 'Maraudes Structures_menant_activite'),
       ('Dispositifs_d_urgence Nb_formes_TCAU_2025','Dispositifs_d_urgence Structures_menant_activite_TCAU'),
       ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'Dispositifs_d_urgence Structures_menant_activite_PSP'),
       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'Dispositifs_d_urgence Structures_menant_activite_GQS')
@@ -1050,6 +1048,26 @@ def vision_conso(df_alldata, df_alldata_DT):
   df_alldata["AEO Structures_menant_activite"] =df_alldata["AEO Structures_menant_activite"].replace('Activités AEO/AAD menée en fixe',"Activité AEO/AAD en site fixe")
   
   df_alldata["AEO Structures_menant_activite"] =df_alldata["AEO Structures_menant_activite"].replace('','Activité AEO/AAD non menée')
+
+
+  # Structures menant activité
+
+  df_alldata['Formation_grand_public Activite_Conso_Etat'] = df_alldata['vision_conso_FGP_certifiantes'].fillna('')
+  df_alldata['Formation_grand_public Activite_Conso_Non_Etat'] = df_alldata['vision_conso_FGP_noncertifiantes'].fillna('')
+  df_alldata['Formation_grand_public Structures_menant_activite'] = df_alldata[['Formation_grand_public Activite_Conso_Etat', 'Formation_grand_public Activite_Conso_Non_Etat']].apply(
+      lambda row: 1
+      if (row['Formation_grand_public Activite_Conso_Etat'] == "Action menée") or (row['Formation_grand_public Activite_Conso_Non_Etat'] == "Action menée")
+      else 0 ,
+      axis=1
+  )
+
+  df_grouped = (
+      df_alldata
+      .groupby('DT_de_rattachement')['Formation_grand_public Structures_menant_activite']
+      .sum()
+      .reset_index()
+  )
+  df_alldata['Formation_grand_public Structures_menant_activite'] = df_alldata['Formation_grand_public Structures_menant_activite'].map({1: 'Action menée', 0: 'Action non menée'})
 
   return df_alldata, df_alldata_DT
   
