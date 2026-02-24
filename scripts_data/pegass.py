@@ -686,6 +686,11 @@ def calcul_PEGASS_indicateurs(
 
     Indics_pegass_struct = pd.merge(Indics_pegass, nb_AEO_Pegass1, on="n_structure", how="outer")
 
+    #Ajout d'un indic pour le calcul du nombre d'AEO fixe par DT
+    Indics_pegass_struct["AEO_COUNT_Structure_activite_fixe"] = (Indics_pegass_struct["nb_AEO_Pegass1"].eq("Activités AEO/AAD menée en fixe").astype(int)
+    )
+    
+
     ref_structure2 = filter_ul_dt(ref_structure1)
     Indics_pegass_struct = pd.merge(Indics_pegass_struct, ref_structure2, on="n_structure", how="inner")
 
@@ -698,12 +703,13 @@ def calcul_PEGASS_indicateurs(
         "nb_activite_AEO",
         "Maraude Nb_benevoles_actifs",
         "AEO Nb_benevoles_actifs",
-        "IS Nb_benevoles_actifs"
+        "IS Nb_benevoles_actifs",
+        "AEO_COUNT_Structure_activite_fixe"
     ]]
 
     Indics_pegass_DT = pd.merge(Indics_pegass_DT, df_rattachement_court, on="n_structure", how="inner")
     Indics_pegass_DT = (Indics_pegass_DT.groupby("DT_de_rattachement", as_index=False).sum(numeric_only=True))
-    Indics_pegass_DT = Indics_pegass_DT.rename(columns={"nb_activite_AEO": "AEO Structure_activite_fixe"}).drop(['n_structure'], axis = 1)
+    Indics_pegass_DT = Indics_pegass_DT.rename(columns={"AEO_COUNT_Structure_activite_fixe" : "AEO Structure_activite_fixe"}).drop(['n_structure'], axis = 1)
 
     # netoyage DF structure => j'ai dupliqué et CALER APRES LES VERIFS
     Indics_pegass_struct = Indics_pegass_struct[[
