@@ -1054,7 +1054,6 @@ def vision_conso(df_alldata, df_alldata_DT):
       .groupby('DT_de_rattachement')["AEO Structures_menant_activite"]
       .apply(lambda x: (x != "Activité AEO/AAD non menée").sum())
       .reset_index()
-      .rename(columns={"AEO Structures_menant_activite": "n_structure_activite_menee"})
   )
 
   df_alldata_DT = pd.merge(df_alldata_DT, df_grouped, on='DT_de_rattachement', how='left')  
