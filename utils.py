@@ -966,7 +966,7 @@ def vision_conso(df_alldata, df_alldata_DT):
   colonnes_non_menee = [
       'OCR Nb_deployees',
       'Maraude Nb_maraudes_SIGMA',
-      # 'Secours Nb_DPS_2025',
+      'Secours Nb_DPS_2025',
       'Textile Nb_dispositifs',
       'Aide_alimentaire Nb_U2A'
   ]
