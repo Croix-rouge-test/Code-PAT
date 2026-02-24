@@ -966,7 +966,7 @@ def vision_conso(df_alldata, df_alldata_DT):
   colonnes_non_menee = [
       'OCR Nb_deployees',
       'Maraude Nb_maraudes_SIGMA',
-      'Secours Nb_DPS_2025',
+      # 'Secours Nb_DPS_2025',
       'Textile Nb_dispositifs',
       'Aide_alimentaire Nb_U2A'
   ]
@@ -982,46 +982,46 @@ def vision_conso(df_alldata, df_alldata_DT):
   # Nb de structures menant l'activité
 
   colonnes_nb_structure = [
-      ('OCR Nb_deployees', 'OCR Structures_menant_activite'),
-      ('Secours Nb_DPS_2025', 'Secours Structures_menant_activite'),
-      ('nb_Maraude_Pegass', 'Maraudes Structures_menant_activite'),
-      ('Dispositifs_d_urgence Nb_formes_TCAU_2025','Dispositifs_d_urgence Structures_menant_activite_TCAU'),
-      ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'Dispositifs_d_urgence Structures_menant_activite_PSP'),
-      ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'Dispositifs_d_urgence Structures_menant_activite_GQS')
+    (('OCR Nb_deployees',), 'OCR Structures_menant_activite'),
+    (('Secours Nb_DPS_2025','Secours Nb_PAPS_2025','Secours Nb_DPS_PE_2025','Secours Nb_DPS_ME_2025','Secours Nb_DPS_GE_2025'), 'Secours Structures_menant_activite'),
+    (('Secours Nb_PSE1','Secours Nb_PSE2','Secours Nb_CI'), 'Secours Structures_menant_activite_formes'),
+    (('Formation_grand_public Nb_sessions_PSE','Formation_grand_public Nb sessions_CI','Formation_grand_public Nb_sessions_FPSE'), 'Secours Structures_menant_activite_sessions'),
+    (('nb_Maraude_Pegass',), 'Maraudes Structures_menant_activite'),
+    (('Dispositifs_d_urgence Nb_formes_TCAU_2025',), 'Dispositifs_d_urgence Structures_menant_activite_TCAU'),
+    (('Dispositifs_d_urgence Nb_formes_PSP_2025',), 'Dispositifs_d_urgence Structures_menant_activite_PSP'),
+    (('Dispositifs_d_urgence Nb_formes_GQS_2025',), 'Dispositifs_d_urgence Structures_menant_activite_GQS'),
+
   ]
   colonnes_actions = [col_output for _, col_output in colonnes_nb_structure]
-  def action(x):
-    if x == ''  or x == 'nan' or x == '<NA>':
-      return 'Action non menée'
-    else :
-      if float(str(x)) > 0 : 
-        return 'Action menée'
-      else : 
-        return 'Action non menée'
 
-  for col_input, col_output in colonnes_nb_structure:
+  for cols_input, col_output in colonnes_nb_structure:
       
-      # Conversion en numérique (force les erreurs en NaN)
-      df_alldata[col_input] = pd.to_numeric(df_alldata[col_input], errors='coerce')
+      # garantir un tuple même si une seule colonne
+      if isinstance(cols_input, str):
+          cols_input = (cols_input,)
       
-      # 1 si > 0 sinon 0
-      df_alldata[col_output] = (df_alldata[col_input] > 0).astype(int)
-
+      # conversion numérique
+      df_alldata[list(cols_input)] = df_alldata[list(cols_input)].apply(
+          pd.to_numeric, errors='coerce'
+      )
+      
+      # 1 si au moins une valeur > 0
+      df_alldata[col_output] = (df_alldata[list(cols_input)] > 0).any(axis=1).astype(int)
 
   df_grouped = (
-      df_alldata
-      .groupby('DT_de_rattachement')[colonnes_actions]
-      .sum()
-      .reset_index()
+    df_alldata[['DT_de_rattachement'] + colonnes_actions]
+    .groupby('DT_de_rattachement')[colonnes_actions]
+    .sum()
+    .reset_index()
   )
 
 
 
-  for col_input, col_output in colonnes_nb_structure:
-
-
-      df_alldata[col_output] = df_alldata[col_output].map({1: 'Action menée', 0: 'Non menée'})
-
+  for _, col_output in colonnes_nb_structure:
+    df_alldata[col_output] = df_alldata[col_output].map({
+        1: 'Action menée',
+        0: 'Action non menée'
+    })
  
 
   df_grouped = df_grouped[colonnes_actions + ['DT_de_rattachement']]
