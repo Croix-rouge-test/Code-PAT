@@ -687,7 +687,7 @@ def calcul_PEGASS_indicateurs(
     Indics_pegass_struct = pd.merge(Indics_pegass, nb_AEO_Pegass1, on="n_structure", how="outer")
 
     #Ajout d'un indic pour le calcul du nombre d'AEO fixe par DT
-    Indics_pegass_struct["AEO_COUNT_Structure_activite_fixe"] = (Indics_pegass_struct["nb_AEO_Pegass1"].eq("Activités AEO/AAD menée en fixe").astype(int)
+    Indics_pegass_struct["AEO_COUNT_Structure_activite_fixe"] = (Indics_pegass_struct["AEO Structure_activite_fixe"].eq("Activités AEO/AAD menée en fixe").astype(int)
     )
     
 
