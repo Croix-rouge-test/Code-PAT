@@ -1062,12 +1062,14 @@ def vision_conso(df_alldata, df_alldata_DT):
   )
 
   df_grouped = (
-      df_alldata
+      df_alldata[['DT_de_rattachement','Formation_grand_public Structures_menant_activite']]
       .groupby('DT_de_rattachement')['Formation_grand_public Structures_menant_activite']
       .sum()
       .reset_index()
   )
   df_alldata['Formation_grand_public Structures_menant_activite'] = df_alldata['Formation_grand_public Structures_menant_activite'].map({1: 'Action menée', 0: 'Action non menée'})
+
+  df_alldata_DT = pd.merge(df_alldata_DT, df_grouped, on='DT_de_rattachement', how='left')  
 
   return df_alldata, df_alldata_DT
   
