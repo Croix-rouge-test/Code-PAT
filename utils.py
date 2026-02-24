@@ -1052,8 +1052,8 @@ def vision_conso(df_alldata, df_alldata_DT):
 
   # Structures menant activité
 
-  df_alldata['Formation_grand_public Activite_Conso_Etat'] = df_alldata['vision_conso_FGP_certifiantes'].fillna('')
-  df_alldata['Formation_grand_public Activite_Conso_Non_Etat'] = df_alldata['vision_conso_FGP_noncertifiantes'].fillna('')
+  df_alldata['Formation_grand_public Activite_Conso_Etat'] = df_alldata['Formation_grand_public Activite_Conso_Etat'].fillna('')
+  df_alldata['Formation_grand_public Activite_Conso_Non_Etat'] = df_alldata['Formation_grand_public Activite_Conso_Non_Etat'].fillna('')
   df_alldata['Formation_grand_public Structures_menant_activite'] = df_alldata[['Formation_grand_public Activite_Conso_Etat', 'Formation_grand_public Activite_Conso_Non_Etat']].apply(
       lambda row: 1
       if (row['Formation_grand_public Activite_Conso_Etat'] == "Action menée") or (row['Formation_grand_public Activite_Conso_Non_Etat'] == "Action menée")
