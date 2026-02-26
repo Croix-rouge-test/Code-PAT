@@ -170,14 +170,15 @@ def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
 
 
 def nb_session_form(df_2025, filtres_bc, col_groupby):
-    df_res = df_2025[df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui'].copy()
+    #df_res = df_2025[df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui'].copy()
+    df_res = df_2025.copy()
     for name, code in [('Formation_grand_public Nb_sessions_PSC_2025', 'PSC'),
                        ('Formation_grand_public Nb_sessions_GQS_2025', 'GQS'),
                        ('Formation_grand_public Nb_sessions_IPS_2025', 'IPS'),
                        ('Formation_grand_public Nb_sessions_IPSEN_2025', 'IPSEN'),
                        ('Formation_grand_public Nb_sessions_PREVIC_2025', 'PREVIC'),
                        ('Formation_grand_public Nb_sessions_PSE', 'PSE'),
-                       ('Formation_grand_public Nb sessions_CI', 'CI'),
+                       ('Formation_grand_public Nb_sessions_CI', 'CI'),
                        ('Formation_grand_public Nb_sessions_FPSE', 'FPS')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
@@ -186,12 +187,12 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
     codes_df = set(df_res['FORMATION_CODE'].unique())
 
     for name, code in [('Formation_grand_public Nb_sessions_PSC_2025', 'PSC'),
-                       ('Formation_grand-public Nb_sessions_GQS_2025', 'GQS'),
-                       ('Formation_grand-public Nb_sessions_IPS_2025', 'IPS'),
-                       ('Formation_grand-public Nb_sessions_IPSEN_2025', 'IPSEN'),
-                       ('Formation_grand-public Nb_sessions_PREVIC_2025', 'PREVIC'),
+                       ('Formation_grand_public Nb_sessions_GQS_2025', 'GQS'),
+                       ('Formation_grand_public Nb_sessions_IPS_2025', 'IPS'),
+                       ('Formation_grand_public Nb_sessions_IPSEN_2025', 'IPSEN'),
+                       ('Formation_grand_public Nb_sessions_PREVIC_2025', 'PREVIC'),
                        ('Formation_grand_public Nb_sessions_PSE', 'PSE'),
-                       ('Formation_grand_public Nb sessions_CI', 'CI'),
+                       ('Formation_grand_public Nb_sessions_CI', 'CI'),
                        ('Formation_grand_public Nb_sessions_FPSE', 'FPS')]:
         codes_attendus = set(filtres_bc.get(code, []))
         codes_trouves = codes_df.intersection(codes_attendus)
@@ -214,7 +215,7 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
                                                                   'Formation_grand_public Nb_sessions_IPSEN_2025',
                                                                   'Formation_grand_public Nb_sessions_PREVIC_2025',
                                                                   'Formation_grand_public Nb_sessions_PSE',
-                                                                  'Formation_grand_public Nb sessions_CI',
+                                                                  'Formation_grand_public Nb_sessions_CI',
                                                                   'Formation_grand_public Nb_sessions_FPSE']})
     ).reset_index()
 
@@ -226,7 +227,7 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
                        ('Formation_grand_public Nb_sessions_IPSEN_2025', 'IPSEN'),
                        ('Formation_grand_public Nb_sessions_PREVIC_2025', 'PREVIC'),
                        ('Formation_grand_public Nb_sessions_PSE', 'PSE'),
-                       ('Formation_grand_public Nb sessions_CI', 'CI'),
+                       ('Formation_grand_public Nb_sessions_CI', 'CI'),
                        ('Formation_grand_public Nb_sessions_FPSE', 'FPS')]]].sum()
     for col in totaux.index:
         print(f"{col} : {totaux[col]}")
@@ -412,32 +413,32 @@ def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
 
 def clean_base_contact(client, df_ref_structure):
 
-    filtres_bc = {
-        'CRB' : ['CRB', 'eCRB', 'VI'],
-        'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], #'AVI'
-        'TCAS' : ['TCAS', 'ETCAS'], #'TCAS2'
-        'TCAU' : ['TCAU', 'ETCAU'],
-        'TCEO' : ['TCEO','ESE'],
-        'PSP' : ['PSP'], #'PSP1'
-        'IRR' : ['IRR','IRRA','IRRJ'],
-        'solidar' : ['SOLIDAR2','SOLIDAR1','SOLIDAR'],
-        'solidar20' : ['PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'], #'PASSSOLIDAR2020'
-        'AAD' : ['AAD'], #'IAD','MAO'
-        'FAAD' : ['FAAD','FAAAD','EPIAF FAAD'],
-        'FPSC' : ['FCFPSC','RATFCFPSC'],
-        'AGQS' : ['AGQS'], #,'RATAGQS'
-        'FIPSEN' : ['FIPSEN','RECFIPSEN'],
-        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','PSE'], #rajout de PSE
-        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2'],
-        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CIP3', 'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'],
-        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'ePSC', 'PSC AC'],
-        'GQS' : ['GQS', 'GQS AC'],
-        'IPSEN' : ['IPSEN'],
-        'IPS' : ['IPS', 'IPS SR', 'ISPE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
-        'PREVIC' : ['PREVIC'],
-        'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE'], #A voir si il faut suppr FCPSE
-        'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2']
-    }
+    codes_filtres_bc = [
+    'CRB', 'ECRB', 'VI',
+    'ACRB', 'ACRB2', 'ACRB3', 'ACRB2024',
+    'TCAS', 'ETCAS',
+    'TCAU', 'ETCAU',
+    'TCEO', 'ESE',
+    'PSP',
+    'IRR', 'IRRA', 'IRRJ',
+    'SOLIDAR2', 'SOLIDAR1', 'SOLIDAR',
+    'PASSOLIDAR2020', 'ESOLIDAR2026', 'SOLIDAR2020',
+    'AAD',
+    'FAAD', 'FAAAD', 'EPIAF FAAD',
+    'FCFPSC', 'RATFCFPSC',
+    'AGQS',
+    'FIPSEN', 'RECFIPSEN',
+    'APTE PSE1', 'PSE1', 'RECPSE1', 'RATPSE1', 'PSE',
+    'RECPSE2', 'PSE2', 'RECPSE2', 'PSE', 'RATPSE2',
+    'CI P1 P2', 'CI', 'CIP1', 'CIP2', 'CIP3', 'CI EXT', 'RECCI', 'REC PSECI', 'RECPSECI', 'RATCI', 'FCCI',
+    'PSC1 IRR', 'EPSC1', 'RECPSC1', 'PSC1', 'PSC1 AC', 'PSC', 'PSC IRR', 'EPSC', 'PSC AC',
+    'GQS', 'GQS AC',
+    'IPSEN',
+    'IPS', 'IPS SR', 'IPSE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC',
+    'PREVIC',
+    'RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE',
+    'APTE PSE1', 'PSE1', 'RECPSE1', 'RATPSE1', 'RECPSE2', 'PSE2', 'RECPSE2', 'PSE', 'RATPSE2'
+    ] 
 
 
 
@@ -449,7 +450,7 @@ def clean_base_contact(client, df_ref_structure):
     df_formation_session_resultat['FORMATION_DATE_OBTENTION'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_OBTENTION'], errors='coerce')
     df_formation_session_resultat['FORMATION_DATE_RECYCLAGE'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_RECYCLAGE'], errors='coerce')
 
-    df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat["FORMATION_CODE"].isin( filtres_bc )]
+    df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat["FORMATION_CODE"].isin( codes_filtres_bc )]
 
 
     query_rattachement_benevole = """
@@ -474,16 +475,16 @@ def clean_base_contact(client, df_ref_structure):
     _ , _ , _, df_formation_session_resultat_rattachement = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat_rattachement, col = 'rattachement_benevole_structure_id_fk')
 
 
-    df_formation_session_resultat_rattachement = df_formation_session_resultat_rattachement[
-    df_formation_session_resultat_rattachement["rattachement_benevole_structure_id_fk"].isin(
-        df_ref_structure["n_structure"] )]
+    # df_formation_session_resultat_rattachement = df_formation_session_resultat_rattachement[
+    # df_formation_session_resultat_rattachement["rattachement_benevole_structure_id_fk"].isin(
+    #     df_ref_structure["n_structure"] )]
 
-    df_formation_session_resultat = df_formation_session_resultat[
-    df_formation_session_resultat["FORMATION_SESSION_STRUCTURE_ID_FK"].isin(
-        df_ref_structure["n_structure"]
-    )]
+    # df_formation_session_resultat = df_formation_session_resultat[
+    # df_formation_session_resultat["FORMATION_SESSION_STRUCTURE_ID_FK"].isin(
+    #     df_ref_structure["n_structure"]
+    # )]
 
-    df_formation_count_session = df_formation_session_resultat
+    df_formation_count_session = df_formation_session_resultat.copy()
     df_formation_count_session = df_formation_count_session.rename(columns={"FORMATION_SESSION_STRUCTURE_ID_FK": "n_structure"})
     df_formation_count_session = dt_rattachement(df_formation_count_session, df_ref_structure)
     df_formation_count_session_2025 = df_formation_count_session[df_formation_count_session['FORMATION_DATE_OBTENTION'].dt.year == 2025].copy()
@@ -492,12 +493,12 @@ def clean_base_contact(client, df_ref_structure):
     df_formation_session_resultat = df_formation_session_resultat.rename(columns={"rattachement_benevole_structure_id_fk": "n_structure"})
 
 
-    return df_formation_session_resultat, df_formation_count_session, df_formation_count_session_2025
+    return df_formation_session_resultat, df_formation_count_session_2025
 
-def indicateurs_base_contact(df_formation_session_resultat, df_formation_count_session, df_formation_count_session_2025, df_ref_structure): 
+def indicateurs_base_contact(df_formation_session_resultat, df_formation_count_session_2025, df_ref_structure): 
     # Définition filtres
     filtres_bc = {
-        'CRB' : ['CRB', 'eCRB', 'VI'],
+        'CRB' : ['CRB', 'ECRB', 'VI'],
         'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], #'AVI'
         'TCAS' : ['TCAS', 'ETCAS'], #'TCAS2'
         'TCAU' : ['TCAU', 'ETCAU'],
@@ -514,10 +515,10 @@ def indicateurs_base_contact(df_formation_session_resultat, df_formation_count_s
         'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','PSE'], #rajout de PSE
         'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2'],
         'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CIP3', 'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'],
-        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'ePSC', 'PSC AC'],
+        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC'],
         'GQS' : ['GQS', 'GQS AC'],
         'IPSEN' : ['IPSEN'],
-        'IPS' : ['IPS', 'IPS SR', 'ISPE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
+        'IPS' : ['IPS', 'IPS SR', 'IPSE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
         'PREVIC' : ['PREVIC'],
         'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE'], #A voir si il faut suppr FCPSE
         'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2']
