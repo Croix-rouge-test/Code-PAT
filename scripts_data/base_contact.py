@@ -15,7 +15,8 @@ def dt_rattachement(df, df_ref_structure):
     """
     Associer les structures avec la DT de rattachement.
     """
-    df = df.rename(columns={"FORMATION_SESSION_STRUCTURE_ID_FK": "n_structure"})
+    #df = df.rename(columns={"FORMATION_SESSION_STRUCTURE_ID_FK": "n_structure"}) =>Enlever car traité plus bas 
+    #df = df.rename(columns={"rattachement_benevole_structure_id_fk": "n_structure"}) =>Enlever car traité plus bas 
     df_return = df.merge(
         df_ref_structure[['n_structure', 'DT_de_rattachement']].drop_duplicates(),
         on='n_structure',
@@ -69,8 +70,8 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
         print(f"  Codes manquants: {codes_manquants}")
 
         df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
-    
-    
+
+
     # Groupby et count distinct
     def count_unique(group, col_name):
         return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
@@ -135,7 +136,7 @@ def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
         print(f"  Codes manquants: {codes_manquants}")
 
         df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
-    
+
     def count_unique(group, col_name):
         return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
 
@@ -201,7 +202,7 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
         print(f"  Codes trouvés  : {codes_trouves}")
         print(f"  Codes manquants: {codes_manquants}")
 
-        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)  
+        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
 
     def count_unique(group, col_name):
         return group.loc[group[col_name], 'SESSION_ID_FK'].nunique()
@@ -238,13 +239,13 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
 def nb_bene_aptes(df_2025, filtres_bc, col_groupby):
     df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte') &
                      (df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
-    
+
     for name, code in [('Formation_grand_public Nb_FPSC', 'FPSC'),
                        ('Formation_grand_public Nb_AGQS', 'AGQS'),
                        ('Formation_grand_public Nb_FIPSEN', 'FIPSEN')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
-        # PARTIE SECOURS (corrigée hiérarchie)  
+        # PARTIE SECOURS (corrigée hiérarchie)
     # Attribution d’un niveau hiérarchique
     def get_level(code):
         if code in filtres_bc['CI']:
@@ -255,24 +256,24 @@ def nb_bene_aptes(df_2025, filtres_bc, col_groupby):
             return 1
         else:
             return 0
-    
+
     df_res['SECOURS_LEVEL'] = df_res['FORMATION_CODE'].apply(get_level)
-    
+
     # Niveau maximum par bénévole
     max_level = (
         df_res.groupby('NIVOL_ID_FK')['SECOURS_LEVEL']
         .max()
         .reset_index()
     )
-    
+
     df_res = df_res.merge(max_level, on='NIVOL_ID_FK', suffixes=('', '_MAX'))
-    
+
     # Colonnes exclusives
     df_res['Secours Nb_PSE1'] = df_res['SECOURS_LEVEL_MAX'] == 1
     df_res['Secours Nb_PSE2'] = df_res['SECOURS_LEVEL_MAX'] == 2
     df_res['Secours Nb_CI'] = df_res['SECOURS_LEVEL_MAX'] == 3
-    
-    
+
+
     # Vérification des codes
     print("\n===== Vérification des codes =====")
     codes_df = set(df_res['FORMATION_CODE'].unique())
@@ -292,7 +293,7 @@ def nb_bene_aptes(df_2025, filtres_bc, col_groupby):
         print(f"  Codes trouvés  : {codes_trouves}")
         print(f"  Codes manquants: {codes_manquants}")
 
-        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)    
+        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
 
     # Fonction de comptage
     def count_unique(group, col_name):
@@ -410,43 +411,115 @@ def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
 # ------------------------------
 
 def clean_base_contact(client, df_ref_structure):
-    query_formation_session_resultat = """
-    SELECT * FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_formation_session_resultat`
-    """
-    df_formation_session_resultat = client.query(query_formation_session_resultat).to_dataframe()
-    df_formation_session_resultat['FORMATION_DATE_OBTENTION'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_OBTENTION'], errors='coerce')
-    df_formation_session_resultat['FORMATION_DATE_RECYCLAGE'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_RECYCLAGE'], errors='coerce')
-    df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['FORMATION_SESSION_STRUCTURE_ID_FK'] != 1]
-    _ , _ , _, df_formation_session_resultat = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat, col = 'FORMATION_SESSION_STRUCTURE_ID_FK')
 
-    return df_formation_session_resultat
-
-def indicateurs_base_contact(df_formation_session_resultat, df_ref_structure):
-    # Définition filtres
     filtres_bc = {
         'CRB' : ['CRB', 'eCRB', 'VI'],
-        'ACRB' : ['AVI','ACRB2','ACRB3','ACRB2024'],
-        'TCAS' : ['TCAS','TCAS2', 'ETCAS'],
+        'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], #'AVI'
+        'TCAS' : ['TCAS', 'ETCAS'], #'TCAS2'
         'TCAU' : ['TCAU', 'ETCAU'],
-        'TCEO' : ['TCEO'],
-        'PSP' : ['PSP','PSP1'],
+        'TCEO' : ['TCEO','ESE'],
+        'PSP' : ['PSP'], #'PSP1'
         'IRR' : ['IRR','IRRA','IRRJ'],
         'solidar' : ['SOLIDAR2','SOLIDAR1','SOLIDAR'],
-        'solidar20' : ['PASSSOLIDAR2020','PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'],
-        'AAD' : ['AAD','IAD','MAO'],
+        'solidar20' : ['PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'], #'PASSSOLIDAR2020'
+        'AAD' : ['AAD'], #'IAD','MAO'
         'FAAD' : ['FAAD','FAAAD','EPIAF FAAD'],
         'FPSC' : ['FCFPSC','RATFCFPSC'],
-        'AGQS' : ['AGQS','RATAGQS'],
+        'AGQS' : ['AGQS'], #,'RATAGQS'
         'FIPSEN' : ['FIPSEN','RECFIPSEN'],
-        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1'],
+        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','PSE'], #rajout de PSE
         'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2'],
-        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CIP3', 'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI'],
-        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC"],
-        'GQS' : ['GQS'],
+        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CIP3', 'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'],
+        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'ePSC', 'PSC AC'],
+        'GQS' : ['GQS', 'GQS AC'],
         'IPSEN' : ['IPSEN'],
         'IPS' : ['IPS', 'IPS SR', 'ISPE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
         'PREVIC' : ['PREVIC'],
-        'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE'],
+        'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE'], #A voir si il faut suppr FCPSE
+        'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2']
+    }
+
+
+
+    query_formation_session_resultat = """
+        SELECT * FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_formation_session_resultat`
+        """
+    df_formation_session_resultat = client.query(query_formation_session_resultat).to_dataframe()
+
+    df_formation_session_resultat['FORMATION_DATE_OBTENTION'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_OBTENTION'], errors='coerce')
+    df_formation_session_resultat['FORMATION_DATE_RECYCLAGE'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_RECYCLAGE'], errors='coerce')
+
+    df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat["FORMATION_CODE"].isin( filtres_bc )]
+
+
+    query_rattachement_benevole = """
+        SELECT rattachement_benevole_nivol_id_fk, rattachement_benevole_structure_id_fk
+        FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_rattachement_benevole`
+        """
+    df_rattachement_benevole = client.query(query_rattachement_benevole).to_dataframe()
+    df_rattachement_benevole.drop_duplicates(subset=["rattachement_benevole_nivol_id_fk"], inplace=True)
+
+
+
+    df_formation_session_resultat_rattachement = pd.merge(
+    df_formation_session_resultat,
+    df_rattachement_benevole,
+    left_on="NIVOL_ID_FK",
+    right_on="rattachement_benevole_nivol_id_fk",
+    how="left"
+    )
+
+    _ , _ , _, df_formation_session_resultat = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat, col = 'FORMATION_SESSION_STRUCTURE_ID_FK')
+
+    _ , _ , _, df_formation_session_resultat_rattachement = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat_rattachement, col = 'rattachement_benevole_structure_id_fk')
+
+
+    df_formation_session_resultat_rattachement = df_formation_session_resultat_rattachement[
+    df_formation_session_resultat_rattachement["rattachement_benevole_structure_id_fk"].isin(
+        df_ref_structure["n_structure"] )]
+
+    df_formation_session_resultat = df_formation_session_resultat[
+    df_formation_session_resultat["FORMATION_SESSION_STRUCTURE_ID_FK"].isin(
+        df_ref_structure["n_structure"]
+    )]
+
+    df_formation_count_session = df_formation_session_resultat
+    df_formation_count_session = df_formation_count_session.rename(columns={"FORMATION_SESSION_STRUCTURE_ID_FK": "n_structure"})
+    df_formation_count_session = dt_rattachement(df_formation_count_session, df_ref_structure)
+    df_formation_count_session_2025 = df_formation_count_session[df_formation_count_session['FORMATION_DATE_OBTENTION'].dt.year == 2025].copy()
+
+    df_formation_session_resultat =df_formation_session_resultat_rattachement
+    df_formation_session_resultat = df_formation_session_resultat.rename(columns={"rattachement_benevole_structure_id_fk": "n_structure"})
+
+
+    return df_formation_session_resultat, df_formation_count_session, df_formation_count_session_2025
+
+def indicateurs_base_contact(df_formation_session_resultat, df_formation_count_session, df_formation_count_session_2025, df_ref_structure): 
+    # Définition filtres
+    filtres_bc = {
+        'CRB' : ['CRB', 'eCRB', 'VI'],
+        'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], #'AVI'
+        'TCAS' : ['TCAS', 'ETCAS'], #'TCAS2'
+        'TCAU' : ['TCAU', 'ETCAU'],
+        'TCEO' : ['TCEO','ESE'],
+        'PSP' : ['PSP'], #'PSP1'
+        'IRR' : ['IRR','IRRA','IRRJ'],
+        'solidar' : ['SOLIDAR2','SOLIDAR1','SOLIDAR'],
+        'solidar20' : ['PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'], #'PASSSOLIDAR2020'
+        'AAD' : ['AAD'], #'IAD','MAO'
+        'FAAD' : ['FAAD','FAAAD','EPIAF FAAD'],
+        'FPSC' : ['FCFPSC','RATFCFPSC'],
+        'AGQS' : ['AGQS'], #,'RATAGQS'
+        'FIPSEN' : ['FIPSEN','RECFIPSEN'],
+        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','PSE'], #rajout de PSE
+        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2'],
+        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CIP3', 'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'],
+        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'ePSC', 'PSC AC'],
+        'GQS' : ['GQS', 'GQS AC'],
+        'IPSEN' : ['IPSEN'],
+        'IPS' : ['IPS', 'IPS SR', 'ISPE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
+        'PREVIC' : ['PREVIC'],
+        'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE'], #A voir si il faut suppr FCPSE
         'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2']
     }
 
@@ -465,8 +538,12 @@ def indicateurs_base_contact(df_formation_session_resultat, df_ref_structure):
     nb_suivi_formation_tous = nb_suivi_form_tous(df_filtered_2025, filtres_bc, 'n_structure')
     nb_suivi_formation_tous_DT = nb_suivi_form_tous(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
 
-    nb_sessions = nb_session_form(df_filtered_2025, filtres_bc, 'n_structure')
-    nb_sessions_DT = nb_session_form(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
+    # nb_sessions = nb_session_form(df_filtered_2025, filtres_bc, 'n_structure') => Ancienne version
+    # nb_sessions_DT = nb_session_form(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
+
+    #Nouvelle version
+    nb_sessions = nb_session_form(df_formation_count_session_2025, filtres_bc, 'n_structure')
+    nb_sessions_DT = nb_session_form(df_formation_count_session_2025, filtres_bc, 'DT_de_rattachement')
 
     nb_apte_formation = nb_bene_aptes(df_filtered_2025, filtres_bc, 'n_structure')
     nb_apte_formation_DT = nb_bene_aptes(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
