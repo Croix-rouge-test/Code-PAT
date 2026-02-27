@@ -380,6 +380,9 @@ def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
                     nb_apte_formation, nb_apte_formation_DT,
                     taux_rec, taux_rec_DT,
                     taux_nouveau_form, taux_nouveau_form_DT,
+                    nb_actifs_solidar, nb_actifs_solidar_DT,
+                    taux_is_actifs, taux_is_actifs_DT,
+                    df_nvx_forme_crb, df_nvx_forme_crb_DT,
                     col_groupby):
     # Fusion des DataFrames
     def merge_all(dfs):
@@ -391,11 +394,14 @@ def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
                                          nb_sessions,
                                          nb_apte_formation,
                                          taux_rec,
-                                         taux_nouveau_form])
+                                         taux_nouveau_form,
+                                         nb_actifs_solidar,
+                                         taux_is_actifs,
+                                         df_nvx_forme_crb])
 
     # Même pour DT
     for df in [nb_suivi_formation_DT, nb_suivi_formation_tous_DT, nb_sessions_DT,
-               nb_apte_formation_DT, taux_rec_DT, taux_nouveau_form_DT]:
+               nb_apte_formation_DT, taux_rec_DT, taux_nouveau_form_DT,nb_actifs_solidar_DT,taux_is_actifs_DT,df_nvx_forme_crb_DT]:
         df.rename(columns={'DT_de_rattachement':'n_structure'}, inplace=True)
 
     indicateurs_base_contact_DT = merge_all([nb_suivi_formation_DT,
@@ -403,42 +409,237 @@ def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
                                             nb_sessions_DT,
                                             nb_apte_formation_DT,
                                             taux_rec_DT,
-                                            taux_nouveau_form_DT])
+                                            taux_nouveau_form_DT,
+                                            nb_actifs_solidar_DT,
+                                            taux_is_actifs_DT,
+                                            df_nvx_forme_crb_DT])
 
     return indicateurs_base_contact, indicateurs_base_contact_DT
 
+# ------------------------------
+# Indicateurs fusionnés
+# ------------------------------
+
+def nb_nvx_forme_crb(client, df, filtres_bc, col_groupby):
+
+    query_nvx_bene = """SELECT DISTINCT
+        rattachement_benevole_nivol_id_fk
+        FROM crf-pat.dataset_PAT_2025.crf_pat_2025_rattachement_benevole
+        WHERE rattachement_benevole_date_debut >= DATE('2025-01-01')
+        AND rattachement_benevole_date_debut < DATE('2026-01-01')"""
+
+    df_nvx_bene = client.query(query_nvx_bene).to_dataframe()
+    df_nvx_bene = df_nvx_bene.rename(columns = {'rattachement_benevole_nivol_id_fk' : 'NIVOL_ID_FK'})['NIVOL_ID_FK'].drop_duplicates()
+
+    df = pd.merge(df, df_nvx_bene, on = 'NIVOL_ID_FK', how = 'inner')
+
+
+    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
+    for name, code in [('Structure Nb_nvx_formes_CRB_2025', 'CRB')]:
+        df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
+
+    # Vérification des codes
+    print("\n===== Vérification des codes =====")
+    codes_df = set(df_res['FORMATION_CODE'].unique())
+
+    for name, code in [('Structure Nb_nvx_formes_CRB_2025', 'CRB')]:
+        codes_attendus = set(filtres_bc.get(code, []))
+        codes_trouves = codes_df.intersection(codes_attendus)
+        codes_manquants = codes_attendus - codes_df
+
+        print(f"\nIndicateur : {name}")
+        print(f"  Codes attendus : {codes_attendus}")
+        print(f"  Codes trouvés  : {codes_trouves}")
+        print(f"  Codes manquants: {codes_manquants}")
+
+        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
+
+    def count_unique(group, col_name):
+        return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
+
+    result = df_res.groupby(col_groupby).apply(
+        lambda g: pd.Series({col: count_unique(g, col) for col in ['Structure Nb_nvx_formes_CRB_2025']})
+    ).reset_index()
+
+    # Somme globale par indicateur
+    print("\n===== Somme globale par indicateur =====")
+    totaux = result[[col for col, _ in [('Structure Nb_nvx_formes_CRB_2025', 'CRB')]]].sum()
+    for col in totaux.index:
+        print(f"{col} : {totaux[col]}")
+
+    return result
+
+def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
+
+    query_is = """WITH codes_actifs AS (
+                            SELECT 10105 AS code UNION ALL
+                            SELECT 10106 UNION ALL
+                            SELECT 10108 UNION ALL
+                            SELECT 10113 UNION ALL
+                            SELECT 10114 UNION ALL
+                            SELECT 10115 UNION ALL
+                            SELECT 10116
+                          )
+
+                          SELECT
+                              act.*,
+                              insc.*
+                          FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_pegass_activite` AS act
+                          INNER JOIN `crf-pat.dataset_PAT_2025.crf_pat_2025_pegass_activite_seance_inscription` AS insc
+                              ON act.PEGASS_ACTIVITE_ID_PK = insc.PEGASS_ACTIVITE_ID_FK
+                          WHERE act.ACTIVITE_BENEVOLE_ID_FK IN (SELECT code FROM codes_actifs) AND insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide' """
+
+
+    df_is = client.query(query_is).to_dataframe()
+    df_is = df_is.rename(columns = {'PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK': 'n_structure','PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['n_structure','NIVOL_ID_FK']].drop_duplicates()
+
+    df = pd.merge(df.drop(['n_structure'], axis = 1), df_is, on = 'NIVOL_ID_FK', how = 'inner')
+    filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
+
+    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
+    _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
+    _ , _ , _, df_is = apply_rattachement_successif(df_ref_structure, df_is, col = 'n_structure')
+
+    df_res = dt_rattachement(df_res, df_ref_structure)
+    df_is = dt_rattachement(df_is, df_ref_structure)
+    
+
+    df_res = df_res.drop_duplicates([col_groupby,'NIVOL_ID_FK'])
+    df_is = df_is.drop_duplicates([col_groupby,'NIVOL_ID_FK'])
+    for name, code in [('Nb_IS', 'IS')]:
+        df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
+
+    # Vérification des codes
+    print("\n===== Vérification des codes =====")
+    codes_df = set(df_res['FORMATION_CODE'].unique())
+
+    for name, code in [('Nb_IS', 'IS')]:
+        codes_attendus = set(filtres_bc.get(code, []))
+        codes_trouves = codes_df.intersection(codes_attendus)
+        codes_manquants = codes_attendus - codes_df
+
+        print(f"\nIndicateur : {name}")
+        print(f"  Codes attendus : {codes_attendus}")
+        print(f"  Codes trouvés  : {codes_trouves}")
+        print(f"  Codes manquants: {codes_manquants}")
+
+        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
+
+    def count_unique(group, col_name):
+        return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
+
+    result = df_res.groupby(col_groupby).apply(
+        lambda g: pd.Series({col: count_unique(g, col) for col in ['Nb_IS']})
+    ).reset_index()
+
+    # Somme globale par indicateur
+    print("\n===== Somme globale par indicateur =====")
+    totaux = result[[col for col, _ in [('Nb_IS', 'IS')]]].sum()
+    for col in totaux.index:
+        print(f"{col} : {totaux[col]}")
+
+
+    df_nb_bene_actifs = df_is.groupby(col_groupby)['NIVOL_ID_FK'].nunique().rename("nb_bene_actifs").reset_index()
+
+    result = pd.merge(result, df_nb_bene_actifs, on = col_groupby, how = 'left')
+    result["Secours Taux_IS_actifs"] = np.where(
+      (result["nb_bene_actifs"] == 0) | (result["nb_bene_actifs"].isna()),
+      np.nan,
+      result["Nb_IS"] / result["nb_bene_actifs"]
+    )
+    assert (result["Nb_IS"] <= result["nb_bene_actifs"]).all()
+    return result[[col_groupby, "Secours Taux_IS_actifs"]]
+
+def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby):
+
+  query_bene_actifs = """SELECT
+                          act.*,
+                          insc.*
+                      FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_pegass_activite` AS act
+                      INNER JOIN `crf-pat.dataset_PAT_2025.crf_pat_2025_pegass_activite_seance_inscription` AS insc
+                          ON act.PEGASS_ACTIVITE_ID_PK = insc.PEGASS_ACTIVITE_ID_FK
+                      WHERE insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide' """
+
+  df_bene_actifs = client.query(query_bene_actifs).to_dataframe()
+  df_bene_actifs = df_bene_actifs.rename(columns = {'PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK': 'n_structure','PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['n_structure','NIVOL_ID_FK']].drop_duplicates()
+
+  df = pd.merge(df.drop(['n_structure'], axis = 1), df_bene_actifs, on = 'NIVOL_ID_FK', how = 'inner')
+  filtres_bc['all_solidar'] = filtres_bc['solidar'] + filtres_bc['solidar20']
+
+  df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
+  _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
+
+  df_res = dt_rattachement(df_res, df_ref_structure)
+
+  df_res = df_res.drop_duplicates(['n_structure','NIVOL_ID_FK'])
+
+
+  for name, code in [('Maraude Nb_benevoles_actifs_formes', 'all_solidar')]:
+      df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
+
+  # Vérification des codes
+  print("\n===== Vérification des codes =====")
+  codes_df = set(df_res['FORMATION_CODE'].unique())
+
+  for name, code in [('Maraude Nb_benevoles_actifs_formes', 'all_solidar')]:
+      codes_attendus = set(filtres_bc.get(code, []))
+      codes_trouves = codes_df.intersection(codes_attendus)
+      codes_manquants = codes_attendus - codes_df
+
+      print(f"\nIndicateur : {name}")
+      print(f"  Codes attendus : {codes_attendus}")
+      print(f"  Codes trouvés  : {codes_trouves}")
+      print(f"  Codes manquants: {codes_manquants}")
+
+      df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
+
+  def count_unique(group, col_name):
+      return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
+
+  result = df_res.groupby(col_groupby).apply(
+      lambda g: pd.Series({col: count_unique(g, col) for col in ['Maraude Nb_benevoles_actifs_formes']})
+  ).reset_index()
+
+  # Somme globale par indicateur
+  print("\n===== Somme globale par indicateur =====")
+  totaux = result[[col for col, _ in [('Maraude Nb_benevoles_actifs_formes', 'all_solidar')]]].sum()
+  for col in totaux.index:
+      print(f"{col} : {totaux[col]}")
+
+  return result
 # ------------------------------
 # Fonction principale
 # ------------------------------
 
 def clean_base_contact(client, df_ref_structure):
 
-    codes_filtres_bc = [
-    'CRB', 'ECRB', 'VI',
-    'ACRB', 'ACRB2', 'ACRB3', 'ACRB2024',
-    'TCAS', 'ETCAS',
-    'TCAU', 'ETCAU',
-    'TCEO', 'ESE',
-    'PSP',
-    'IRR', 'IRRA', 'IRRJ',
-    'SOLIDAR2', 'SOLIDAR1', 'SOLIDAR',
-    'PASSOLIDAR2020', 'ESOLIDAR2026', 'SOLIDAR2020',
-    'AAD',
-    'FAAD', 'FAAAD', 'EPIAF FAAD',
-    'FCFPSC', 'RATFCFPSC',
-    'AGQS',
-    'FIPSEN', 'RECFIPSEN',
-    'APTE PSE1', 'PSE1', 'RECPSE1', 'RATPSE1', 'PSE',
-    'RECPSE2', 'PSE2', 'RECPSE2', 'PSE', 'RATPSE2',
-    'CI P1 P2', 'CI', 'CIP1', 'CIP2', 'CIP3', 'CI EXT', 'RECCI', 'REC PSECI', 'RECPSECI', 'RATCI', 'FCCI',
-    'PSC1 IRR', 'EPSC1', 'RECPSC1', 'PSC1', 'PSC1 AC', 'PSC', 'PSC IRR', 'EPSC', 'PSC AC',
-    'GQS', 'GQS AC',
-    'IPSEN',
-    'IPS', 'IPS SR', 'IPSE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC',
-    'PREVIC',
-    'RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE',
-    'APTE PSE1', 'PSE1', 'RECPSE1', 'RATPSE1', 'RECPSE2', 'PSE2', 'RECPSE2', 'PSE', 'RATPSE2'
-    ] 
+    filtres_bc = {
+        'CRB' : ['CRB', 'ECRB', 'VI'],
+        'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], #'AVI'
+        'TCAS' : ['TCAS', 'ETCAS'], #'TCAS2'
+        'TCAU' : ['TCAU', 'ETCAU'],
+        'TCEO' : ['TCEO','ESE'],
+        'PSP' : ['PSP'], #'PSP1'
+        'IRR' : ['IRR','IRRA','IRRJ'],
+        'solidar' : ['SOLIDAR2','SOLIDAR1','SOLIDAR'],
+        'solidar20' : ['PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'], #'PASSSOLIDAR2020'
+        'AAD' : ['AAD'], #'IAD','MAO'
+        'FAAD' : ['FAAD','FAAAD','EPIAF FAAD'],
+        'FPSC' : ['FCFPSC','RATFCFPSC'],
+        'AGQS' : ['AGQS'], #,'RATAGQS'
+        'FIPSEN' : ['FIPSEN','RECFIPSEN'],
+        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','PSE'], #rajout de PSE
+        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2'],
+        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CIP3', 'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'],
+        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC'],
+        'GQS' : ['GQS', 'GQS AC'],
+        'IPSEN' : ['IPSEN'],
+        'IPS' : ['IPS', 'IPS SR', 'IPSE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
+        'PREVIC' : ['PREVIC'],
+        'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE'], #A voir si il faut suppr FCPSE
+        'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2']
+    }
+    codes_filtres_bc = [element for sous_liste in filtres_bc.values() for element in sous_liste] 
 
 
 
@@ -555,6 +756,17 @@ def indicateurs_base_contact(df_formation_session_resultat, df_formation_count_s
     taux_nouveau_form = taux_ren(df_filtered, filtres_bc, 'n_structure')
     taux_nouveau_form_DT = taux_ren(df_filtered, filtres_bc, 'DT_de_rattachement')
 
+    # Indicateurs fusion 
+
+    nb_actifs_solidar = nb_bene_actifs_solidar(client, df_formation_session_resultat, filtres_bc, df_ref_structure, 'n_structure')
+    nb_actifs_solidar_DT = nb_bene_actifs_solidar(client, df_formation_session_resultat, filtres_bc, df_ref_structure, 'DT_de_rattachement')
+
+    taux_is_actifs = taux_IS(client, df_formation_session_resultat, filtres_bc, df_ref_structure, 'n_structure')
+    taux_is_actifs_DT = taux_IS(client, df_formation_session_resultat, filtres_bc, df_ref_structure, 'DT_de_rattachement')
+
+    df_nvx_forme_crb = nb_nvx_forme_crb(client, df_filtered_2025, filtres_bc, 'n_structure')
+    df_nvx_forme_crb_DT = nb_nvx_forme_crb(client, df_filtered_2025, filtres_bc, 'DT_de_rattachement')
+
     indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd = fusion_bc_final(
         nb_suivi_formation, nb_suivi_formation_DT,
         nb_suivi_formation_tous, nb_suivi_formation_tous_DT,
@@ -562,6 +774,9 @@ def indicateurs_base_contact(df_formation_session_resultat, df_formation_count_s
         nb_apte_formation, nb_apte_formation_DT,
         taux_rec, taux_rec_DT,
         taux_nouveau_form, taux_nouveau_form_DT,
+        nb_actifs_solidar, nb_actifs_solidar_DT,
+        taux_is_actifs, taux_is_actifs_DT,
+        df_nvx_forme_crb, df_nvx_forme_crb_DT,
         'n_structure'
     )
 
