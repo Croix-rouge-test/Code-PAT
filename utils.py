@@ -703,7 +703,7 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Formation_grand_public Produits_2025",
     "Dispositifs_d_urgence Nb_formes_PSP_2025",
     "Formation_grand_public Nb_sessions_PSE",
-    "Formation_grand_public Nb sessions_CI",
+    "Formation_grand_public Nb_sessions_CI",
     "Formation_grand_public Nb_sessions_FPSE",
     "Formation_grand_public Nb_formes_PSC_2025",
     "Formation_grand_public Nb_sessions_PSC_2025",
