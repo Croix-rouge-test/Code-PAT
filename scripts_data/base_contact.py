@@ -692,6 +692,7 @@ def clean_base_contact(client, df_ref_structure):
 
     df_formation_session_resultat =df_formation_session_resultat_rattachement
     df_formation_session_resultat = df_formation_session_resultat.rename(columns={"rattachement_benevole_structure_id_fk": "n_structure"})
+    df_formation_session_resultat["n_structure"] = df_formation_session_resultat["n_structure"].fillna(df_formation_session_resultat["FORMATION_SESSION_STRUCTURE_ID_FK"])
 
     df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['FORMATION_RESULTAT'] != 'Absent']
 
