@@ -696,7 +696,7 @@ def clean_base_contact(client, df_ref_structure):
 
     return df_formation_session_resultat, df_formation_count_session_2025
 
-def indicateurs_base_contact(df_formation_session_resultat, df_formation_count_session_2025, df_ref_structure): 
+def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_count_session_2025, df_ref_structure): 
     # Définition filtres
     filtres_bc = {
         'CRB' : ['CRB', 'ECRB', 'VI'],
