@@ -985,7 +985,7 @@ def vision_conso(df_alldata, df_alldata_DT):
     (('OCR Nb_deployees',), 'OCR Structures_menant_activite'),
     (('Secours Nb_DPS_2025','Secours Nb_PAPS_2025','Secours Nb_DPS_PE_2025','Secours Nb_DPS_ME_2025','Secours Nb_DPS_GE_2025'), 'Secours Structures_menant_activite'),
     (('Secours Nb_PSE1','Secours Nb_PSE2','Secours Nb_CI'), 'Secours Structures_menant_activite_formes'),
-    (('Formation_grand_public Nb_sessions_PSE','Formation_grand_public Nb sessions_CI','Formation_grand_public Nb_sessions_FPSE'), 'Secours Structures_menant_activite_sessions'),
+    (('Formation_grand_public Nb_sessions_PSE','Formation_grand_public Nb_sessions_CI','Formation_grand_public Nb_sessions_FPSE'), 'Secours Structures_menant_activite_sessions'),
     (('nb_Maraude_Pegass',), 'Maraudes Structures_menant_activite'),
     (('Dispositifs_d_urgence Nb_formes_TCAU_2025',), 'Dispositifs_d_urgence Structures_menant_activite_TCAU'),
     (('Dispositifs_d_urgence Nb_formes_PSP_2025',), 'Dispositifs_d_urgence Structures_menant_activite_PSP'),
