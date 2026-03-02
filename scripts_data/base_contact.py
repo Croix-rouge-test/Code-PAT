@@ -693,6 +693,14 @@ def clean_base_contact(client, df_ref_structure):
     df_formation_session_resultat =df_formation_session_resultat_rattachement
     df_formation_session_resultat = df_formation_session_resultat.rename(columns={"rattachement_benevole_structure_id_fk": "n_structure"})
 
+    mask_2025 = df_formation_session_resultat['FORMATION_DATE_OBTENTION'].dt.year == 2025
+
+    df_formation_session_resultat.loc[mask_2025, "n_structure"] = (
+        df_formation_session_resultat.loc[mask_2025, "n_structure"]
+        .fillna(df_formation_session_resultat.loc[mask_2025, "FORMATION_SESSION_STRUCTURE_ID_FK"])
+    )
+
+
     df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['FORMATION_RESULTAT'] != 'Absent']
 
 
@@ -735,7 +743,6 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
 
     df_filtered_2025 = df_filtered[df_filtered['FORMATION_DATE_OBTENTION'].dt.year == 2025].copy()
 
-    df_filtered_2025["n_structure"] = df_filtered_2025["n_structure"].fillna(df_filtered_2025["FORMATION_SESSION_STRUCTURE_ID_FK"])
 
 
     # Calculs indicateurs
