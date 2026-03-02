@@ -615,29 +615,29 @@ def clean_base_contact(client, df_ref_structure):
 
     filtres_bc = {
         'CRB' : ['CRB', 'ECRB', 'VI'],
-        'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], #'AVI'
-        'TCAS' : ['TCAS', 'ETCAS'], #'TCAS2'
+        'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], # suppression'AVI'
+        'TCAS' : ['TCAS', 'ETCAS'], # suppression 'TCAS2'
         'TCAU' : ['TCAU', 'ETCAU'],
         'TCEO' : ['TCEO','ESE'],
-        'PSP' : ['PSP'], #'PSP1'
+        'PSP' : ['PSP'], #suppression 'PSP1'
         'IRR' : ['IRR','IRRA','IRRJ'],
         'solidar' : ['SOLIDAR2','SOLIDAR1','SOLIDAR'],
-        'solidar20' : ['PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'], #'PASSSOLIDAR2020'
-        'AAD' : ['AAD'], #'IAD','MAO'
-        'FAAD' : ['FAAD','FAAAD','EPIAF FAAD'],
-        'FPSC' : ['FCFPSC','RATFCFPSC'],
-        'AGQS' : ['AGQS'], #,'RATAGQS'
+        'solidar20' : ['PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'], # suppression'PASSSOLIDAR2020'
+        'AAD' : ['AAD'], # suppression'IAD','MAO'
+        'FAAD' : ['FAAD','EPIAF FAAD'],
+        'FPSC' : ['FCFPSC','RATFCFPSC', 'FPSC', 'RECFPSC', 'PICF FPSC'], #ajout de 'FPSC', 'RECFPSC', 'PICF FPSC'
+        'AGQS' : ['AGQS'], # suppression'RATAGQS'
         'FIPSEN' : ['FIPSEN','RECFIPSEN'],
-        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','PSE'], #rajout de PSE
-        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2'],
-        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CIP3', 'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'],
-        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC'],
+        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1'], #ajout formation continue FC
+        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2', 'FCPSE2', 'FCPSE'], #ajout formation continue FC + PSE
+        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'], #suppression CIP3 et ajout FCCI
+        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'], #ajout de 'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'
         'GQS' : ['GQS', 'GQS AC'],
         'IPSEN' : ['IPSEN'],
         'IPS' : ['IPS', 'IPS SR', 'IPSE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
         'PREVIC' : ['PREVIC'],
-        'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE'], #A voir si il faut suppr FCPSE
-        'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1','RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2']
+        'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE'], #ajout de 'PICF FPS', 'PICF FPSE'
+        'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2']
     }
     codes_filtres_bc = [element for sous_liste in filtres_bc.values() for element in sous_liste] 
 
