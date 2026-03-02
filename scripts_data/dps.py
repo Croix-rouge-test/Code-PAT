@@ -90,3 +90,27 @@ def indicateurs_dps(df_dps, df_ref_structure):
         print(f"{col} : {totals[col]}")
 
     return df
+
+
+
+def verifications_dps(df_conventions, df_indicateurs_dps):
+  """ Vérifie que les sommes correspondent à la source des données puis à la 
+  sortie du traitement
+
+  """
+
+  df_test_conv = df_conventions.copy().fillna(0)
+  columns_to_check = [('Nb de vacations de 4h effectuées PAPS', 'Secours Nb_PAPS_2025'), ('Nb de vacations de 4h effectuées DPS PE', 'Secours Nb_DPS_PE_2025'), ('Nb de vacations de 4h effectuées DPS ME','Secours Nb_DPS_ME_2025'), ('Nb de vacations de 4h effectuées DPS GE', 'Secours Nb_DPS_GE_2025')]
+
+  acc = 0
+  for col_source, col_res in columns_to_check:
+    if df_test_conv[col_source].sum() != df_indicateurs_dps[col_res].sum():
+      print(f" ❌ PROBL {col_res} : source {df_test_conv[col_source].sum()} ≠ résultat {df_indicateurs_dps[col_res].sum()}")
+    else :
+      print(f"✅ OK {col_res} : {col_source} = {col_res}")
+    acc += df_test_conv[col_source].sum()
+
+  if acc == df_indicateurs_dps['Secours Nb_PAPS_2025'].sum():
+    print(f" ❌ PROBL Secours Nb_PAPS_2025 : source {acc} ≠ résultat {df_indicateurs_dps['Secours Nb_PAPS_2025'].sum()}")
+  else :
+    print(f"✅ OK Secours Nb_PAPS_2025 : source = Secours Nb_PAPS_2025")
