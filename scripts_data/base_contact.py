@@ -88,7 +88,7 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
 
     # Somme globale par indicateur
     print("\n===== Somme globale par indicateur =====")
-    totaux = result[[col for col, _ in [('Maraude Nb_SOLIDAR', 'solidar'),
+    totaux = result[[col for col, _ in [('Maraude Nb_SOLIDAR', 'all_solidar'),
                        ('Maraude Nb_SOLIDAR2020', 'solidar20'),
                        ('AEO Nb_AAD', 'AAD'),
                        ('AEO Nb_FAAD', 'FAAD'),
@@ -564,7 +564,6 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
   df_bene_actifs = df_bene_actifs.rename(columns = {'PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK': 'n_structure','PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['n_structure','NIVOL_ID_FK']].drop_duplicates()
 
   df = pd.merge(df.drop(['n_structure'], axis = 1), df_bene_actifs, on = 'NIVOL_ID_FK', how = 'inner')
-  filtres_bc['all_solidar'] = filtres_bc['solidar'] + filtres_bc['solidar20']
 
   df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
   _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
@@ -734,7 +733,8 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
         'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE'], #ajout de 'PICF FPS', 'PICF FPSE'
         'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2']    
         }
-
+    
+    filtres_bc['all_solidar'] = filtres_bc['solidar'] + filtres_bc['solidar20']
 
     # Ajouter DT
     df_filtered = df_formation_session_resultat.copy()
@@ -795,3 +795,4 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     indicateurs_base_contact_DT_pd = indicateurs_base_contact_DT_pd[indicateurs_base_contact_DT_pd['n_structure'] != '']
 
     return indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd
+
