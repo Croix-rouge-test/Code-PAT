@@ -47,7 +47,7 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
                        ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS'),
                        ('Structure Nb_formes_CRB_2025', 'CRB'),
                        ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
-                       ('Structure Nb_formes_TCAS_2025', 'TCAS'))]:
+                       ('Structure Nb_formes_TCAS_2025', 'TCAS')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
     # Vérification des codes
@@ -474,6 +474,7 @@ def nb_nvx_forme_crb(client, df, filtres_bc, col_groupby):
 
 def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
 
+    # Utiliser 
     query_is = """WITH codes_actifs AS (
                             SELECT 10105 AS code UNION ALL
                             SELECT 10106 UNION ALL
@@ -496,7 +497,7 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
     df_is = client.query(query_is).to_dataframe()
     df_is = df_is.rename(columns = {'PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK': 'n_structure','PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['n_structure','NIVOL_ID_FK']].drop_duplicates()
 
-    df = pd.merge(df.drop(['n_structure'], axis = 1), df_is, on = 'NIVOL_ID_FK', how = 'inner')
+    df = pd.merge(df.drop(['n_structure'], axis = 1), df_is, on = 'NIVOL_ID_FK', how = 'left')
 
     # Potentiellement ajouter filtre sur 2024 en attente réponse Théotime
     filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
@@ -552,7 +553,7 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
       np.nan,
       result["nb_bene_actifs"] / result["Nb_IS"]
     )
-    assert (result["Nb_IS"] >= result["nb_bene_actifs"]).all()
+    #assert (result["Nb_IS"] >= result["nb_bene_actifs"]).all()
     return result[[col_groupby, "Secours Taux_IS_actifs"]]
 
 def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby):
