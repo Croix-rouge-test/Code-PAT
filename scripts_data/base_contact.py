@@ -495,15 +495,23 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
 
 
     df_is = client.query(query_is).to_dataframe()
-    df_is = df_is.rename(columns = {'PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK': 'n_structure','PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['n_structure','NIVOL_ID_FK']].drop_duplicates()
+    df_is = df_is.rename(columns = {'PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK','NIVOL_ID_FK']].drop_duplicates()
 
-    df = pd.merge(df.drop(['n_structure'], axis = 1), df_is, on = 'NIVOL_ID_FK', how = 'left')
+    df_is["n_structure"] = (
+        df_is["n_structure"]
+        .fillna(df_is["PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK"])
+    )
 
-    # Potentiellement ajouter filtre sur 2024 en attente réponse Théotime
+    df_is = pd.merge(df, df_is, on = 'NIVOL_ID_FK', how = 'right')
+
+    
     filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
 
     df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
-    _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
+    
+    # Potentiellement enlever 2025 en attente réponse Théotime
+    df_res[(df_res['FORMATION_DATE_OBTENTION'].dt.year == 2025) | (df_res['FORMATION_DATE_OBTENTION'].dt.year == 2024)]
+    # _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
     _ , _ , _, df_is = apply_rattachement_successif(df_ref_structure, df_is, col = 'n_structure')
 
     df_res = dt_rattachement(df_res, df_ref_structure)
@@ -547,13 +555,21 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
 
     df_nb_bene_actifs = df_is.groupby(col_groupby)['NIVOL_ID_FK'].nunique().rename("nb_bene_actifs").reset_index()
 
+    
+
     result = pd.merge(result, df_nb_bene_actifs, on = col_groupby, how = 'left')
     result["Secours Taux_IS_actifs"] = np.where(
       (result["nb_bene_actifs"] == 0) | (result["nb_bene_actifs"].isna()),
       np.nan,
       result["nb_bene_actifs"] / result["Nb_IS"]
     )
-    #assert (result["Nb_IS"] >= result["nb_bene_actifs"]).all()
+    mask = result["Nb_IS"] < result["nb_bene_actifs"]
+
+    if mask.any():
+        lignes_erreur = result[mask]
+        raise AssertionError(
+            f"{mask.sum()} ligne(s) ont Nb_IS < nb_bene_actifs :\n{lignes_erreur}"
+        )
     return result[[col_groupby, "Secours Taux_IS_actifs"]]
 
 def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby):
@@ -678,8 +694,6 @@ def clean_base_contact(client, df_ref_structure):
     how="left"
     )
 
-    _ , _ , _, df_formation_session_resultat = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat, col = 'FORMATION_SESSION_STRUCTURE_ID_FK')
-
     _ , _ , _, df_formation_session_resultat_rattachement = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat_rattachement, col = 'rattachement_benevole_structure_id_fk')
 
 
@@ -706,6 +720,9 @@ def clean_base_contact(client, df_ref_structure):
         df_formation_session_resultat.loc[mask_2025, "n_structure"]
         .fillna(df_formation_session_resultat.loc[mask_2025, "FORMATION_SESSION_STRUCTURE_ID_FK"])
     )
+
+    _ , _ , _, df_formation_session_resultat = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat, col = 'n_structure')
+
 
 
     df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['FORMATION_RESULTAT'] != 'Absent']
