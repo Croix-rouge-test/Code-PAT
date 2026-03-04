@@ -433,6 +433,9 @@ def nb_nvx_forme_crb(client, df, filtres_bc, col_groupby):
 
     df = pd.merge(df, df_nvx_bene, on = 'NIVOL_ID_FK', how = 'inner')
 
+    df = df[df['FORMATION_DATE_OBTENTION'].dt.year == 2025].copy()
+
+    df = df[df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui']
 
     df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
     for name, code in [('Structure Nb_nvx_formes_CRB_2025', 'CRB')]:
@@ -494,6 +497,8 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
     df_is = df_is.rename(columns = {'PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK': 'n_structure','PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['n_structure','NIVOL_ID_FK']].drop_duplicates()
 
     df = pd.merge(df.drop(['n_structure'], axis = 1), df_is, on = 'NIVOL_ID_FK', how = 'inner')
+
+    # Potentiellement ajouter filtre sur 2024 en attente réponse Théotime
     filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
 
     df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
@@ -545,9 +550,9 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
     result["Secours Taux_IS_actifs"] = np.where(
       (result["nb_bene_actifs"] == 0) | (result["nb_bene_actifs"].isna()),
       np.nan,
-      result["Nb_IS"] / result["nb_bene_actifs"]
+      result["nb_bene_actifs"] / result["Nb_IS"]
     )
-    assert (result["Nb_IS"] <= result["nb_bene_actifs"]).all()
+    assert (result["Nb_IS"] >= result["nb_bene_actifs"]).all()
     return result[[col_groupby, "Secours Taux_IS_actifs"]]
 
 def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby):
@@ -564,6 +569,8 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
   df_bene_actifs = df_bene_actifs.rename(columns = {'PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK': 'n_structure','PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['n_structure','NIVOL_ID_FK']].drop_duplicates()
 
   df = pd.merge(df.drop(['n_structure'], axis = 1), df_bene_actifs, on = 'NIVOL_ID_FK', how = 'inner')
+
+  df = df[df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui']
 
   df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
   _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
@@ -795,5 +802,6 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     indicateurs_base_contact_DT_pd = indicateurs_base_contact_DT_pd[indicateurs_base_contact_DT_pd['n_structure'] != '']
 
     return indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd
+
 
 
