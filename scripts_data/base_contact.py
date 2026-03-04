@@ -28,12 +28,12 @@ def dt_rattachement(df, df_ref_structure):
 def flatten(xss):
     return [x for xs in xss for x in xs]
 
-def calcul_secours_par_annee(df, filtres_bc, annee):
+def calcul_secours_par_annee(df, filtres_bc):
 
     # Filtre commun
     df_year = df[
         (df['FORMATION_RESULTAT'] == 'Apte') &
-        (df[df['FORMATION_DATE_OBTENTION'].dt.year == annee])
+        (df[(df['FORMATION_DATE_OBTENTION'].dt.year == 2024) | (df['FORMATION_DATE_OBTENTION'].dt.year == 2025)])
     ].copy()
 
     # ======================
@@ -287,9 +287,24 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
     return result
 
 
-def nb_bene_aptes_PSE1_2_CI(df_2025, filtres_bc, col_groupby):
-    df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte') &
-                     (df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
+def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
+    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') &
+                     (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
+    
+    nivols = calcul_secours_par_annee(df_res, filtres_bc)
+
+    for name, code in [('Secours Nb_PSE1', 'PSE1'),
+                       ('Secours Nb_PSE2', 'PSE2'),
+                       ('Secours Nb_CI', 'CI')]:
+        df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
+
+    mask_PSE1 = df_res['FORMATION_CODE'] == filtres_bc['PSE1']
+    mask_PSE2 = df_res['FORMATION_CODE'] == filtres_bc['PSE2']
+    mask_CI = df_res['FORMATION_CODE'] == filtres_bc['CI']
+
+    df_res.iloc[mask_PSE1, 'NIVOL_ID_FK'] = df_res.iloc[mask_PSE1, 'NIVOL_ID_FK'][df_res['NIVOL_ID_FK'].isin(nivols['LISTE_PSE1'])]
+    df_res.iloc[mask_PSE2, 'NIVOL_ID_FK'] = df_res.iloc[mask_PSE2, 'NIVOL_ID_FK'][df_res['NIVOL_ID_FK'].isin(nivols['LISTE_PSE2'])]
+    df_res.iloc[mask_CI, 'NIVOL_ID_FK'] = df_res.iloc[mask_CI, 'NIVOL_ID_FK'][df_res['NIVOL_ID_FK'].isin(nivols['LISTE_CI'])]
 
 
     # Vérification des codes
@@ -322,10 +337,7 @@ def nb_bene_aptes_PSE1_2_CI(df_2025, filtres_bc, col_groupby):
 
     # Somme globale par indicateur
     print("\n===== Somme globale par indicateur =====")
-    totaux = result[[col for col, _ in [('Formation_grand_public Nb_FPSC', 'FPSC'),
-                       ('Formation_grand_public Nb_AGQS', 'AGQS'),
-                       ('Formation_grand_public Nb_FIPSEN', 'FIPSEN'),
-                                        ('Secours Nb_PSE1', 'PSE1'),
+    totaux = result[[col for col, _ in [('Secours Nb_PSE1', 'PSE1'),
                                         ('Secours Nb_PSE2', 'PSE2'),
                                         ('Secours Nb_CI', 'CI')]]].sum()
 
@@ -343,45 +355,13 @@ def nb_bene_aptes_autres(df_2025, filtres_bc, col_groupby):
                        ('Formation_grand_public Nb_FIPSEN', 'FIPSEN')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
-        # PARTIE SECOURS (corrigée hiérarchie)
-    # Attribution d’un niveau hiérarchique
-    def get_level(code):
-        if code in filtres_bc['CI']:
-            return 3
-        elif code in filtres_bc['PSE2']:
-            return 2
-        elif code in filtres_bc['PSE1']:
-            return 1
-        else:
-            return 0
-
-    df_res['SECOURS_LEVEL'] = df_res['FORMATION_CODE'].apply(get_level)
-
-    # Niveau maximum par bénévole
-    max_level = (
-        df_res.groupby('NIVOL_ID_FK')['SECOURS_LEVEL']
-        .max()
-        .reset_index()
-    )
-
-    df_res = df_res.merge(max_level, on='NIVOL_ID_FK', suffixes=('', '_MAX'))
-
-    # Colonnes exclusives
-    df_res['Secours Nb_PSE1'] = df_res['SECOURS_LEVEL_MAX'] == 1
-    df_res['Secours Nb_PSE2'] = df_res['SECOURS_LEVEL_MAX'] == 2
-    df_res['Secours Nb_CI'] = df_res['SECOURS_LEVEL_MAX'] == 3
-
-
     # Vérification des codes
     print("\n===== Vérification des codes =====")
     codes_df = set(df_res['FORMATION_CODE'].unique())
 
     for name, code in [('Formation_grand_public Nb_FPSC', 'FPSC'),
                        ('Formation_grand_public Nb_AGQS', 'AGQS'),
-                       ('Formation_grand_public Nb_FIPSEN', 'FIPSEN'),
-                                        ('Secours Nb_PSE1', 'PSE1'),
-                                        ('Secours Nb_PSE2', 'PSE2'),
-                                        ('Secours Nb_CI', 'CI')]:
+                       ('Formation_grand_public Nb_FIPSEN', 'FIPSEN')]:
         codes_attendus = set(filtres_bc.get(code, []))
         codes_trouves = codes_df.intersection(codes_attendus)
         codes_manquants = codes_attendus - codes_df
@@ -400,20 +380,14 @@ def nb_bene_aptes_autres(df_2025, filtres_bc, col_groupby):
     result = df_res.groupby(col_groupby).apply(
         lambda g: pd.Series({col: count_unique(g, col) for col in ['Formation_grand_public Nb_FPSC',
                                                                   'Formation_grand_public Nb_AGQS',
-                                                                  'Formation_grand_public Nb_FIPSEN',
-                                                                  'Secours Nb_PSE1',
-                                                                  'Secours Nb_PSE2',
-                                                                  'Secours Nb_CI']})
+                                                                  'Formation_grand_public Nb_FIPSEN']})
     ).reset_index()
 
     # Somme globale par indicateur
     print("\n===== Somme globale par indicateur =====")
     totaux = result[[col for col, _ in [('Formation_grand_public Nb_FPSC', 'FPSC'),
                        ('Formation_grand_public Nb_AGQS', 'AGQS'),
-                       ('Formation_grand_public Nb_FIPSEN', 'FIPSEN'),
-                                        ('Secours Nb_PSE1', 'PSE1'),
-                                        ('Secours Nb_PSE2', 'PSE2'),
-                                        ('Secours Nb_CI', 'CI')]]].sum()
+                       ('Formation_grand_public Nb_FIPSEN', 'FIPSEN')]]].sum()
 
     for col in totaux.index:
         print(f"{col} : {totaux[col]}")
@@ -473,7 +447,7 @@ def taux_ren(df_filtered, filtres_bc, col_groupby):
 
 def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
                     nb_suivi_formation_tous, nb_suivi_formation_tous_DT,
-                    nb_sessions, nb_sessions_DT,
+                    nb_sessions, nb_sessions_DT, nb_apte_formation_PSE1_2_CI, nb_apte_formation_PSE1_2_CI_DT,
                     nb_apte_formation, nb_apte_formation_DT,
                     taux_rec, taux_rec_DT,
                     taux_nouveau_form, taux_nouveau_form_DT,
@@ -489,6 +463,7 @@ def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
     indicateurs_base_contact = merge_all([nb_suivi_formation,
                                          nb_suivi_formation_tous,
                                          nb_sessions,
+                                         nb_apte_formation_PSE1_2_CI,
                                          nb_apte_formation,
                                          taux_rec,
                                          taux_nouveau_form,
@@ -504,6 +479,7 @@ def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
     indicateurs_base_contact_DT = merge_all([nb_suivi_formation_DT,
                                             nb_suivi_formation_tous_DT,
                                             nb_sessions_DT,
+                                            nb_apte_formation_PSE1_2_CI_DT,
                                             nb_apte_formation_DT,
                                             taux_rec_DT,
                                             taux_nouveau_form_DT,
@@ -881,8 +857,11 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     nb_sessions = nb_session_form(df_formation_count_session_2025, filtres_bc, 'n_structure')
     nb_sessions_DT = nb_session_form(df_formation_count_session_2025, filtres_bc, 'DT_de_rattachement')
 
-    nb_apte_formation = nb_bene_aptes(df_filtered_2025, filtres_bc, 'n_structure')
-    nb_apte_formation_DT = nb_bene_aptes(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
+    nb_apte_formation_PSE1_2_CI = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'n_structure')
+    nb_apte_formation_PSE1_2_CI_DT = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'DT_de_rattachement')
+
+    nb_apte_formation = nb_bene_aptes_autres(df_filtered_2025, filtres_bc, 'n_structure')
+    nb_apte_formation_DT = nb_bene_aptes_autres(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
 
     taux_rec = taux_recy(df_filtered_2025, filtres_bc, 'n_structure')
     taux_rec_DT = taux_recy(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
@@ -904,7 +883,7 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd = fusion_bc_final(
         nb_suivi_formation, nb_suivi_formation_DT,
         nb_suivi_formation_tous, nb_suivi_formation_tous_DT,
-        nb_sessions, nb_sessions_DT,
+        nb_sessions, nb_sessions_DT, nb_apte_formation_PSE1_2_CI, nb_apte_formation_PSE1_2_CI_DT
         nb_apte_formation, nb_apte_formation_DT,
         taux_rec, taux_rec_DT,
         taux_nouveau_form, taux_nouveau_form_DT,
