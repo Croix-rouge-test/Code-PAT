@@ -491,7 +491,7 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
                           FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_pegass_activite` AS act
                           INNER JOIN `crf-pat.dataset_PAT_2025.crf_pat_2025_pegass_activite_seance_inscription` AS insc
                               ON act.PEGASS_ACTIVITE_ID_PK = insc.PEGASS_ACTIVITE_ID_FK
-                          WHERE act.ACTIVITE_BENEVOLE_ID_FK IN (SELECT code FROM codes_actifs) AND insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide' """
+                          WHERE act.ACTIVITE_BENEVOLE_ID_FK IN (SELECT code FROM codes_actifs) AND insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide' AND PEGASS_ACTIVITE_DATE_DEBUT >= DATE('2025-01-01')"""
 
 
     df_is = client.query(query_is).to_dataframe()
@@ -508,7 +508,7 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
     filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
 
     df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
-    
+
     # Potentiellement enlever 2025 en attente réponse Théotime
     df_res[(df_res['FORMATION_DATE_OBTENTION'].dt.year == 2025) | (df_res['FORMATION_DATE_OBTENTION'].dt.year == 2024)]
     # _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
@@ -580,7 +580,7 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
                       FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_pegass_activite` AS act
                       INNER JOIN `crf-pat.dataset_PAT_2025.crf_pat_2025_pegass_activite_seance_inscription` AS insc
                           ON act.PEGASS_ACTIVITE_ID_PK = insc.PEGASS_ACTIVITE_ID_FK
-                      WHERE insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide' """
+                      WHERE insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide' AND PEGASS_ACTIVITE_DATE_DEBUT >= DATE('2025-01-01') """
 
   df_bene_actifs = client.query(query_bene_actifs).to_dataframe()
   df_bene_actifs = df_bene_actifs.rename(columns = {'PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK': 'n_structure','PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['n_structure','NIVOL_ID_FK']].drop_duplicates()
