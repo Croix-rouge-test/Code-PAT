@@ -44,7 +44,10 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
                        ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
                        ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
                        ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
-                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS')]:
+                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS'),
+                       ('Structure Nb_formes_CRB_2025', 'CRB'),
+                       ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
+                       ('Structure Nb_formes_TCAS_2025', 'TCAS'))]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
     # Vérification des codes
@@ -59,7 +62,10 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
                        ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
                        ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
                        ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
-                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS')]:
+                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS'),
+                       ('Structure Nb_formes_CRB_2025', 'CRB'),
+                       ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
+                       ('Structure Nb_formes_TCAS_2025', 'TCAS')]:
         codes_attendus = set(filtres_bc.get(code, []))
         codes_trouves = codes_df.intersection(codes_attendus)
         codes_manquants = codes_attendus - codes_df
@@ -83,7 +89,10 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
                                                                   'Dispositifs_d_urgence Nb_formes_TCEO_2025',
                                                                   'Dispositifs_d_urgence Nb_formes_PSP_2025',
                                                                   'Dispositifs_d_urgence Nb_formes_IRR_2025',
-                                                                  'Dispositifs_d_urgence Nb_formes_GQS_2025']})
+                                                                  'Dispositifs_d_urgence Nb_formes_GQS_2025',
+                                                                  'Structure Nb_formes_CRB_2025',
+                                                                  'Structure Nb_formateurs_CRB_2025',
+                                                                  'Structure Nb_formes_TCAS_2025']})
     ).reset_index()
 
     # Somme globale par indicateur
@@ -96,7 +105,10 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
                        ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
                        ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
                        ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
-                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS')]]].sum()
+                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS'),
+                       ('Structure Nb_formes_CRB_2025', 'CRB'),
+                       ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
+                       ('Structure Nb_formes_TCAS_2025', 'TCAS')]]].sum()
     for col in totaux.index:
         print(f"{col} : {totaux[col]}")
 
@@ -108,10 +120,7 @@ def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
                        ('Formation_grand_public Nb_formes_GQS_2025', 'GQS'),
                        ('Formation_grand_public Nb_formes_IPS_2025', 'IPS'),
                        ('Formation_grand_public Nb_formes_IPSEN_2025', 'IPSEN'),
-                       ('Formation_grand_public Nb_formes_PREVIC_2025', 'PREVIC'),
-                       ('Structure Nb_formes_CRB_2025', 'CRB'),
-                       ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
-                       ('Structure Nb_formes_TCAS_2025', 'TCAS')]:
+                       ('Formation_grand_public Nb_formes_PREVIC_2025', 'PREVIC')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
     # Vérification des codes
@@ -122,10 +131,7 @@ def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
                        ('Formation_grand_public Nb_formes_GQS_2025', 'GQS'),
                        ('Formation_grand_public Nb_formes_IPS_2025', 'IPS'),
                        ('Formation_grand_public Nb_formes_IPSEN_2025', 'IPSEN'),
-                       ('Formation_grand_public Nb_formes_PREVIC_2025', 'PREVIC'),
-                       ('Structure Nb_formes_CRB_2025', 'CRB'),
-                       ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
-                       ('Structure Nb_formes_TCAS_2025', 'TCAS')]:
+                       ('Formation_grand_public Nb_formes_PREVIC_2025', 'PREVIC')]:
         codes_attendus = set(filtres_bc.get(code, []))
         codes_trouves = codes_df.intersection(codes_attendus)
         codes_manquants = codes_attendus - codes_df
@@ -145,10 +151,7 @@ def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
                                                                   'Formation_grand_public Nb_formes_GQS_2025',
                                                                   'Formation_grand_public Nb_formes_IPS_2025',
                                                                   'Formation_grand_public Nb_formes_IPSEN_2025',
-                                                                  'Formation_grand_public Nb_formes_PREVIC_2025',
-                                                                  'Structure Nb_formes_CRB_2025',
-                                                                  'Structure Nb_formateurs_CRB_2025',
-                                                                  'Structure Nb_formes_TCAS_2025']})
+                                                                  'Formation_grand_public Nb_formes_PREVIC_2025']})
     ).reset_index()
 
     # Somme globale par indicateur
@@ -157,10 +160,7 @@ def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
                        ('Formation_grand_public Nb_formes_GQS_2025', 'GQS'),
                        ('Formation_grand_public Nb_formes_IPS_2025', 'IPS'),
                        ('Formation_grand_public Nb_formes_IPSEN_2025', 'IPSEN'),
-                       ('Formation_grand_public Nb_formes_PREVIC_2025', 'PREVIC'),
-                       ('Structure Nb_formes_CRB_2025', 'CRB'),
-                       ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
-                       ('Structure Nb_formes_TCAS_2025', 'TCAS')]]].sum()
+                       ('Formation_grand_public Nb_formes_PREVIC_2025', 'PREVIC')]]].sum()
     for col in totaux.index:
         print(f"{col} : {totaux[col]}")
 
@@ -795,4 +795,5 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     indicateurs_base_contact_DT_pd = indicateurs_base_contact_DT_pd[indicateurs_base_contact_DT_pd['n_structure'] != '']
 
     return indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd
+
 
