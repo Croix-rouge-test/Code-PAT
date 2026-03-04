@@ -28,6 +28,57 @@ def dt_rattachement(df, df_ref_structure):
 def flatten(xss):
     return [x for xs in xss for x in xs]
 
+def calcul_secours_par_annee(df, filtres_bc, annee):
+
+    # Filtre commun
+    df_year = df[
+        (df['FORMATION_RESULTAT'] == 'Apte') &
+        (df[df['FORMATION_DATE_OBTENTION'].dt.year == annee])
+    ].copy()
+
+    # ======================
+    # 1️⃣ CI
+    # ======================
+    nivols_ci = set(
+        df_year[df_year['FORMATION_CODE'].isin(filtres_bc['CI'])]
+        ['NIVOL_ID_FK']
+        .drop_duplicates()
+    )
+
+    # ======================
+    # 2️⃣ PSE2
+    # ======================
+    nivols_pse2 = set(
+        df_year[df_year['FORMATION_CODE'].isin(filtres_bc['PSE2'])]
+        ['NIVOL_ID_FK']
+        .drop_duplicates()
+    )
+
+    # Exclusion CI
+    nivols_pse2 = nivols_pse2 - nivols_ci
+
+    # ======================
+    # 3️⃣ PSE1
+    # ======================
+    nivols_pse1 = set(
+        df_year[df_year['FORMATION_CODE'].isin(filtres_bc['PSE1'])]
+        ['NIVOL_ID_FK']
+        .drop_duplicates()
+    )
+
+    # Exclusion niveaux supérieurs
+    nivols_pse1 = nivols_pse1 - nivols_ci - nivols_pse2
+
+    # ======================
+    # Résumé
+    # ======================
+    resume = {
+        "LISTE_CI": list(nivols_ci),
+        "LISTE_PSE2": list(nivols_pse2),
+        "LISTE_PSE1": list(nivols_pse1)
+    }
+
+    return resume
 # ------------------------------
 # Fonctions indicateurs
 # ------------------------------
@@ -172,6 +223,7 @@ def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
 def nb_session_form(df_2025, filtres_bc, col_groupby):
     #df_res = df_2025[df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui'].copy()
     df_res = df_2025.copy()
+
     for name, code in [('Formation_grand_public Nb_sessions_PSC_2025', 'PSC'),
                        ('Formation_grand_public Nb_sessions_GQS_2025', 'GQS'),
                        ('Formation_grand_public Nb_sessions_IPS_2025', 'IPS'),
@@ -235,9 +287,54 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
     return result
 
 
+def nb_bene_aptes_PSE1_2_CI(df_2025, filtres_bc, col_groupby):
+    df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte') &
+                     (df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
 
 
-def nb_bene_aptes(df_2025, filtres_bc, col_groupby):
+    # Vérification des codes
+    print("\n===== Vérification des codes =====")
+    codes_df = set(df_res['FORMATION_CODE'].unique())
+
+    for name, code in [('Secours Nb_PSE1', 'PSE1'),
+                       ('Secours Nb_PSE2', 'PSE2'),
+                       ('Secours Nb_CI', 'CI')]:
+        codes_attendus = set(filtres_bc.get(code, []))
+        codes_trouves = codes_df.intersection(codes_attendus)
+        codes_manquants = codes_attendus - codes_df
+
+        print(f"\nIndicateur : {name}")
+        print(f"  Codes attendus : {codes_attendus}")
+        print(f"  Codes trouvés  : {codes_trouves}")
+        print(f"  Codes manquants: {codes_manquants}")
+
+        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
+
+    # Fonction de comptage
+    def count_unique(group, col_name):
+        return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
+
+    result = df_res.groupby(col_groupby).apply(
+        lambda g: pd.Series({col: count_unique(g, col) for col in ['Secours Nb_PSE1',
+                                                                  'Secours Nb_PSE2',
+                                                                  'Secours Nb_CI']})
+    ).reset_index()
+
+    # Somme globale par indicateur
+    print("\n===== Somme globale par indicateur =====")
+    totaux = result[[col for col, _ in [('Formation_grand_public Nb_FPSC', 'FPSC'),
+                       ('Formation_grand_public Nb_AGQS', 'AGQS'),
+                       ('Formation_grand_public Nb_FIPSEN', 'FIPSEN'),
+                                        ('Secours Nb_PSE1', 'PSE1'),
+                                        ('Secours Nb_PSE2', 'PSE2'),
+                                        ('Secours Nb_CI', 'CI')]]].sum()
+
+    for col in totaux.index:
+        print(f"{col} : {totaux[col]}")
+
+    return result
+
+def nb_bene_aptes_autres(df_2025, filtres_bc, col_groupby):
     df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte') &
                      (df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
 
