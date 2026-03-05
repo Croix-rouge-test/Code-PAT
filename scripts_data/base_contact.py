@@ -684,7 +684,7 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
     df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
 
     # Potentiellement enlever 2025 en attente réponse Théotime
-    df_res[(df_res['FORMATION_DATE_OBTENTION'].dt.year == 2025) | (df_res['FORMATION_DATE_OBTENTION'].dt.year == 2024)]
+    df_res = df_res[(df_res['FORMATION_DATE_OBTENTION'].dt.year == 2025) | (df_res['FORMATION_DATE_OBTENTION'].dt.year == 2024)]
     # _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
     _ , _ , _, df_is = apply_rattachement_successif(df_ref_structure, df_is, col = 'n_structure')
 
