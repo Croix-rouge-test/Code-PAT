@@ -28,14 +28,14 @@ def dt_rattachement(df, df_ref_structure):
 def flatten(xss):
     return [x for xs in xss for x in xs]
 
-def calcul_secours_par_annee(df, filtres_bc):
+def calcul_secours_par_annee(df, filtres_bc,annees):
 
     # ======================
     # Filtre unique optimisé
     # ======================
     mask = (
         (df['FORMATION_RESULTAT'] == 'Apte') &
-        (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025]))
+        (df['FORMATION_DATE_OBTENTION'].dt.year.isin(annees))
     )
 
     df_year = df.loc[mask, ['FORMATION_CODE', 'NIVOL_ID_FK']]
@@ -305,7 +305,7 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
     # ======================
     # Calcul hiérarchie secours
     # ======================
-    nivols = calcul_secours_par_annee(df_res, filtres_bc)
+    nivols = calcul_secours_par_annee(df_res, filtres_bc, [2024,2025])
 
     set_pse1 = set(nivols['LISTE_PSE1'])
     set_pse2 = set(nivols['LISTE_PSE2'])
