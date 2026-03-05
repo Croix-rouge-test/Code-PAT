@@ -382,9 +382,9 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
 
     return result
 
-def nb_bene_aptes_autres(df_2025, filtres_bc, col_groupby):
-    df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte') &
-                     (df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
+def nb_bene_aptes_autres(df, filtres_bc, col_groupby):
+    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') &
+                     (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui') & (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025]))].copy()
 
     for name, code in [('Formation_grand_public Nb_FPSC', 'FPSC'),
                        ('Formation_grand_public Nb_AGQS', 'AGQS'),
@@ -896,8 +896,8 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     nb_apte_formation_PSE1_2_CI = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'n_structure')
     nb_apte_formation_PSE1_2_CI_DT = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'DT_de_rattachement')
 
-    nb_apte_formation = nb_bene_aptes_autres(df_filtered_2025, filtres_bc, 'n_structure')
-    nb_apte_formation_DT = nb_bene_aptes_autres(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
+    nb_apte_formation = nb_bene_aptes_autres(df_filtered, filtres_bc, 'n_structure')
+    nb_apte_formation_DT = nb_bene_aptes_autres(df_filtered, filtres_bc, 'DT_de_rattachement')
 
     taux_rec = taux_recy(df_filtered_2025, filtres_bc, 'n_structure')
     taux_rec_DT = taux_recy(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
