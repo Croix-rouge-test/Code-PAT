@@ -810,40 +810,39 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
 
 def clean_base_contact(client, df_ref_structure):
 
-  filtres_bc = {
-      'CRB' : ['CRB', 'ECRB', 'VI'],
-      'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], # suppression'AVI'
-      'TCAS' : ['TCAS', 'ETCAS'], # suppression 'TCAS2'
-      'TCAU' : ['TCAU', 'ETCAU'],
-      'TCEO' : ['TCEO','ESE'],
-      'PSP' : ['PSP'], #suppression 'PSP1'
-      'IRR' : ['IRR','IRRA','IRRJ'],
-      'solidar' : ['SOLIDAR2','SOLIDAR1','SOLIDAR'],
-      'solidar20' : ['PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'], # suppression'PASSSOLIDAR2020'
-      'AAD' : ['AAD'], # suppression'IAD','MAO'
-      'FAAD' : ['FAAD','EPIAF FAAD'],
-      'FPSC' : ['FCFPSC','RATFCFPSC', 'FPSC', 'RECFPSC', 'PICF FPSC'], #ajout de 'FPSC', 'RECFPSC', 'PICF FPSC'
-      'AGQS' : ['AGQS'], # suppression'RATAGQS'
-      'FIPSEN' : ['FIPSEN','RECFIPSEN'],
-      'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1'], #ajout formation continue FC
-      'PSE1_i' : ['APTE PSE1', 'PSE1'],
-      'RECPSE1' : ['RECPSE1', 'FCPSE1'],
-      'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2', 'FCPSE2', 'FCPSE'], #ajout formation continue FC + PSE
-      'PSE2_i' : ['PSE','PSE2','RATPSE2'], 
-      'RECPSE2' : ['RECPSE2', 'FCPSE2'],
-      'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'], #suppression CIP3 et ajout FCCI
-      'CI_i' : ['CI', 'CI P1 P2', 'CI P1', 'CI P2', 'CI EXT'],
-      'RECCI' : ['RECCI', 'REC PSECI', 'RECPSECI'],
-      'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'], #ajout de 'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'
-      'GQS' : ['GQS', 'GQS AC'],
-      'IPSEN' : ['IPSEN'],
-      'IPS' : ['IPS', 'IPS SR', 'IPSE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
-      'PREVIC' : ['PREVIC'],
-      'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE'], #ajout de 'PICF FPS', 'PICF FPSE'
-      'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2']    
-      }
-    codes_filtres_bc = [element for sous_liste in filtres_bc.values() for element in sous_liste] 
-
+    filtres_bc = {
+        'CRB' : ['CRB', 'ECRB', 'VI'],
+        'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], # suppression'AVI'
+        'TCAS' : ['TCAS', 'ETCAS'], # suppression 'TCAS2'
+        'TCAU' : ['TCAU', 'ETCAU'],
+        'TCEO' : ['TCEO','ESE'],
+        'PSP' : ['PSP'], #suppression 'PSP1'
+        'IRR' : ['IRR','IRRA','IRRJ'],
+        'solidar' : ['SOLIDAR2','SOLIDAR1','SOLIDAR'],
+        'solidar20' : ['PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'], # suppression'PASSSOLIDAR2020'
+        'AAD' : ['AAD'], # suppression'IAD','MAO'
+        'FAAD' : ['FAAD','EPIAF FAAD'],
+        'FPSC' : ['FCFPSC','RATFCFPSC', 'FPSC', 'RECFPSC', 'PICF FPSC'], #ajout de 'FPSC', 'RECFPSC', 'PICF FPSC'
+        'AGQS' : ['AGQS'], # suppression'RATAGQS'
+        'FIPSEN' : ['FIPSEN','RECFIPSEN'],
+        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1'], #ajout formation continue FC
+        'PSE1_i' : ['APTE PSE1', 'PSE1'],
+        'RECPSE1' : ['RECPSE1', 'FCPSE1'],
+        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2', 'FCPSE2', 'FCPSE'], #ajout formation continue FC + PSE
+        'PSE2_i' : ['PSE','PSE2','RATPSE2'], 
+        'RECPSE2' : ['RECPSE2', 'FCPSE2'],
+        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'], #suppression CIP3 et ajout FCCI
+        'CI_i' : ['CI', 'CI P1 P2', 'CI P1', 'CI P2', 'CI EXT'],
+        'RECCI' : ['RECCI', 'REC PSECI', 'RECPSECI'],
+        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'], #ajout de 'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'
+        'GQS' : ['GQS', 'GQS AC'],
+        'IPSEN' : ['IPSEN'],
+        'IPS' : ['IPS', 'IPS SR', 'IPSE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
+        'PREVIC' : ['PREVIC'],
+        'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE'], #ajout de 'PICF FPS', 'PICF FPSE'
+        'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2']    
+        }
+    codes_filtres_bc = list({element for sous_liste in filtres_bc.values() for element in sous_liste})
 
 
     query_formation_session_resultat = """
