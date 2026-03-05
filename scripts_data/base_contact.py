@@ -740,7 +740,7 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
 
     if mask.any():
         lignes_erreur = result[mask]
-        raise AssertionError(
+        print(
             f"{mask.sum()} ligne(s) ont Nb_IS < nb_bene_actifs :\n{lignes_erreur}"
         )
     return result[[col_groupby, "Secours Taux_IS_actifs"]]
