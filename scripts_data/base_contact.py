@@ -974,11 +974,11 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     nb_apte_formation = nb_bene_aptes_autres(df_filtered, filtres_bc, 'n_structure')
     nb_apte_formation_DT = nb_bene_aptes_autres(df_filtered, filtres_bc, 'DT_de_rattachement')
 
-    taux_rec = taux_recy(df_filtered_2025, filtres_bc, 'n_structure')
-    taux_rec_DT = taux_recy(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
+    taux_rec = taux_recy(df_filtered,nb_apte_formation_PSE1_2_CI, filtres_bc, 'n_structure')
+    taux_rec_DT = taux_recy(df_filtered,nb_apte_formation_PSE1_2_CI_DT, filtres_bc, 'DT_de_rattachement')
 
-    taux_nouveau_form = taux_ren(df_filtered, filtres_bc, 'n_structure')
-    taux_nouveau_form_DT = taux_ren(df_filtered, filtres_bc, 'DT_de_rattachement')
+    taux_nouveau_form = taux_ren(df_filtered,nb_apte_formation_PSE1_2_CI, filtres_bc, 'n_structure')
+    taux_nouveau_form_DT = taux_ren(df_filtered,nb_apte_formation_PSE1_2_CI_DT, filtres_bc, 'DT_de_rattachement')
 
     # Indicateurs fusion 
 
