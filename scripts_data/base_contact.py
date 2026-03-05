@@ -438,44 +438,109 @@ def nb_bene_aptes_autres(df, filtres_bc, col_groupby):
 # Fonctions taux
 # ------------------------------
 
-def taux_recy(df_2025, filtres_bc, col_groupby):
-    df_res = df_2025.copy()
+def taux_recy(df_2025, df_nb_aptes, filtres_bc, col_groupby):
+    df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte') &
+        (df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
     result = pd.DataFrame({col_groupby: df_res[col_groupby].unique()})
     result.set_index(col_groupby, inplace=True)
 
-    for code, alias in [('PSE1', 'Secours Taux_recy26_PSE1'),
-                        ('PSE2', 'Secours Taux_recy26_PSE2'),
-                        ('CI', 'Secours Taux_recy26_CI')]:
+    nivols = calcul_secours_par_annee(df_res, filtres_bc,[2025])
+
+    set_pse1 = set(nivols['LISTE_PSE1'])
+    set_pse2 = set(nivols['LISTE_PSE2'])
+    set_ci = set(nivols['LISTE_CI'])
+
+    mask = (
+        (df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) & df_res['NIVOL_ID_FK'].isin(set_pse1)) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) & df_res['NIVOL_ID_FK'].isin(set_pse2)) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['CI']) & df_res['NIVOL_ID_FK'].isin(set_ci))
+    )
+
+    df_res = df_res.loc[mask]
+
+    for code, alias in [('RECPSE1', 'nb_recy_PSE1'),
+                        ('RECPSE2', 'nb_recy_PSE2'),
+                        ('RECCI', 'nb_recy_CI')]:
         taux = df_res.groupby(col_groupby).apply(
-            lambda g: ((g[g['FORMATION_CODE'].isin(filtres_bc[code])]
-                        ['FORMATION_DATE_RECYCLAGE'].dt.year == 2025).sum()
-                       / max(1, g[g['FORMATION_CODE'].isin(filtres_bc[code])].shape[0]))
+            lambda g: g[
+                g['FORMATION_CODE'].isin(filtres_bc[code]) & 
+                (g['FORMATION_DATE_OBTENTION'].dt.year == 2025)
+            ]['NIVOL_ID_FK'].nunique()
         )
         result[alias] = taux
 
+    result = pd.merge(result, df_nb_aptes, on = col_groupby, how = 'outer')
+
+    for code, nb, alias in [('PSE1','Secours Nb_PSE1', 'Secours Taux_recy26_PSE1'),
+                        ('PSE2', 'Secours Nb_PSE2', 'Secours Taux_recy26_PSE2'),
+                        ('CI','Secours Nb_CI', 'Secours Taux_recy26_CI')]:
+        mask = result[nb] < result['nb_recy_'+code]
+        print(f"nb_recy_{code} : {result['nb_recy_'+code].sum()}")
+
+
+        if mask.any():
+            lignes_erreur = result[mask][['nb_recy_'+code,nb]]
+            print(f"{mask.sum()} ligne(s) ont {nb} < nb_recy_{code} :\n{lignes_erreur}")
+        result[alias] = np.where(
+          (result['nb_recy_'+code] == 0) | (result[nb] == 0),
+          0,  # si l’un des deux est 0
+          result['nb_recy_'+code] / result[nb]  # sinon le calcul normal
+      )
+
     result = result.reset_index()
-    return result
+    return result[[col_groupby, 'Secours Taux_recy26_PSE1', 'Secours Taux_recy26_PSE2', 'Secours Taux_recy26_CI']]
 
-def taux_ren(df_filtered, filtres_bc, col_groupby):
-    df_2025 = df_filtered[df_filtered['FORMATION_DATE_OBTENTION'].dt.year == 2025].copy()
-    df_autres = df_filtered[df_filtered['FORMATION_DATE_OBTENTION'].dt.year == 2024].copy()
-
-    result = pd.DataFrame({col_groupby: df_2025[col_groupby].unique()})
+def taux_ren(df_2025, df_nb_aptes, filtres_bc, col_groupby):
+    df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte') &
+        (df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
+    result = pd.DataFrame({col_groupby: df_res[col_groupby].unique()})
     result.set_index(col_groupby, inplace=True)
 
-    for code, alias in [('PSE1', 'Secours Taux_ren25_PSE1'),
-                        ('PSE2', 'Secours Taux_ren25_PSE2'),
-                        ('CI', 'Secours Taux_ren25_CI')]:
-        def compute_taux(g):
-            nivol_2025 = g[g['FORMATION_CODE'].isin(filtres_bc[code])]['NIVOL_ID_FK'].unique()
-            nivol_autres = df_autres['NIVOL_ID_FK'].unique()
-            nivol_absents = np.setdiff1d(nivol_2025, nivol_autres)
-            return len(nivol_absents) / max(1, len(nivol_2025))
-        taux = df_2025.groupby(col_groupby).apply(compute_taux)
+    nivols = calcul_secours_par_annee(df_res, filtres_bc,[2025])
+
+    set_pse1 = set(nivols['LISTE_PSE1'])
+    set_pse2 = set(nivols['LISTE_PSE2'])
+    set_ci = set(nivols['LISTE_CI'])
+
+    mask = (
+        (df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) & df_res['NIVOL_ID_FK'].isin(set_pse1)) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) & df_res['NIVOL_ID_FK'].isin(set_pse2)) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['CI']) & df_res['NIVOL_ID_FK'].isin(set_ci))
+    )
+
+    df_res = df_res.loc[mask]
+
+    for code, alias in [('PSE1_i', 'nb_ren_PSE1'),
+                        ('PSE2_i', 'nb_ren_PSE2'),
+                        ('CI_i', 'nb_ren_CI')]:
+        taux = df_res.groupby(col_groupby).apply(
+            lambda g: g[
+                g['FORMATION_CODE'].isin(filtres_bc[code]) & 
+                (g['FORMATION_DATE_OBTENTION'].dt.year == 2025)
+            ]['NIVOL_ID_FK'].nunique()
+        )
         result[alias] = taux
 
+    result = pd.merge(result, df_nb_aptes, on = col_groupby, how = 'outer')
+
+    for code, nb, alias in [('PSE1','Secours Nb_PSE1', 'Secours Taux_ren25_PSE1'),
+                        ('PSE2', 'Secours Nb_PSE2', 'Secours Taux_ren25_PSE2'),
+                        ('CI','Secours Nb_CI', 'Secours Taux_ren25_CI')]:
+        mask = result[nb] < result['nb_ren_'+code]
+        print(f"nb_ren_{code} : {result['nb_ren_'+code].sum()}")
+
+        if mask.any():
+            lignes_erreur = result[mask][['nb_ren_'+code,nb]]
+            print(f"{mask.sum()} ligne(s) ont {nb} < nb_recy_{code} :\n{lignes_erreur}")
+        result[alias] = np.where(
+          (result['nb_ren_'+code] == 0) | (result[nb] == 0),
+          0,  # si l’un des deux est 0
+          result['nb_ren_'+code] / result[nb]  # sinon le calcul normal
+      )
+
     result = result.reset_index()
-    return result
+    return result[[col_groupby, 'Secours Taux_ren25_PSE1', 'Secours Taux_ren25_PSE2', 'Secours Taux_ren25_CI']]
+
 
 # ------------------------------
 # Fusion
@@ -745,32 +810,38 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
 
 def clean_base_contact(client, df_ref_structure):
 
-    filtres_bc = {
-        'CRB' : ['CRB', 'ECRB', 'VI'],
-        'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], # suppression'AVI'
-        'TCAS' : ['TCAS', 'ETCAS'], # suppression 'TCAS2'
-        'TCAU' : ['TCAU', 'ETCAU'],
-        'TCEO' : ['TCEO','ESE'],
-        'PSP' : ['PSP'], #suppression 'PSP1'
-        'IRR' : ['IRR','IRRA','IRRJ'],
-        'solidar' : ['SOLIDAR2','SOLIDAR1','SOLIDAR'],
-        'solidar20' : ['PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'], # suppression'PASSSOLIDAR2020'
-        'AAD' : ['AAD'], # suppression'IAD','MAO'
-        'FAAD' : ['FAAD','EPIAF FAAD'],
-        'FPSC' : ['FCFPSC','RATFCFPSC', 'FPSC', 'RECFPSC', 'PICF FPSC'], #ajout de 'FPSC', 'RECFPSC', 'PICF FPSC'
-        'AGQS' : ['AGQS'], # suppression'RATAGQS'
-        'FIPSEN' : ['FIPSEN','RECFIPSEN'],
-        'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1'], #ajout formation continue FC
-        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2', 'FCPSE2', 'FCPSE'], #ajout formation continue FC + PSE
-        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'], #suppression CIP3 et ajout FCCI
-        'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'], #ajout de 'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'
-        'GQS' : ['GQS', 'GQS AC'],
-        'IPSEN' : ['IPSEN'],
-        'IPS' : ['IPS', 'IPS SR', 'IPSE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
-        'PREVIC' : ['PREVIC'],
-        'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE'], #ajout de 'PICF FPS', 'PICF FPSE'
-        'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2']
-    }
+  filtres_bc = {
+      'CRB' : ['CRB', 'ECRB', 'VI'],
+      'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], # suppression'AVI'
+      'TCAS' : ['TCAS', 'ETCAS'], # suppression 'TCAS2'
+      'TCAU' : ['TCAU', 'ETCAU'],
+      'TCEO' : ['TCEO','ESE'],
+      'PSP' : ['PSP'], #suppression 'PSP1'
+      'IRR' : ['IRR','IRRA','IRRJ'],
+      'solidar' : ['SOLIDAR2','SOLIDAR1','SOLIDAR'],
+      'solidar20' : ['PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'], # suppression'PASSSOLIDAR2020'
+      'AAD' : ['AAD'], # suppression'IAD','MAO'
+      'FAAD' : ['FAAD','EPIAF FAAD'],
+      'FPSC' : ['FCFPSC','RATFCFPSC', 'FPSC', 'RECFPSC', 'PICF FPSC'], #ajout de 'FPSC', 'RECFPSC', 'PICF FPSC'
+      'AGQS' : ['AGQS'], # suppression'RATAGQS'
+      'FIPSEN' : ['FIPSEN','RECFIPSEN'],
+      'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1'], #ajout formation continue FC
+      'PSE1_i' : ['APTE PSE1', 'PSE1'],
+      'RECPSE1' : ['RECPSE1', 'FCPSE1'],
+      'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2', 'FCPSE2', 'FCPSE'], #ajout formation continue FC + PSE
+      'PSE2_i' : ['PSE','PSE2','RATPSE2'], 
+      'RECPSE2' : ['RECPSE2', 'FCPSE2'],
+      'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'], #suppression CIP3 et ajout FCCI
+      'CI_i' : ['CI', 'CI P1 P2', 'CI P1', 'CI P2', 'CI EXT'],
+      'RECCI' : ['RECCI', 'REC PSECI', 'RECPSECI'],
+      'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'], #ajout de 'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'
+      'GQS' : ['GQS', 'GQS AC'],
+      'IPSEN' : ['IPSEN'],
+      'IPS' : ['IPS', 'IPS SR', 'IPSE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
+      'PREVIC' : ['PREVIC'],
+      'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE'], #ajout de 'PICF FPS', 'PICF FPSE'
+      'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2']    
+      }
     codes_filtres_bc = [element for sous_liste in filtres_bc.values() for element in sous_liste] 
 
 
@@ -857,8 +928,14 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
         'AGQS' : ['AGQS'], # suppression'RATAGQS'
         'FIPSEN' : ['FIPSEN','RECFIPSEN'],
         'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1'], #ajout formation continue FC
+        'PSE1_i' : ['APTE PSE1', 'PSE1'],
+        'RECPSE1' : ['RECPSE1', 'FCPSE1'],
         'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2', 'FCPSE2', 'FCPSE'], #ajout formation continue FC + PSE
+        'PSE2_i' : ['PSE','PSE2','RATPSE2'], 
+        'RECPSE2' : ['RECPSE2', 'FCPSE2'],
         'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'], #suppression CIP3 et ajout FCCI
+        'CI_i' : ['CI', 'CI P1 P2', 'CI P1', 'CI P2', 'CI EXT'],
+        'RECCI' : ['RECCI', 'REC PSECI', 'RECPSECI'],
         'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'], #ajout de 'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'
         'GQS' : ['GQS', 'GQS AC'],
         'IPSEN' : ['IPSEN'],
@@ -867,7 +944,6 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
         'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE'], #ajout de 'PICF FPS', 'PICF FPSE'
         'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2']    
         }
-    
     filtres_bc['all_solidar'] = filtres_bc['solidar'] + filtres_bc['solidar20']
 
     # Ajouter DT
