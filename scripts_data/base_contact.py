@@ -30,55 +30,53 @@ def flatten(xss):
 
 def calcul_secours_par_annee(df, filtres_bc):
 
-    # Filtre commun
-    df_year = df[
+    # ======================
+    # Filtre unique optimisé
+    # ======================
+    mask = (
         (df['FORMATION_RESULTAT'] == 'Apte') &
-        (df[(df['FORMATION_DATE_OBTENTION'].dt.year == 2024) | (df['FORMATION_DATE_OBTENTION'].dt.year == 2025)])
-    ].copy()
+        (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025]))
+    )
+
+    df_year = df.loc[mask, ['FORMATION_CODE', 'NIVOL_ID_FK']]
 
     # ======================
-    # 1️⃣ CI
+    # Sets de codes
+    # ======================
+    codes_ci = set(filtres_bc['CI'])
+    codes_pse2 = set(filtres_bc['PSE2'])
+    codes_pse1 = set(filtres_bc['PSE1'])
+
+    # ======================
+    # Extraction rapide
     # ======================
     nivols_ci = set(
-        df_year[df_year['FORMATION_CODE'].isin(filtres_bc['CI'])]
-        ['NIVOL_ID_FK']
-        .drop_duplicates()
+        df_year.loc[df_year['FORMATION_CODE'].isin(codes_ci), 'NIVOL_ID_FK']
     )
 
-    # ======================
-    # 2️⃣ PSE2
-    # ======================
     nivols_pse2 = set(
-        df_year[df_year['FORMATION_CODE'].isin(filtres_bc['PSE2'])]
-        ['NIVOL_ID_FK']
-        .drop_duplicates()
+        df_year.loc[df_year['FORMATION_CODE'].isin(codes_pse2), 'NIVOL_ID_FK']
     )
 
-    # Exclusion CI
-    nivols_pse2 = nivols_pse2 - nivols_ci
-
-    # ======================
-    # 3️⃣ PSE1
-    # ======================
     nivols_pse1 = set(
-        df_year[df_year['FORMATION_CODE'].isin(filtres_bc['PSE1'])]
-        ['NIVOL_ID_FK']
-        .drop_duplicates()
+        df_year.loc[df_year['FORMATION_CODE'].isin(codes_pse1), 'NIVOL_ID_FK']
     )
 
-    # Exclusion niveaux supérieurs
-    nivols_pse1 = nivols_pse1 - nivols_ci - nivols_pse2
+    # ======================
+    # Hiérarchie logique
+    # ======================
+    nivols_pse2 -= nivols_ci
+    nivols_pse1 -= nivols_ci
+    nivols_pse1 -= nivols_pse2
 
     # ======================
-    # Résumé
+    # Résultat
     # ======================
-    resume = {
+    return {
         "LISTE_CI": list(nivols_ci),
         "LISTE_PSE2": list(nivols_pse2),
         "LISTE_PSE1": list(nivols_pse1)
     }
-
-    return resume
 # ------------------------------
 # Fonctions indicateurs
 # ------------------------------
@@ -288,32 +286,62 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
 
 
 def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
-    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') &
-                     (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
-    
+
+    # ======================
+    # Filtre principal
+    # ======================
+    df_res = df[
+        (df['FORMATION_RESULTAT'] == 'Apte') &
+        (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui') &
+        (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025]))
+    ]
+
+    df_res = df_res[
+        df_res['FORMATION_CODE'].isin(
+            filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
+        )
+    ].copy()
+
+    # ======================
+    # Calcul hiérarchie secours
+    # ======================
     nivols = calcul_secours_par_annee(df_res, filtres_bc)
 
-    for name, code in [('Secours Nb_PSE1', 'PSE1'),
-                       ('Secours Nb_PSE2', 'PSE2'),
-                       ('Secours Nb_CI', 'CI')]:
-        df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
+    set_pse1 = set(nivols['LISTE_PSE1'])
+    set_pse2 = set(nivols['LISTE_PSE2'])
+    set_ci = set(nivols['LISTE_CI'])
 
-    mask_PSE1 = df_res['FORMATION_CODE'] == filtres_bc['PSE1']
-    mask_PSE2 = df_res['FORMATION_CODE'] == filtres_bc['PSE2']
-    mask_CI = df_res['FORMATION_CODE'] == filtres_bc['CI']
+    # ======================
+    # Colonnes indicateurs
+    # ======================
+    df_res['Secours Nb_PSE1'] = (
+        df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) &
+        df_res['NIVOL_ID_FK'].isin(set_pse1)
+    )
 
-    df_res.iloc[mask_PSE1, 'NIVOL_ID_FK'] = df_res.iloc[mask_PSE1, 'NIVOL_ID_FK'][df_res['NIVOL_ID_FK'].isin(nivols['LISTE_PSE1'])]
-    df_res.iloc[mask_PSE2, 'NIVOL_ID_FK'] = df_res.iloc[mask_PSE2, 'NIVOL_ID_FK'][df_res['NIVOL_ID_FK'].isin(nivols['LISTE_PSE2'])]
-    df_res.iloc[mask_CI, 'NIVOL_ID_FK'] = df_res.iloc[mask_CI, 'NIVOL_ID_FK'][df_res['NIVOL_ID_FK'].isin(nivols['LISTE_CI'])]
+    df_res['Secours Nb_PSE2'] = (
+        df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) &
+        df_res['NIVOL_ID_FK'].isin(set_pse2)
+    )
 
+    df_res['Secours Nb_CI'] = (
+        df_res['FORMATION_CODE'].isin(filtres_bc['CI']) &
+        df_res['NIVOL_ID_FK'].isin(set_ci)
+    )
 
+    # ======================
     # Vérification des codes
+    # ======================
     print("\n===== Vérification des codes =====")
+
     codes_df = set(df_res['FORMATION_CODE'].unique())
 
-    for name, code in [('Secours Nb_PSE1', 'PSE1'),
-                       ('Secours Nb_PSE2', 'PSE2'),
-                       ('Secours Nb_CI', 'CI')]:
+    for name, code in [
+        ('Secours Nb_PSE1', 'PSE1'),
+        ('Secours Nb_PSE2', 'PSE2'),
+        ('Secours Nb_CI', 'CI')
+    ]:
+
         codes_attendus = set(filtres_bc.get(code, []))
         codes_trouves = codes_df.intersection(codes_attendus)
         codes_manquants = codes_attendus - codes_df
@@ -323,23 +351,31 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
         print(f"  Codes trouvés  : {codes_trouves}")
         print(f"  Codes manquants: {codes_manquants}")
 
-        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
+    # ======================
+    # Comptage optimisé
+    # ======================
+    def count_unique(df, mask):
+        return df.loc[mask, 'NIVOL_ID_FK'].nunique()
 
-    # Fonction de comptage
-    def count_unique(group, col_name):
-        return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
+    result = (
+        df_res
+        .groupby(col_groupby)
+        .apply(lambda g: pd.Series({
+            'Secours Nb_PSE1': count_unique(g, g['Secours Nb_PSE1']),
+            'Secours Nb_PSE2': count_unique(g, g['Secours Nb_PSE2']),
+            'Secours Nb_CI': count_unique(g, g['Secours Nb_CI'])
+        }))
+        .reset_index()
+    )
 
-    result = df_res.groupby(col_groupby).apply(
-        lambda g: pd.Series({col: count_unique(g, col) for col in ['Secours Nb_PSE1',
-                                                                  'Secours Nb_PSE2',
-                                                                  'Secours Nb_CI']})
-    ).reset_index()
-
-    # Somme globale par indicateur
+    # ======================
+    # Somme globale
+    # ======================
     print("\n===== Somme globale par indicateur =====")
-    totaux = result[[col for col, _ in [('Secours Nb_PSE1', 'PSE1'),
-                                        ('Secours Nb_PSE2', 'PSE2'),
-                                        ('Secours Nb_CI', 'CI')]]].sum()
+
+    totaux = result[
+        ['Secours Nb_PSE1', 'Secours Nb_PSE2', 'Secours Nb_CI']
+    ].sum()
 
     for col in totaux.index:
         print(f"{col} : {totaux[col]}")
@@ -883,7 +919,7 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd = fusion_bc_final(
         nb_suivi_formation, nb_suivi_formation_DT,
         nb_suivi_formation_tous, nb_suivi_formation_tous_DT,
-        nb_sessions, nb_sessions_DT, nb_apte_formation_PSE1_2_CI, nb_apte_formation_PSE1_2_CI_DT
+        nb_sessions, nb_sessions_DT, nb_apte_formation_PSE1_2_CI, nb_apte_formation_PSE1_2_CI_DT,
         nb_apte_formation, nb_apte_formation_DT,
         taux_rec, taux_rec_DT,
         taux_nouveau_form, taux_nouveau_form_DT,
