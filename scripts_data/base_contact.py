@@ -671,13 +671,12 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
     df_is = client.query(query_is).to_dataframe()
     df_is = df_is.rename(columns = {'PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK','NIVOL_ID_FK']].drop_duplicates()
 
+    df_is = pd.merge(df, df_is, on = 'NIVOL_ID_FK', how = 'right')
+
     df_is["n_structure"] = (
         df_is["n_structure"]
         .fillna(df_is["PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK"])
     )
-
-    df_is = pd.merge(df, df_is, on = 'NIVOL_ID_FK', how = 'right')
-
     
     filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
 
