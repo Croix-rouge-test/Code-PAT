@@ -100,7 +100,7 @@ def  Import_Maraude_manuel(client,df_ref_structure):
 
 
 
-def calcul_indic_maraude_manuelles(df_ref_structure, df_Maraude_donnees_manuelles):
+def calcul_indic_maraude_manuelles(df_ref_structure, df_Maraude_donnees_manuelles, df_rattachement_court):
 
   #rattachement successif
   df_ref_structure, c, rattachement_successif, df_Maraude_donnees_manuelles_2 = apply_rattachement_successif(df_ref_structure, df_Maraude_donnees_manuelles, col="n_structure")
