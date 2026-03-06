@@ -200,7 +200,7 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
     return result
 
 def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
-    df_res = df_2025[df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui'].copy()
+    df_res = df_2025[df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] != 'Oui'].copy()
     for name, code in [('Formation_grand_public Nb_formes_PSC_2025', 'PSC'),
                        ('Formation_grand_public Nb_formes_GQS_2025', 'GQS'),
                        ('Formation_grand_public Nb_formes_IPS_2025', 'IPS'),
@@ -329,13 +329,13 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
     df_res = df[
         (df['FORMATION_RESULTAT'] == 'Apte') &
         (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025]))
-    ]
+    ].copy()
 
     df_res = df_res[
         df_res['FORMATION_CODE'].isin(
             filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
         )
-    ].copy()
+    ]
 
     # ======================
     # Calcul hiérarchie secours
@@ -903,9 +903,6 @@ def clean_base_contact(client, df_ref_structure):
     how="left"
     )
 
-    _ , _ , _, df_formation_session_resultat_rattachement = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat_rattachement, col = 'rattachement_benevole_structure_id_fk')
-
-
     # df_formation_session_resultat_rattachement = df_formation_session_resultat_rattachement[
     # df_formation_session_resultat_rattachement["rattachement_benevole_structure_id_fk"].isin(
     #     df_ref_structure["n_structure"] )]
@@ -917,6 +914,8 @@ def clean_base_contact(client, df_ref_structure):
 
     df_formation_count_session = df_formation_session_resultat.copy()
     df_formation_count_session = df_formation_count_session.rename(columns={"FORMATION_SESSION_STRUCTURE_ID_FK": "n_structure"})
+    _ , _ , _, df_formation_count_session = apply_rattachement_successif(df_ref_structure, df_formation_count_session, col = 'n_structure')
+
     df_formation_count_session = dt_rattachement(df_formation_count_session, df_ref_structure)
     df_formation_count_session_2025 = df_formation_count_session[df_formation_count_session['FORMATION_DATE_OBTENTION'].dt.year == 2025].copy()
 
