@@ -765,6 +765,7 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "AEO Nb_PA_dispos_mobiles",
     "AEO Structure_domiciliation_fixe",
     "AEO Structure_ecrivain_public_fixe",
+    'Activités AAD facultatives',
     "Aide_alimentaire Nb_U2A",
     "Aide_alimentaire Nb_Centre_distribution_alimentaire",
     "Aide_alimentaire Nb_epiceries_sociales",
