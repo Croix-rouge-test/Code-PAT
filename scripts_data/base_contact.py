@@ -80,21 +80,78 @@ def calcul_secours_par_annee(df, filtres_bc,annees):
 # ------------------------------
 # Fonctions indicateurs
 # ------------------------------
-
-def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
+def nb_bene_suivi_form(df_filtered, filtres_bc, col_groupby):
     df_res = df_filtered[df_filtered['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui'].copy()
 
     # Ajouter colonnes booléennes par filtre
-    for name, code in [('Maraude Nb_SOLIDAR', 'solidar'),
-                       ('Maraude Nb_SOLIDAR2020', 'solidar20'),
-                       ('AEO Nb_AAD', 'AAD'),
-                       ('AEO Nb_FAAD', 'FAAD'),
+    for name, code in [('AEO Nb_AAD', 'AAD'),
                        ('Dispositifs_d_urgence Nb_formes_TCAU_2025', 'TCAU'),
                        ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
                        ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
                        ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
                        ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS'),
-                       ('Structure Nb_formes_CRB_2025', 'CRB'),
+                       ('Structure Nb_formes_CRB_2025', 'CRB')]:
+        df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
+
+    # Vérification des codes
+    print("\n===== Vérification des codes =====")
+    codes_df = set(df_res['FORMATION_CODE'].unique())
+
+    for name, code in [('AEO Nb_AAD', 'AAD'),
+                       ('Dispositifs_d_urgence Nb_formes_TCAU_2025', 'TCAU'),
+                       ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
+                       ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
+                       ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
+                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS'),
+                       ('Structure Nb_formes_CRB_2025', 'CRB')]:
+        codes_attendus = set(filtres_bc.get(code, []))
+        codes_trouves = codes_df.intersection(codes_attendus)
+        codes_manquants = codes_attendus - codes_df
+
+        print(f"\nIndicateur : {name}")
+        print(f"  Codes attendus : {codes_attendus}")
+        print(f"  Codes trouvés  : {codes_trouves}")
+        print(f"  Codes manquants: {codes_manquants}")
+
+        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
+
+
+    # Groupby et count distinct
+    def count_unique(group, col_name):
+        return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
+
+    result = df_res.groupby(col_groupby).apply(
+        lambda g: pd.Series({col: count_unique(g, col) for col in [
+                                                                  'AEO Nb_AAD',
+                                                                  'Dispositifs_d_urgence Nb_formes_TCAU_2025',
+                                                                  'Dispositifs_d_urgence Nb_formes_TCEO_2025',
+                                                                  'Dispositifs_d_urgence Nb_formes_PSP_2025',
+                                                                  'Dispositifs_d_urgence Nb_formes_IRR_2025',
+                                                                  'Dispositifs_d_urgence Nb_formes_GQS_2025',
+                                                                  'Structure Nb_formes_CRB_2025']})
+    ).reset_index()
+
+    # Somme globale par indicateur
+    print("\n===== Somme globale par indicateur =====")
+    totaux = result[[col for col, _ in [('AEO Nb_AAD', 'AAD'),
+                       ('Dispositifs_d_urgence Nb_formes_TCAU_2025', 'TCAU'),
+                       ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
+                       ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
+                       ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
+                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS'),
+                       ('Structure Nb_formes_CRB_2025', 'CRB')]]].sum()
+    for col in totaux.index:
+        print(f"{col} : {totaux[col]}")
+
+    return result
+
+def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
+    df_res = df_filtered.copy()
+
+    # Ajouter colonnes booléennes par filtre
+    for name, code in [('Maraude Nb_SOLIDAR', 'solidar'),
+                       ('Maraude Nb_SOLIDAR2020', 'solidar20'),
+                       ('AEO Nb_FAAD', 'FAAD'),
                        ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
                        ('Structure Nb_formes_TCAS_2025', 'TCAS')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
@@ -105,14 +162,7 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
 
     for name, code in [('Maraude Nb_SOLIDAR', 'solidar'),
                        ('Maraude Nb_SOLIDAR2020', 'solidar20'),
-                       ('AEO Nb_AAD', 'AAD'),
                        ('AEO Nb_FAAD', 'FAAD'),
-                       ('Dispositifs_d_urgence Nb_formes_TCAU_2025', 'TCAU'),
-                       ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
-                       ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
-                       ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
-                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS'),
-                       ('Structure Nb_formes_CRB_2025', 'CRB'),
                        ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
                        ('Structure Nb_formes_TCAS_2025', 'TCAS')]:
         codes_attendus = set(filtres_bc.get(code, []))
@@ -133,29 +183,15 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
 
     result = df_res.groupby(col_groupby).apply(
         lambda g: pd.Series({col: count_unique(g, col) for col in ['Maraude Nb_SOLIDAR', 'Maraude Nb_SOLIDAR2020',
-                                                                  'AEO Nb_AAD', 'AEO Nb_FAAD',
-                                                                  'Dispositifs_d_urgence Nb_formes_TCAU_2025',
-                                                                  'Dispositifs_d_urgence Nb_formes_TCEO_2025',
-                                                                  'Dispositifs_d_urgence Nb_formes_PSP_2025',
-                                                                  'Dispositifs_d_urgence Nb_formes_IRR_2025',
-                                                                  'Dispositifs_d_urgence Nb_formes_GQS_2025',
-                                                                  'Structure Nb_formes_CRB_2025',
-                                                                  'Structure Nb_formateurs_CRB_2025',
+                                                                  'AEO Nb_FAAD', 'Structure Nb_formateurs_CRB_2025',
                                                                   'Structure Nb_formes_TCAS_2025']})
     ).reset_index()
 
     # Somme globale par indicateur
     print("\n===== Somme globale par indicateur =====")
-    totaux = result[[col for col, _ in [('Maraude Nb_SOLIDAR', 'all_solidar'),
+    totaux = result[[col for col, _ in [('Maraude Nb_SOLIDAR', 'solidar'),
                        ('Maraude Nb_SOLIDAR2020', 'solidar20'),
-                       ('AEO Nb_AAD', 'AAD'),
                        ('AEO Nb_FAAD', 'FAAD'),
-                       ('Dispositifs_d_urgence Nb_formes_TCAU_2025', 'TCAU'),
-                       ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
-                       ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
-                       ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
-                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS'),
-                       ('Structure Nb_formes_CRB_2025', 'CRB'),
                        ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
                        ('Structure Nb_formes_TCAS_2025', 'TCAS')]]].sum()
     for col in totaux.index:
@@ -542,7 +578,8 @@ def taux_ren(df_2025, df_nb_aptes, filtres_bc, col_groupby):
 # Fusion
 # ------------------------------
 
-def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
+def fusion_bc_final(nb_bene_suivi_formation, nb_bene_suivi_formation_DT,
+                    nb_suivi_formation, nb_suivi_formation_DT,
                     nb_suivi_formation_tous, nb_suivi_formation_tous_DT,
                     nb_sessions, nb_sessions_DT, nb_apte_formation_PSE1_2_CI, nb_apte_formation_PSE1_2_CI_DT,
                     nb_apte_formation, nb_apte_formation_DT,
@@ -557,7 +594,8 @@ def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
         from functools import reduce
         return reduce(lambda left, right: left.merge(right, on=col_groupby, how='left'), dfs)
 
-    indicateurs_base_contact = merge_all([nb_suivi_formation,
+    indicateurs_base_contact = merge_all([nb_bene_suivi_formation,
+                                         nb_suivi_formation,
                                          nb_suivi_formation_tous,
                                          nb_sessions,
                                          nb_apte_formation_PSE1_2_CI,
@@ -569,11 +607,11 @@ def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
                                          df_nvx_forme_crb])
 
     # Même pour DT
-    for df in [nb_suivi_formation_DT, nb_suivi_formation_tous_DT, nb_sessions_DT,nb_apte_formation_PSE1_2_CI_DT,
+    for df in [nb_bene_suivi_formation_DT,nb_suivi_formation_DT, nb_suivi_formation_tous_DT, nb_sessions_DT,nb_apte_formation_PSE1_2_CI_DT,
                nb_apte_formation_DT, taux_rec_DT, taux_nouveau_form_DT,nb_actifs_solidar_DT,taux_is_actifs_DT,df_nvx_forme_crb_DT]:
         df.rename(columns={'DT_de_rattachement':'n_structure'}, inplace=True)
 
-    indicateurs_base_contact_DT = merge_all([nb_suivi_formation_DT,
+    indicateurs_base_contact_DT = merge_all([nb_bene_suivi_formation_DT,nb_suivi_formation_DT,
                                             nb_suivi_formation_tous_DT,
                                             nb_sessions_DT,
                                             nb_apte_formation_PSE1_2_CI_DT,
@@ -941,9 +979,10 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
 
     df_filtered_2025 = df_filtered[df_filtered['FORMATION_DATE_OBTENTION'].dt.year == 2025].copy()
 
-
-
     # Calculs indicateurs
+    nb_bene_suivi_formation = nb_bene_suivi_form(df_filtered, filtres_bc, 'n_structure')
+    nb_bene_suivi_formation_DT = nb_bene_suivi_form(df_filtered, filtres_bc, 'DT_de_rattachement')
+
     nb_suivi_formation = nb_suivi_form(df_filtered, filtres_bc, 'n_structure')
     nb_suivi_formation_DT = nb_suivi_form(df_filtered, filtres_bc, 'DT_de_rattachement')
 
@@ -981,6 +1020,7 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     df_nvx_forme_crb_DT = nb_nvx_forme_crb(client, df_filtered_2025, filtres_bc, 'DT_de_rattachement')
 
     indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd = fusion_bc_final(
+        nb_bene_suivi_formation, nb_bene_suivi_formation_DT,
         nb_suivi_formation, nb_suivi_formation_DT,
         nb_suivi_formation_tous, nb_suivi_formation_tous_DT,
         nb_sessions, nb_sessions_DT, nb_apte_formation_PSE1_2_CI, nb_apte_formation_PSE1_2_CI_DT,
