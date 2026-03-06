@@ -578,7 +578,7 @@ def taux_ren(df_2025, df_nb_aptes, filtres_bc, col_groupby):
 # Fusion
 # ------------------------------
 
-def fusion_bc_final(nb_bene_suivi_formation, nb_bene_suivi_formation_DT,
+def fusion_bc_final(df_ref_structure, df_ref_structure_DT,nb_bene_suivi_formation, nb_bene_suivi_formation_DT,
                     nb_suivi_formation, nb_suivi_formation_DT,
                     nb_suivi_formation_tous, nb_suivi_formation_tous_DT,
                     nb_sessions, nb_sessions_DT, nb_apte_formation_PSE1_2_CI, nb_apte_formation_PSE1_2_CI_DT,
@@ -594,7 +594,7 @@ def fusion_bc_final(nb_bene_suivi_formation, nb_bene_suivi_formation_DT,
         from functools import reduce
         return reduce(lambda left, right: left.merge(right, on=col_groupby, how='left'), dfs)
 
-    indicateurs_base_contact = merge_all([nb_bene_suivi_formation,
+    indicateurs_base_contact = merge_all([df_ref_structure,nb_bene_suivi_formation,
                                          nb_suivi_formation,
                                          nb_suivi_formation_tous,
                                          nb_sessions,
@@ -607,11 +607,11 @@ def fusion_bc_final(nb_bene_suivi_formation, nb_bene_suivi_formation_DT,
                                          df_nvx_forme_crb])
 
     # Même pour DT
-    for df in [nb_bene_suivi_formation_DT,nb_suivi_formation_DT, nb_suivi_formation_tous_DT, nb_sessions_DT,nb_apte_formation_PSE1_2_CI_DT,
+    for df in [df_ref_structure_DT,nb_bene_suivi_formation_DT,nb_suivi_formation_DT, nb_suivi_formation_tous_DT, nb_sessions_DT,nb_apte_formation_PSE1_2_CI_DT,
                nb_apte_formation_DT, taux_rec_DT, taux_nouveau_form_DT,nb_actifs_solidar_DT,taux_is_actifs_DT,df_nvx_forme_crb_DT]:
         df.rename(columns={'DT_de_rattachement':'n_structure'}, inplace=True)
 
-    indicateurs_base_contact_DT = merge_all([nb_bene_suivi_formation_DT,nb_suivi_formation_DT,
+    indicateurs_base_contact_DT = merge_all([df_ref_structure_DT,nb_bene_suivi_formation_DT,nb_suivi_formation_DT,
                                             nb_suivi_formation_tous_DT,
                                             nb_sessions_DT,
                                             nb_apte_formation_PSE1_2_CI_DT,
@@ -931,9 +931,13 @@ def clean_base_contact(client, df_ref_structure):
 
     _ , _ , _, df_formation_session_resultat = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat, col = 'n_structure')
 
-
-
     df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['FORMATION_RESULTAT'] != 'Absent']
+
+    # On garde seulement les structures dans df_ref_structure
+
+    liste_structure_garder = df_ref_structure['n_structure'].drop_duplicates().tolist()    
+    df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['n_structure'].isin(liste_structure_garder)]
+    df_formation_count_session_2025 = df_formation_count_session_2025[df_formation_count_session_2025['n_structure'].isin(liste_structure_garder)]
 
 
     return df_formation_session_resultat, df_formation_count_session_2025
@@ -1022,6 +1026,7 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     df_nvx_forme_crb_DT = nb_nvx_forme_crb(client, df_filtered_2025, filtres_bc, 'DT_de_rattachement')
 
     indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd = fusion_bc_final(
+      df_ref_structure['n_structure'].drop_duplicates(),df_ref_structure['DT_de_rattachement'].drop_duplicates(),
         nb_bene_suivi_formation, nb_bene_suivi_formation_DT,
         nb_suivi_formation, nb_suivi_formation_DT,
         nb_suivi_formation_tous, nb_suivi_formation_tous_DT,
