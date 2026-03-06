@@ -573,7 +573,7 @@ def fusion_bc_final(nb_suivi_formation, nb_suivi_formation_DT,
                                          df_nvx_forme_crb])
 
     # Même pour DT
-    for df in [nb_suivi_formation_DT, nb_suivi_formation_tous_DT, nb_sessions_DT,
+    for df in [nb_suivi_formation_DT, nb_suivi_formation_tous_DT, nb_sessions_DT,nb_apte_formation_PSE1_2_CI_DT,
                nb_apte_formation_DT, taux_rec_DT, taux_nouveau_form_DT,nb_actifs_solidar_DT,taux_is_actifs_DT,df_nvx_forme_crb_DT]:
         df.rename(columns={'DT_de_rattachement':'n_structure'}, inplace=True)
 
