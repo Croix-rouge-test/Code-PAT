@@ -164,7 +164,7 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
     return result
 
 def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
-    df_res = df_2025.copy()
+    df_res = df_2025[df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui'].copy()
     for name, code in [('Formation_grand_public Nb_formes_PSC_2025', 'PSC'),
                        ('Formation_grand_public Nb_formes_GQS_2025', 'GQS'),
                        ('Formation_grand_public Nb_formes_IPS_2025', 'IPS'),
@@ -292,7 +292,6 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
     # ======================
     df_res = df[
         (df['FORMATION_RESULTAT'] == 'Apte') &
-        (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui') &
         (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025]))
     ]
 
@@ -383,8 +382,7 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
     return result
 
 def nb_bene_aptes_autres(df, filtres_bc, col_groupby):
-    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') &
-                     (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui') & (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025]))].copy()
+    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025]))].copy()
 
     for name, code in [('Formation_grand_public Nb_FPSC', 'FPSC'),
                        ('Formation_grand_public Nb_AGQS', 'AGQS'),
@@ -439,8 +437,7 @@ def nb_bene_aptes_autres(df, filtres_bc, col_groupby):
 # ------------------------------
 
 def taux_recy(df_2025, df_nb_aptes, filtres_bc, col_groupby):
-    df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte') &
-        (df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
+    df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte')].copy()
     result = pd.DataFrame({col_groupby: df_res[col_groupby].unique()})
     result.set_index(col_groupby, inplace=True)
 
@@ -491,8 +488,7 @@ def taux_recy(df_2025, df_nb_aptes, filtres_bc, col_groupby):
     return result[[col_groupby, 'Secours Taux_recy26_PSE1', 'Secours Taux_recy26_PSE2', 'Secours Taux_recy26_CI']]
 
 def taux_ren(df_2025, df_nb_aptes, filtres_bc, col_groupby):
-    df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte') &
-        (df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
+    df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte')].copy()
     result = pd.DataFrame({col_groupby: df_res[col_groupby].unique()})
     result.set_index(col_groupby, inplace=True)
 
@@ -607,11 +603,7 @@ def nb_nvx_forme_crb(client, df, filtres_bc, col_groupby):
 
     df = pd.merge(df, df_nvx_bene, on = 'NIVOL_ID_FK', how = 'inner')
 
-    df = df[df['FORMATION_DATE_OBTENTION'].dt.year == 2025].copy()
-
-    df = df[df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui']
-
-    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
+    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui') & (df['FORMATION_DATE_OBTENTION'].dt.year == 2025)].copy()
     for name, code in [('Structure Nb_nvx_formes_CRB_2025', 'CRB')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
@@ -671,21 +663,22 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
     df_is = client.query(query_is).to_dataframe()
     df_is = df_is.rename(columns = {'PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK','NIVOL_ID_FK']].drop_duplicates()
 
-    df_is = pd.merge(df, df_is, on = 'NIVOL_ID_FK', how = 'right')
+    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte')].copy() 
 
-    df_is["n_structure"] = (
-        df_is["n_structure"]
-        .fillna(df_is["PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK"])
-    )
+    df_res = df_res[(df_res['FORMATION_DATE_OBTENTION'].dt.year == 2025) | (df_res['FORMATION_DATE_OBTENTION'].dt.year == 2024)]
+
+    df_is = pd.merge(df_res, df_is, on = 'NIVOL_ID_FK', how = 'inner')
+
+    # df_is["n_structure"] = (
+    #     df_is["n_structure"]
+    #     .fillna(df_is["PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK"])
+    # )
     
     filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
 
-    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
 
-    # Potentiellement enlever 2025 en attente réponse Théotime
-    df_res = df_res[(df_res['FORMATION_DATE_OBTENTION'].dt.year == 2025) | (df_res['FORMATION_DATE_OBTENTION'].dt.year == 2024)]
     # _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
-    _ , _ , _, df_is = apply_rattachement_successif(df_ref_structure, df_is, col = 'n_structure')
+    #_ , _ , _, df_is = apply_rattachement_successif(df_ref_structure, df_is, col = 'n_structure')
 
     df_res = dt_rattachement(df_res, df_ref_structure)
     df_is = dt_rattachement(df_is, df_ref_structure)
@@ -693,8 +686,7 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
 
     df_res = df_res.drop_duplicates([col_groupby,'NIVOL_ID_FK'])
     df_is = df_is.drop_duplicates([col_groupby,'NIVOL_ID_FK'])
-    for name, code in [('Nb_IS', 'IS')]:
-        df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
+    
 
     # Vérification des codes
     print("\n===== Vérification des codes =====")
@@ -733,7 +725,7 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
     result = pd.merge(result, df_nb_bene_actifs, on = col_groupby, how = 'left')
     result["Secours Taux_IS_actifs"] = np.where(
       (result["nb_bene_actifs"] == 0) | (result["nb_bene_actifs"].isna()),
-      np.nan,
+      0,
       result["nb_bene_actifs"] / result["Nb_IS"]
     )
     mask = result["Nb_IS"] < result["nb_bene_actifs"]
@@ -759,8 +751,6 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
   df_bene_actifs = df_bene_actifs.rename(columns = {'PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK': 'n_structure','PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['n_structure','NIVOL_ID_FK']].drop_duplicates()
 
   df = pd.merge(df.drop(['n_structure'], axis = 1), df_bene_actifs, on = 'NIVOL_ID_FK', how = 'inner')
-
-  df = df[df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui']
 
   df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
   _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
