@@ -51,6 +51,9 @@ import re
 import torch
 from sentence_transformers import SentenceTransformer, util
 
+sys.path.append(os.path.abspath("/Code-PAT"))
+from utils import *
+
 def  Import_Maraude_manuel(client,df_ref_structure):
   # Import
   query = """
