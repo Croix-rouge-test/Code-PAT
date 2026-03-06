@@ -1026,7 +1026,7 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     df_nvx_forme_crb_DT = nb_nvx_forme_crb(client, df_filtered_2025, filtres_bc, 'DT_de_rattachement')
 
     indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd = fusion_bc_final(
-      df_ref_structure['n_structure'].drop_duplicates(),df_ref_structure['DT_de_rattachement'].drop_duplicates(),
+      df_ref_structure['n_structure'].drop_duplicates().to_frame(),df_ref_structure['DT_de_rattachement'].drop_duplicates().to_frame(),
         nb_bene_suivi_formation, nb_bene_suivi_formation_DT,
         nb_suivi_formation, nb_suivi_formation_DT,
         nb_suivi_formation_tous, nb_suivi_formation_tous_DT,
