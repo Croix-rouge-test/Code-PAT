@@ -146,7 +146,7 @@ def nb_bene_suivi_form(df_filtered, filtres_bc, col_groupby):
     return result
 
 def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
-    df_res = df_filtered.copy()
+    df_res = df_filtered[df_filtered['FORMATION_RESULTAT'] == 'Apte'].copy()
 
     # Ajouter colonnes booléennes par filtre
     for name, code in [('Maraude Nb_SOLIDAR', 'solidar'),
@@ -697,6 +697,8 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
                               ON act.PEGASS_ACTIVITE_ID_PK = insc.PEGASS_ACTIVITE_ID_FK
                           WHERE act.ACTIVITE_BENEVOLE_ID_FK IN (SELECT code FROM codes_actifs) AND insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide' AND PEGASS_ACTIVITE_DATE_DEBUT >= DATE('2025-01-01')"""
 
+    filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
+
 
     df_is = client.query(query_is).to_dataframe()
     df_is = df_is.rename(columns = {'PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK','NIVOL_ID_FK']].drop_duplicates()
@@ -704,6 +706,8 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
     df_res = df[(df['FORMATION_RESULTAT'] == 'Apte')].copy() 
 
     df_res = df_res[(df_res['FORMATION_DATE_OBTENTION'].dt.year == 2025) | (df_res['FORMATION_DATE_OBTENTION'].dt.year == 2024)]
+    df_res = df_res[df_res['FORMATION_CODE'].isin(filtres_bc['IS'])]
+
 
     df_is = pd.merge(df_res, df_is, on = 'NIVOL_ID_FK', how = 'inner')
 
@@ -712,7 +716,6 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
     #     .fillna(df_is["PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK"])
     # )
     
-    filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
 
 
     # _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
