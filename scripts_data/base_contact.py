@@ -199,8 +199,8 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
 
     return result
 
-def nb_suivi_form_tous(df_2025, filtres_bc, col_groupby):
-    df_res = df_2025[df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] != 'Oui'].copy()
+def nb_suivi_form_tous(df, filtres_bc, col_groupby):
+    df_res = df[(df['FORMATION_BENEVOLE_DANS_L_ANNEE'] != 'Oui') & (df['FORMATION_DATE_OBTENTION'].dt.year == 2025)].copy()
     for name, code in [('Formation_grand_public Nb_formes_PSC_2025', 'PSC'),
                        ('Formation_grand_public Nb_formes_GQS_2025', 'GQS'),
                        ('Formation_grand_public Nb_formes_IPS_2025', 'IPS'),
@@ -885,6 +885,8 @@ def clean_base_contact(client, df_ref_structure):
 
     df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat["FORMATION_CODE"].isin( codes_filtres_bc )]
 
+    df_formation_session_resultat_fpg = df_formation_session_resultat.copy()
+    df_formation_session_resultat_fpg = df_formation_session_resultat_fpg.rename(columns={'FORMATION_SESSION_STRUCTURE_ID_FK' : 'n_structure'})
 
     query_rattachement_benevole = """
         SELECT rattachement_benevole_nivol_id_fk, rattachement_benevole_structure_id_fk
@@ -924,25 +926,30 @@ def clean_base_contact(client, df_ref_structure):
 
     mask_2025 = df_formation_session_resultat['FORMATION_DATE_OBTENTION'].dt.year == 2025
 
-    df_formation_session_resultat.loc[mask_2025, "n_structure"] = (
-        df_formation_session_resultat.loc[mask_2025, "n_structure"]
-        .fillna(df_formation_session_resultat.loc[mask_2025, "FORMATION_SESSION_STRUCTURE_ID_FK"])
-    )
+    # df_formation_session_resultat.loc[mask_2025, "n_structure"] = (
+    #     df_formation_session_resultat.loc[mask_2025, "n_structure"]
+    #     .fillna(df_formation_session_resultat.loc[mask_2025, "FORMATION_SESSION_STRUCTURE_ID_FK"])
+    # )
 
     _ , _ , _, df_formation_session_resultat = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat, col = 'n_structure')
+
+    
+    _ , _ , _, df_formation_session_resultat_fpg = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat_fpg, col = 'n_structure')
+
 
     df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['FORMATION_RESULTAT'] != 'Absent']
 
     # On garde seulement les structures dans df_ref_structure
 
-    liste_structure_garder = df_ref_structure['n_structure'].drop_duplicates().tolist()    
+    liste_structure_garder = df_ref_structure['n_structure'].drop_duplicates().tolist() 
     df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['n_structure'].isin(liste_structure_garder)]
+    df_formation_session_resultat_fpg = df_formation_session_resultat_fpg[df_formation_session_resultat_fpg['n_structure'].isin(liste_structure_garder)]
     df_formation_count_session_2025 = df_formation_count_session_2025[df_formation_count_session_2025['n_structure'].isin(liste_structure_garder)]
 
 
-    return df_formation_session_resultat, df_formation_count_session_2025
+    return df_formation_session_resultat, df_formation_count_session_2025, df_formation_session_resultat_fpg
 
-def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_count_session_2025, df_ref_structure): 
+def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_count_session_2025,df_formation_session_resultat_fpg, df_ref_structure): 
     # Définition filtres
     filtres_bc = {
         'CRB' : ['CRB', 'ECRB', 'VI'],
@@ -992,8 +999,8 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     nb_suivi_formation = nb_suivi_form(df_filtered, filtres_bc, 'n_structure')
     nb_suivi_formation_DT = nb_suivi_form(df_filtered, filtres_bc, 'DT_de_rattachement')
 
-    nb_suivi_formation_tous = nb_suivi_form_tous(df_filtered_2025, filtres_bc, 'n_structure')
-    nb_suivi_formation_tous_DT = nb_suivi_form_tous(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
+    nb_suivi_formation_tous = nb_suivi_form_tous(df_formation_session_resultat_fpg, filtres_bc, 'n_structure')
+    nb_suivi_formation_tous_DT = nb_suivi_form_tous(df_formation_session_resultat_fpg, filtres_bc, 'DT_de_rattachement')
 
     # nb_sessions = nb_session_form(df_filtered_2025, filtres_bc, 'n_structure') => Ancienne version
     # nb_sessions_DT = nb_session_form(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
