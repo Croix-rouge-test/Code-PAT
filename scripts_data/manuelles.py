@@ -224,6 +224,30 @@ def clean_conventions(df_conventions):
     return df
 
 
+
+
+
+def clean_indicateurs_DUO(df_conventions):
+    df = df_conventions[
+        [
+            'DT Annuaire Opé',
+            'Departement',
+            "Nb opérations d'urgence",
+            "Nombre de prises en charge lors de ces opérations d'urgence",
+            'Recherche de personnes',
+            'SDIS / BMPM / BSPP',
+        ]
+    ]
+
+    df["Departement"] = df["Departement"].str.replace(
+        r"DELEGATION DEPARTEMENTALE|DELEGATION TERRITORIALE",
+        "DT",
+        regex=True
+    )
+
+    return df
+
+
 def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR,
     df_PST,
@@ -238,6 +262,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_redcall_clean = clean_redcall(df_redcall)
     df_CAICHUCMCC_clean = clean_CAICHUCMCC(df_CAICHUCMCC)
     df_conventions_clean = clean_conventions(df_conventions)
+    df_duo_clean = clean_indicateurs_DUO(df_conventions)
 
     return (
         df_OCR_clean,
@@ -246,6 +271,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
         df_redcall_clean,
         df_CAICHUCMCC_clean,
         df_conventions_clean
+        df_duo_clean
     )
 
 
@@ -419,6 +445,28 @@ def indicateurs_conventions(df_conventions, df_ref_structure):
 
     return df
 
+
+
+def indicateurs_DUO(df_conventions, df_ref_structure):
+    df = df_conventions[
+        ["Departement", "Nb opérations d'urgence", "Nombre de prises en charge lors de ces opérations d'urgence",]
+    ].copy()
+
+    df = rapprochement_libelles(
+        df_ref_structure,
+        df,
+        "Departement"
+    )
+
+    df = df.rename(
+        columns={
+            "Nb opérations d'urgence": "Dispositifs_d_urgence Nb_operations",
+            "Nombre de prises en charge lors de ces opérations d'urgence": "Dispositifs_d_urgence Nb_personnes_prises_charge",
+        }
+    )
+
+    return df
+
 def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR,
     df_PST,
@@ -434,6 +482,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_redcall2 = indicateurs_redcall(df_RC_grouped, df_ref_structure)
     df_CAICHUCMCC_VF = indicateurs_CAICHUCMCC(df_CAICHUCMCC2, df_ref_structure)
     df_conventions2 = indicateurs_conventions(df_conventions, df_ref_structure)
+    df_DUO = indicateurs_DUO(df_conventions, df_ref_structure)
 
     return (
         df_OCR_Nb_deployees,
@@ -441,7 +490,8 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
         df_declenchement3,
         df_redcall2,
         df_CAICHUCMCC_VF,
-        df_conventions2
+        df_conventions2,
+        df_DUO
     )
 
 
