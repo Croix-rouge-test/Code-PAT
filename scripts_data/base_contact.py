@@ -935,6 +935,8 @@ def clean_base_contact(client, df_ref_structure):
 
     
     _ , _ , _, df_formation_session_resultat_fpg = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat_fpg, col = 'n_structure')
+    df_formation_session_resultat_fpg = dt_rattachement(df_formation_session_resultat_fpg, df_ref_structure)
+
 
 
     df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['FORMATION_RESULTAT'] != 'Absent']
