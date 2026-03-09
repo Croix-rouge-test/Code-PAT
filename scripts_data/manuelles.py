@@ -270,7 +270,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
         df_declenchement_clean,
         df_redcall_clean,
         df_CAICHUCMCC_clean,
-        df_conventions_clean
+        df_conventions_clean,
         df_duo_clean
     )
 
