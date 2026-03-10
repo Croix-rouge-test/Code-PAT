@@ -648,7 +648,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
         df_CAICHUCMCC_VF,
         df_conventions2,
         df_raw_Textile,
-        df_raw_ProdResTextile
+        df_raw_ProdResTextile,
         df_DUO
     )
 
