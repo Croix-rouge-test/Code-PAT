@@ -772,7 +772,8 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Aide_alimentaire Nb_crsr",
     "Textile Nb_dispositifs",
     "Textile Produit_2025",
-    "Textile Resultat_2025"
+    "Textile Resultat_2025",
+    "IS_actifs"
   ]
 
   mask = df_ref_structure['n_structure'].to_list()
@@ -1087,4 +1088,5 @@ def vision_conso(df_alldata, df_alldata_DT):
 
   return df_alldata, df_alldata_DT
   
+
 
