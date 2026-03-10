@@ -356,7 +356,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
         df_CAICHUCMCC_clean,
         df_conventions_clean,
         df_raw_Textile,
-        df_raw_ProdResTextile
+        df_raw_ProdResTextile,
         df_duo_clean
     )
 
@@ -626,6 +626,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_conventions,
     df_raw_Textile,
     df_raw_ProdResTextile,
+    df_DUO_clean,
     df_ref_structure
 ):
     df_OCR_Nb_deployees = indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure)
