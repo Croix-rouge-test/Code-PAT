@@ -322,13 +322,14 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
 
 
 def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
-
+    
     # ======================
     # Filtre principal
     # ======================
     df_res = df[
         (df['FORMATION_RESULTAT'] == 'Apte') &
-        (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025]))
+        (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025])) &
+        (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')
     ].copy()
 
     df_res = df_res[
