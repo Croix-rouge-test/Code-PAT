@@ -626,7 +626,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_conventions,
     df_raw_Textile,
     df_raw_ProdResTextile,
-    df_DUO_clean,
+    df_duo_clean,
     df_ref_structure
 ):
     df_OCR_Nb_deployees = indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure)
@@ -638,7 +638,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_raw_Textile = indicateurs_raw_Textile(df_raw_Textile)
     df_raw_ProdResTextile = indicateurs_ProdResTextile(df_raw_ProdResTextile , df_ref_structure)
 
-    df_DUO = indicateurs_DUO(df_conventions, df_ref_structure)
+    df_DUO = indicateurs_DUO(df_duo_clean, df_ref_structure)
 
     return (
         df_OCR_Nb_deployees,
@@ -759,5 +759,6 @@ def verif_textile(df_raw_Textile_c, df_raw_ProdResTextile_c, df_raw_Textile, df_
   verifier_colonne_structure(df_raw_ProdResTextile, "n_structure", df_ref_structure)
   verifier_colonne_structure(df_Textile_DT.reset_index(), "DT_de_rattachement", rattachement_court)
   verifier_colonne_structure(df_Textile_financier_DT, "DT_de_rattachement", rattachement_court)
+
 
 
