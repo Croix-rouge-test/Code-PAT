@@ -316,7 +316,11 @@ def clean_indicateurs_DUO(df_conventions):
             "Nombre de participations à des exercices organisés par les secours publics",
             'Opération type A',
             'Opération type B',
-            'Opération type A et B'
+            'Opération type A et B',
+            "Points d'Alerte et de Premiers Secours RIS",
+            "Dispositifs Prévisionnel de Secours de Petite Envergure RIS",
+            "Dispositifs Prévisionnel de Secours de Moyenne Envergure RIS",
+            "Dispositifs Prévisionnel de Secours de Grande Envergure RIS"
         ]
     ]
 
@@ -611,7 +615,8 @@ def indicateurs_DUO(df_conventions, df_ref_structure):
     )
 
     df["Dispositifs_d_urgence Nb_agrements2"] = df[["Opération type A", "Opération type B", "Opération type A et B"]].sum(axis=1)
- 
+    df["Secours Nb_agrements_DPS_2025_2"] = df[["Points d'Alerte et de Premiers Secours RIS", "Dispositifs Prévisionnel de Secours de Petite Envergure RIS", "Dispositifs Prévisionnel de Secours de Moyenne Envergure RIS", "Dispositifs Prévisionnel de Secours de Grande Envergure RIS"]].sum(axis=1)
+
     df = df.rename(
         columns={
             "Nb opérations d'urgence": "Dispositifs_d_urgence Nb_operations2",
