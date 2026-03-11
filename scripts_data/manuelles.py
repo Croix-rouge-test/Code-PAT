@@ -601,7 +601,7 @@ def indicateurs_ProdResTextile(df_raw_ProdResTextile, df_ref_structure):
 
 def indicateurs_DUO(df_conventions, df_ref_structure):
     df = df_conventions[
-        ["Departement", "Nb opérations d'urgence", "Nombre de prises en charge lors de ces opérations d'urgence",]
+        ["Departement", "Nb opérations d'urgence", "Nombre de prises en charge lors de ces opérations d'urgence","Opération type A", "Opération type B", "Opération type A et B"]
     ].copy()
 
     df = rapprochement_libelles(
