@@ -65,16 +65,30 @@ def clean_gaia(client, df_ref_structure):
 def indicateurs_gaia(df_gaia):
 
   # Filtrage : date nulle ou année = 2025
-  df_gaia = df_gaia[
-    (
-        df_gaia['rattachement_benevole_date_fin'].isna()
-        | (df_gaia['rattachement_benevole_date_fin'].dt.year == 2025)
-    )
-    &
-    (
-        df_gaia['rattachement_benevole_date_debut'].isna()
-        | (df_gaia['rattachement_benevole_date_debut'].dt.year != 2026)
-    )
+  df_gaia_rattachement_benevole = df_gaia.copy()
+
+  df_gaia_rattachement_benevole["rattachement_benevole_date_debut"] = pd.to_datetime(
+      df_gaia_rattachement_benevole["rattachement_benevole_date_debut"],
+      errors="coerce"
+  )
+
+  df_gaia_rattachement_benevole = (
+      df_gaia_rattachement_benevole
+      .sort_values("rattachement_benevole_date_debut", ascending=False)
+      .drop_duplicates(subset=["rattachement_benevole_nivol_id_fk"], keep="first")
+      .reset_index(drop=True)
+  )
+  df_gaia_rattachement_benevole["rattachement_benevole_date_fin"] = pd.to_datetime(
+    df_gaia_rattachement_benevole["rattachement_benevole_date_fin"], errors="coerce", dayfirst=True
+  )
+
+  df_gaia_rattachement_benevole =  df_gaia_rattachement_benevole[df_gaia_rattachement_benevole["rattachement_benevole_date_debut"]  <= ("2025-12-31")]
+
+  # Filtre : date_fin = NaT OU = 31/12/2025
+  target = pd.Timestamp("2025-12-31")
+  df_gaia_rattachement_benevole = df_gaia_rattachement_benevole.loc[
+      df_gaia_rattachement_benevole["rattachement_benevole_date_fin"].isna()
+      | (df_gaia_rattachement_benevole["rattachement_benevole_date_fin"] >= target) & (df_gaia_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
   ]
  
   df_gaia = df_gaia.rename(columns={
