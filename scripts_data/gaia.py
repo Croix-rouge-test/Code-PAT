@@ -82,8 +82,6 @@ def indicateurs_gaia(df_gaia):
     df_gaia_rattachement_benevole["rattachement_benevole_date_fin"], errors="coerce", dayfirst=True
   )
 
-  df_gaia_rattachement_benevole =  df_gaia_rattachement_benevole[df_gaia_rattachement_benevole["rattachement_benevole_date_debut"]  <= ("2025-12-31")]
-
   # Filtre : date_fin = NaT OU = 31/12/2025
   target = pd.Timestamp("2025-12-31")
   df_gaia_rattachement_benevole = df_gaia_rattachement_benevole.loc[
@@ -91,12 +89,12 @@ def indicateurs_gaia(df_gaia):
       | (df_gaia_rattachement_benevole["rattachement_benevole_date_fin"] >= target) & (df_gaia_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
   ]
  
-  df_gaia = df_gaia.rename(columns={
+  df_gaia_rattachement_benevole = df_gaia_rattachement_benevole.rename(columns={
     'rattachement_benevole_structure_id_fk': 'n_structure',
     'rattachement_benevole_nivol_id_fk': 'Structure Nb_Benevoles'
   })
  # On compte le nb de volontaires de l'urgence
-  nb_benevoles = (df_gaia.groupby('n_structure')['Structure Nb_Benevoles'].nunique()).reset_index()
+  nb_benevoles = (df_gaia_rattachement_benevole.groupby('n_structure')['Structure Nb_Benevoles'].nunique()).reset_index()
   
   print(f"Nombre de structures agrégées : {len(nb_benevoles)}")
 
