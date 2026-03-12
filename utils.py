@@ -777,7 +777,8 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Dispositifs_d_urgence Nb_agrements2",
     "Dispositifs_d_urgence Nb_operations2",
     "Dispositifs_d_urgence Nb_personnes_prises_charge2",
-    "Dispositifs_d_urgence Nb_exercices2"
+    "Dispositifs_d_urgence Nb_exercices2",
+    "Dispositifs_d_urgence Nb_personnes_prises_charge2"
   ]
 
   mask = df_ref_structure['n_structure'].to_list()

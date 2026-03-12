@@ -605,7 +605,7 @@ def indicateurs_ProdResTextile(df_raw_ProdResTextile, df_ref_structure):
 
 def indicateurs_DUO(df_conventions, df_ref_structure):
     df = df_conventions[
-        ["Departement", "Nb opérations d'urgence", "Nombre de prises en charge lors de ces opérations d'urgence","Opération type A", "Opération type B", "Opération type A et B","Points d'Alerte et de Premiers Secours RIS",'Dispositifs Prévisionnel de Secours de Petite Envergure RIS','Dispositifs Prévisionnel de Secours de Moyenne Envergure RIS','Dispositifs Prévisionnel de Secours de Grande Envergure RIS']
+        ["Departement", "Nb opérations d'urgence", "Nombre de prises en charge lors de ces opérations d'urgence","Nombre de participations à des exercices organisés par les secours publics","Opération type A", "Opération type B", "Opération type A et B","Points d'Alerte et de Premiers Secours RIS",'Dispositifs Prévisionnel de Secours de Petite Envergure RIS','Dispositifs Prévisionnel de Secours de Moyenne Envergure RIS','Dispositifs Prévisionnel de Secours de Grande Envergure RIS']
     ].copy()
 
     df = rapprochement_libelles(
