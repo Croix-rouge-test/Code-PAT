@@ -915,10 +915,6 @@ def clean_base_contact(client, df_ref_structure):
     #df_rattachement_benevole.drop_duplicates(subset=["rattachement_benevole_nivol_id_fk"], inplace=True)
 
     df_rattachement_benevole["rattachement_benevole_date_fin"] = pd.to_datetime(df_rattachement_benevole["rattachement_benevole_date_fin"])
-    df_rattachement_benevole_retravail = df_rattachement_benevole[
-    df_rattachement_benevole["rattachement_benevole_date_fin"].isna()
-    | (df_rattachement_benevole["rattachement_benevole_date_fin"].dt.year > 2024)
-    ].copy()
 
     df_rattachement_benevole["rattachement_benevole_date_debut"] = pd.to_datetime(
     df_rattachement_benevole["rattachement_benevole_date_debut"],
