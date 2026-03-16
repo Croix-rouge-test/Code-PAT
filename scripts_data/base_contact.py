@@ -149,7 +149,7 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
     df_res = df_filtered[df_filtered['FORMATION_RESULTAT'] == 'Apte'].copy()
 
     # Ajouter colonnes booléennes par filtre
-    for name, code in [('Maraude Nb_SOLIDAR', 'solidar'),
+    for name, code in [('Maraude Nb_SOLIDAR', 'all_solidar'),
                        ('Maraude Nb_SOLIDAR2020', 'solidar20'),
                        ('AEO Nb_FAAD', 'FAAD'),
                        ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
@@ -160,7 +160,7 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
     print("\n===== Vérification des codes =====")
     codes_df = set(df_res['FORMATION_CODE'].unique())
 
-    for name, code in [('Maraude Nb_SOLIDAR', 'solidar'),
+    for name, code in [('Maraude Nb_SOLIDAR', 'all_solidar'),
                        ('Maraude Nb_SOLIDAR2020', 'solidar20'),
                        ('AEO Nb_FAAD', 'FAAD'),
                        ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
@@ -189,7 +189,7 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
 
     # Somme globale par indicateur
     print("\n===== Somme globale par indicateur =====")
-    totaux = result[[col for col, _ in [('Maraude Nb_SOLIDAR', 'solidar'),
+    totaux = result[[col for col, _ in [('Maraude Nb_SOLIDAR', 'all_solidar'),
                        ('Maraude Nb_SOLIDAR2020', 'solidar20'),
                        ('AEO Nb_FAAD', 'FAAD'),
                        ('Structure Nb_formateurs_CRB_2025', 'ACRB'),
