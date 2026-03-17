@@ -554,7 +554,7 @@ def apply_rattachement_successif(df_ref_structure, df, col="maraude_structure_id
     c = rattachement_successif["N structure de rattachement"].isna().sum()
 
     # 3) Application du rattachement sur le df de travail
-    df_maraude = rattache_structure(df, rattachement_successif, col=col)
+    df = rattache_structure(df, rattachement_successif, col=col)
 
     return df_ref_structure , c , rattachement_successif, df
 
