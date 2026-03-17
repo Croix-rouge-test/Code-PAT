@@ -632,10 +632,10 @@ def fusion_bc_final(df_ref_structure, df_ref_structure_DT,nb_bene_suivi_formatio
                     df_nvx_forme_crb, df_nvx_forme_crb_DT,
                     col_groupby):
 
-                    """
-                    Cette fonction permet de fusionner tous les dataframes en un, on utilise df_ref_structure comme référence et on fait un left join dessus pour avoir exactement les mêmes structures
-                    On peut améliorer la robustesse en changeant les arguments en deux listes, une toutes structure et une DT.
-                    """
+    """
+    Cette fonction permet de fusionner tous les dataframes en un, on utilise df_ref_structure comme référence et on fait un left join dessus pour avoir exactement les mêmes structures
+    On peut améliorer la robustesse en changeant les arguments en deux listes, une toutes structure et une DT.
+    """
     # Fusion des DataFrames
     def merge_all(dfs):
         from functools import reduce
