@@ -32,6 +32,7 @@ def calcul_secours_par_annee(df, filtres_bc,annees):
 
     # ======================
     # Filtre unique optimisé
+    # Permet de faire la différence entre PSE1, PSE2 et CI comme il y a intersection entre ces différents ensembles (concrètement : CI => PSE1 ^ PSE2 et PSE2 => PSE1)
     # ======================
     mask = (
         (df['FORMATION_RESULTAT'] == 'Apte') &
@@ -81,6 +82,9 @@ def calcul_secours_par_annee(df, filtres_bc,annees):
 # Fonctions indicateurs
 # ------------------------------
 def nb_bene_suivi_form(df_filtered, filtres_bc, col_groupby):
+    """
+    Nombre de bénévoles formés aux différentes formations  (toutes années confondues)
+    """
     df_res = df_filtered[df_filtered['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui'].copy()
 
     # Ajouter colonnes booléennes par filtre
@@ -146,6 +150,9 @@ def nb_bene_suivi_form(df_filtered, filtres_bc, col_groupby):
     return result
 
 def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
+    """
+    Nombre de formateurs  (déclarés aptes toutes années confondues)
+    """
     df_res = df_filtered[df_filtered['FORMATION_RESULTAT'] == 'Apte'].copy()
 
     # Ajouter colonnes booléennes par filtre
@@ -200,6 +207,9 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby):
     return result
 
 def nb_suivi_form_tous(df, filtres_bc, col_groupby):
+    """
+    Nombre de non bénévoles formés aux différentes formations (2025)
+    """
     df_res = df[(df['FORMATION_BENEVOLE_DANS_L_ANNEE'] != 'Oui') & (df['FORMATION_DATE_OBTENTION'].dt.year == 2025)].copy()
     for name, code in [('Formation_grand_public Nb_formes_PSC_2025', 'PSC'),
                        ('Formation_grand_public Nb_formes_GQS_2025', 'GQS'),
@@ -263,6 +273,9 @@ def nb_suivi_form_tous(df, filtres_bc, col_groupby):
 
 
 def nb_session_form(df_2025, filtres_bc, col_groupby):
+    """
+    Nombre de session de formations sur 2025
+    """
     #df_res = df_2025[df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui'].copy()
     df_res = df_2025.copy()
 
@@ -338,6 +351,9 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
 
 
 def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
+    """
+    Nombre de bénévoles secouristes (aptitudes PSE1, PSE2 et CI)
+    """
 
     # ======================
     # Filtre principal
@@ -435,6 +451,9 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
     return result
 
 def nb_bene_aptes_autres(df, filtres_bc, col_groupby):
+    """
+    Nombre de personnes aptes aux formations
+    """
     df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025]))].copy()
 
     for name, code in [('Formation_grand_public Nb_FPSC', 'FPSC'),
@@ -490,6 +509,9 @@ def nb_bene_aptes_autres(df, filtres_bc, col_groupby):
 # ------------------------------
 
 def taux_recy(df_2025, df_nb_aptes, filtres_bc, col_groupby):
+    """
+    Taux de recyclage PSE1, PSE2 et CI pour 2026 (seront aptes en 2026 grâce au recyclage)
+    """
     df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte')].copy()
     result = pd.DataFrame({col_groupby: df_res[col_groupby].unique()})
     result.set_index(col_groupby, inplace=True)
@@ -541,6 +563,9 @@ def taux_recy(df_2025, df_nb_aptes, filtres_bc, col_groupby):
     return result[[col_groupby, 'Secours Taux_recy26_PSE1', 'Secours Taux_recy26_PSE2', 'Secours Taux_recy26_CI']]
 
 def taux_ren(df_2025, df_nb_aptes, filtres_bc, col_groupby):
+    """
+    Taux de nouveaux PSE1, PSE2 et CI en 2025 (formation initiale en 2025)
+    """
     df_res = df_2025[(df_2025['FORMATION_RESULTAT'] == 'Apte')].copy()
     result = pd.DataFrame({col_groupby: df_res[col_groupby].unique()})
     result.set_index(col_groupby, inplace=True)
@@ -606,6 +631,11 @@ def fusion_bc_final(df_ref_structure, df_ref_structure_DT,nb_bene_suivi_formatio
                     taux_is_actifs, taux_is_actifs_DT,
                     df_nvx_forme_crb, df_nvx_forme_crb_DT,
                     col_groupby):
+
+                    """
+                    Cette fonction permet de fusionner tous les dataframes en un, on utilise df_ref_structure comme référence et on fait un left join dessus pour avoir exactement les mêmes structures
+                    On peut améliorer la robustesse en changeant les arguments en deux listes, une toutes structure et une DT.
+                    """
     # Fusion des DataFrames
     def merge_all(dfs):
         from functools import reduce
@@ -646,6 +676,9 @@ def fusion_bc_final(df_ref_structure, df_ref_structure_DT,nb_bene_suivi_formatio
 # ------------------------------
 
 def nb_nvx_forme_crb(client, df, filtres_bc, col_groupby):
+    """ 
+    Nombre de nouveaux bénévoles formés CRB, on détermine les nouveaux bénévoles grâce à la requête SQL
+    """
 
     query_nvx_bene = """SELECT DISTINCT
         rattachement_benevole_nivol_id_fk
@@ -694,7 +727,11 @@ def nb_nvx_forme_crb(client, df, filtres_bc, col_groupby):
     return result
 
 def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
-
+    """
+    Taux d'intervenants secouristes (IS) i.e. sont formés PSE1 ou PSE2 ou CI; qui sont actifs dans pegass
+    Numérateur : Nombre d'IS actifs dans pegass en 2025 (également présents dans l'ensemble PSE1, PSE2, CI 2024, 2025 de base contact formation_session_resultat, la raison pour cela étant qu'il est possible qu'il y ai des activités secouristes menée par des gens qui ne sont pas dans la base contact)
+    Dénominateur : Nombre de PSE1, PSE2 et CI aptes en 2025 (donc formés 2024-2025)
+    """
     # Utiliser
     query_is = """WITH codes_actifs AS (
                             SELECT 10105 AS code UNION ALL
@@ -856,7 +893,13 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
 # ------------------------------
 
 def clean_base_contact(client, df_ref_structure):
-
+    """
+    Traitements à partir de la table brute big query:
+    - Filtre pour garder uniquement les codes formation nécessaires et les nivols absents aux sessions
+    - Join avec gaia (rattachement_benevole) pour obtenir les structures de rattachement des nivols
+    - Dataframe df_formation_count_session_2025 pour garder uniquement les structures organisatrices quand on doit calculer le nombre de session
+    - apply_rattachement_benevole pour remplacer les numéros de structure ILs et équipes locales par leur rattachement UL ou DT
+    """
     filtres_bc = {
         'CRB' : ['CRB', 'ECRB', 'VI'],
         'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], # suppression'AVI'
@@ -988,6 +1031,11 @@ def clean_base_contact(client, df_ref_structure):
     return df_formation_session_resultat, df_formation_count_session_2025, df_formation_session_resultat_fpg
 
 def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_count_session_2025,df_formation_session_resultat_fpg, df_ref_structure):
+    """
+    Utilisation de toutes les fonctions du fichier pour calculer les indicateurs fonction par fonction.
+    Les résultats sont stockés dans un dataframe différent à chaque fois, on a un calcul par structure et un par DT de rattachement pour obtenir les deux types d'agrégat.
+    Tous les dataframes sont ensuite données à la fonction de fusion pour obtenir deux dataframes finaux : un par structure et un par DT, qui sont ensuite retournés 
+    """
     # Définition filtres
     filtres_bc = {
         'CRB' : ['CRB', 'ECRB', 'VI'],
