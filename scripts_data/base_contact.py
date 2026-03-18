@@ -383,13 +383,18 @@ def nb_structures_menant_activite(df_2025, filtres_bc, col_groupby):
 
         df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
 
-    def count_unique(group, col_name):
-        return group.loc[group[col_name], 'SESSION_ID_FK'].nunique()
+    cols = [
+        col for col,code in [('Dispositifs_d_urgence Structures_menant_activite_TCAU', 'TCAU'),
+                       ('Dispositifs_d_urgence Structures_menant_activite_PSP', 'PSP'),
+                       ('Dispositifs_d_urgence Structures_menant_activite_GQS', 'GQS')]
+    ]
+
 
     result = df_res.groupby(col_groupby).apply(
-        lambda g: pd.Series({col: count_unique(g, col) for col in ['Dispositifs_d_urgence Structures_menant_activite_TCAU',
-                       'Dispositifs_d_urgence Structures_menant_activite_PSP',
-                       'Dispositifs_d_urgence Structures_menant_activite_GQS']})
+        lambda g: pd.Series({
+            col: g.loc[g[col], 'n_structure'].nunique()
+            for col in cols
+        })
     ).reset_index()
 
     # Somme globale par indicateur
@@ -683,6 +688,7 @@ def fusion_bc_final(df_ref_structure, df_ref_structure_DT,nb_bene_suivi_formatio
                     nb_actifs_solidar, nb_actifs_solidar_DT,
                     taux_is_actifs, taux_is_actifs_DT,
                     df_nvx_forme_crb, df_nvx_forme_crb_DT,
+                    nb_structures_ma_DT,
                     col_groupby):
 
     """
@@ -708,7 +714,7 @@ def fusion_bc_final(df_ref_structure, df_ref_structure_DT,nb_bene_suivi_formatio
 
     # Même pour DT
     for df in [nb_bene_suivi_formation_DT,nb_suivi_formation_DT, nb_suivi_formation_tous_DT, nb_sessions_DT,nb_apte_formation_PSE1_2_CI_DT,
-               nb_apte_formation_DT, taux_rec_DT, taux_nouveau_form_DT,nb_actifs_solidar_DT,taux_is_actifs_DT,df_nvx_forme_crb_DT]:
+               nb_apte_formation_DT, taux_rec_DT, taux_nouveau_form_DT,nb_actifs_solidar_DT,taux_is_actifs_DT,df_nvx_forme_crb_DT,nb_structures_ma_DT]:
         df.rename(columns={'DT_de_rattachement':'n_structure'}, inplace=True)
 
     indicateurs_base_contact_DT = merge_all([df_ref_structure_DT,nb_bene_suivi_formation_DT,nb_suivi_formation_DT,
@@ -720,7 +726,7 @@ def fusion_bc_final(df_ref_structure, df_ref_structure_DT,nb_bene_suivi_formatio
                                             taux_nouveau_form_DT,
                                             nb_actifs_solidar_DT,
                                             taux_is_actifs_DT,
-                                            df_nvx_forme_crb_DT])
+                                            df_nvx_forme_crb_DT,nb_structures_ma_DT])
 
     return indicateurs_base_contact, indicateurs_base_contact_DT
 
@@ -744,7 +750,7 @@ def nb_nvx_forme_crb(client, df, filtres_bc, col_groupby):
 
     df = pd.merge(df, df_nvx_bene, on = 'NIVOL_ID_FK', how = 'inner')
 
-    df_res = df[(df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui') & (df['FORMATION_DATE_OBTENTION'].dt.year == 2025)].copy()
+    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui') & (df['FORMATION_DATE_OBTENTION'].dt.year == 2025)].copy()
     for name, code in [('Structure Nb_nvx_formes_CRB_2025', 'CRB')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
@@ -1148,6 +1154,8 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     nb_sessions = nb_session_form(df_formation_count_session_2025, filtres_bc, 'n_structure')
     nb_sessions_DT = nb_session_form(df_formation_count_session_2025, filtres_bc, 'DT_de_rattachement')
 
+    nb_structures_ma_DT = nb_structures_menant_activite(df_formation_count_session_2025, filtres_bc, 'DT_de_rattachement')
+
     nb_apte_formation_PSE1_2_CI = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'n_structure')
     nb_apte_formation_PSE1_2_CI_DT = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'DT_de_rattachement')
 
@@ -1182,7 +1190,7 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
         taux_nouveau_form, taux_nouveau_form_DT,
         nb_actifs_solidar, nb_actifs_solidar_DT,
         taux_is_actifs, taux_is_actifs_DT,
-        df_nvx_forme_crb, df_nvx_forme_crb_DT,
+        df_nvx_forme_crb, df_nvx_forme_crb_DT,nb_structures_ma_DT,
         'n_structure'
     )
 
@@ -1261,7 +1269,10 @@ def correction_indic_BC_DT(df_ref_structure, indicateurs_base_contact, indicateu
           'Secours Taux_recy26_CI', 'Secours Taux_ren25_PSE1',
           'Secours Taux_ren25_PSE2', 'Secours Taux_ren25_CI',
           'Maraude Nb_benevoles_actifs_formes', 'Secours Taux_IS_actifs',
-          'Structure Nb_nvx_formes_CRB_2025']].copy()
+          'Structure Nb_nvx_formes_CRB_2025',
+          'Dispositifs_d_urgence Structures_menant_activite_TCAU',
+          'Dispositifs_d_urgence Structures_menant_activite_PSP',
+          'Dispositifs_d_urgence Structures_menant_activite_GQS']].copy()
 
     indicateurs_base_contact_DT['n_structure'] = pd.to_numeric(indicateurs_base_contact_DT['n_structure'], errors='coerce').fillna(0).astype(int)
     indicateurs_base_contact_DT = indicateurs_base_contact_DT.merge(df_rattachement_structure2, on="n_structure", how="left").copy()
