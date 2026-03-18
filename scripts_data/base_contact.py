@@ -349,6 +349,59 @@ def nb_session_form(df_2025, filtres_bc, col_groupby):
 
     return result
 
+# ======================
+# Structures menant activité
+# ======================
+
+def nb_structures_menant_activite(df_2025, filtres_bc, col_groupby):
+    """
+    Nombre de session de formations sur 2025
+    """
+    #df_res = df_2025[df_2025['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui'].copy()
+    df_res = df_2025.copy()
+
+    for name, code in [('Dispositifs_d_urgence Structures_menant_activite_TCAU', 'TCAU'),
+                       ('Dispositifs_d_urgence Structures_menant_activite_PSP', 'PSP'),
+                       ('Dispositifs_d_urgence Structures_menant_activite_GQS', 'GQS')]:
+        df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
+
+        # Vérification des codes
+    print("\n===== Vérification des codes =====")
+    codes_df = set(df_res['FORMATION_CODE'].unique())
+
+    for name, code in [('Dispositifs_d_urgence Structures_menant_activite_TCAU', 'TCAU'),
+                       ('Dispositifs_d_urgence Structures_menant_activite_PSP', 'PSP'),
+                       ('Dispositifs_d_urgence Structures_menant_activite_GQS', 'GQS')]:
+        codes_attendus = set(filtres_bc.get(code, []))
+        codes_trouves = codes_df.intersection(codes_attendus)
+        codes_manquants = codes_attendus - codes_df
+
+        print(f"\nIndicateur : {name}")
+        print(f"  Codes attendus : {codes_attendus}")
+        print(f"  Codes trouvés  : {codes_trouves}")
+        print(f"  Codes manquants: {codes_manquants}")
+
+        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
+
+    def count_unique(group, col_name):
+        return group.loc[group[col_name], 'SESSION_ID_FK'].nunique()
+
+    result = df_res.groupby(col_groupby).apply(
+        lambda g: pd.Series({col: count_unique(g, col) for col in ['Dispositifs_d_urgence Structures_menant_activite_TCAU',
+                       'Dispositifs_d_urgence Structures_menant_activite_PSP',
+                       'Dispositifs_d_urgence Structures_menant_activite_GQS']})
+    ).reset_index()
+
+    # Somme globale par indicateur
+    print("\n===== Somme globale par indicateur =====")
+    totaux = result[[col for col, _ in [('Dispositifs_d_urgence Structures_menant_activite_TCAU', 'TCAU'),
+                       ('Dispositifs_d_urgence Structures_menant_activite_PSP', 'PSP'),
+                       ('Dispositifs_d_urgence Structures_menant_activite_GQS', 'GQS')]]].sum()
+    for col in totaux.index:
+        print(f"{col} : {totaux[col]}")
+
+    return result
+
 
 def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
     """

@@ -859,7 +859,10 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Dispositifs_d_urgence Nb_personnes_prises_charge2",
     "Dispositifs_d_urgence Nb_exercices2",
     "Dispositifs_d_urgence Nb_personnes_prises_charge2",
-    "Secours Nb_agrements_DPS_2025_2"
+    "Secours Nb_agrements_DPS_2025_2",
+    'Dispositifs_d_urgence Structures_menant_activite_TCAU',
+    'Dispositifs_d_urgence Structures_menant_activite_PSP',
+    'Dispositifs_d_urgence Structures_menant_activite_GQS'
   ]
 
   mask = df_ref_structure['n_structure'].to_list()
@@ -1077,9 +1080,9 @@ def vision_conso(df_alldata, df_alldata_DT):
     (('Secours Nb_PSE1','Secours Nb_PSE2','Secours Nb_CI'), 'Secours Structures_menant_activite_formes'),
     (('Secours Nb_sessions_PSE','Secours Nb_sessions_CI','Secours Nb_sessions_FPSE'), 'Secours Structures_menant_activite_sessions'),
     (('nb_Maraude_Pegass',), 'Maraudes Structures_menant_activite'),
-    (('Dispositifs_d_urgence Nb_formes_TCAU_2025',), 'Dispositifs_d_urgence Structures_menant_activite_TCAU'),
-    (('Dispositifs_d_urgence Nb_formes_PSP_2025',), 'Dispositifs_d_urgence Structures_menant_activite_PSP'),
-    (('Dispositifs_d_urgence Nb_formes_GQS_2025',), 'Dispositifs_d_urgence Structures_menant_activite_GQS'),
+    # (('Dispositifs_d_urgence Nb_formes_TCAU_2025',), 'Dispositifs_d_urgence Structures_menant_activite_TCAU'),
+    # (('Dispositifs_d_urgence Nb_formes_PSP_2025',), 'Dispositifs_d_urgence Structures_menant_activite_PSP'),
+    # (('Dispositifs_d_urgence Nb_formes_GQS_2025',), 'Dispositifs_d_urgence Structures_menant_activite_GQS'),
 
   ]
   colonnes_actions = [col_output for _, col_output in colonnes_nb_structure]
