@@ -1133,11 +1133,13 @@ def vision_conso(df_alldata, df_alldata_DT):
       mobile.fillna("").astype(str).str.strip()
   ).str.strip(" |")
   
-  df_alldata["AEO Structures_menant_activite"] =df_alldata["AEO Structures_menant_activite"].replace('Activités AEO/AAD menée en fixe | Activité AEO/AAD en dispositif mobile',"Activité AEO/AAD en site fixe et en dispositif mobile")
+  df_alldata["AEO Structures_menant_activite"] =df_alldata["AEO Structures_menant_activite"].replace('Activités AEO/AAD menée en fixe | Activité AEO/AAD en dispositif mobile',"Activité AEO en site fixe et en dispositif mobile")
   
-  df_alldata["AEO Structures_menant_activite"] =df_alldata["AEO Structures_menant_activite"].replace('Activités AEO/AAD menée en fixe',"Activité AEO/AAD en site fixe")
+  df_alldata["AEO Structures_menant_activite"] =df_alldata["AEO Structures_menant_activite"].replace('Activités AEO/AAD menée en fixe',"Activité AEO en site fixe")
+
+  df_alldata["AEO Structures_menant_activite"] =df_alldata["AEO Structures_menant_activite"].replace("Activité AEO/AAD en dispositif mobile","Activité AEO en dispositif mobile")
   
-  df_alldata["AEO Structures_menant_activite"] =df_alldata["AEO Structures_menant_activite"].replace('','Activité AEO/AAD non menée')
+  df_alldata["AEO Structures_menant_activite"] =df_alldata["AEO Structures_menant_activite"].replace('','Activité AEO non menée')
 
   df_grouped = (
       df_alldata[['DT_de_rattachement',"AEO Structures_menant_activite"]]
