@@ -688,7 +688,7 @@ def fusion_bc_final(df_ref_structure, df_ref_structure_DT,nb_bene_suivi_formatio
                     nb_actifs_solidar, nb_actifs_solidar_DT,
                     taux_is_actifs, taux_is_actifs_DT,
                     df_nvx_forme_crb, df_nvx_forme_crb_DT,
-                    nb_structures_ma_DT,
+                    nb_structures_ma, nb_structures_ma_DT,
                     col_groupby):
 
     """
@@ -1154,6 +1154,7 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     nb_sessions = nb_session_form(df_formation_count_session_2025, filtres_bc, 'n_structure')
     nb_sessions_DT = nb_session_form(df_formation_count_session_2025, filtres_bc, 'DT_de_rattachement')
 
+    nb_structures_ma = nb_structures_menant_activite(df_formation_count_session_2025, filtres_bc, 'n_structure')
     nb_structures_ma_DT = nb_structures_menant_activite(df_formation_count_session_2025, filtres_bc, 'DT_de_rattachement')
 
     nb_apte_formation_PSE1_2_CI = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'n_structure')
@@ -1190,7 +1191,7 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
         taux_nouveau_form, taux_nouveau_form_DT,
         nb_actifs_solidar, nb_actifs_solidar_DT,
         taux_is_actifs, taux_is_actifs_DT,
-        df_nvx_forme_crb, df_nvx_forme_crb_DT,nb_structures_ma_DT,
+        df_nvx_forme_crb, df_nvx_forme_crb_DT,nb_structures_ma,nb_structures_ma_DT,
         'n_structure'
     )
 
