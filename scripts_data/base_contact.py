@@ -691,7 +691,7 @@ def nb_nvx_forme_crb(client, df, filtres_bc, col_groupby):
 
     df = pd.merge(df, df_nvx_bene, on = 'NIVOL_ID_FK', how = 'inner')
 
-    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui') & (df['FORMATION_DATE_OBTENTION'].dt.year == 2025)].copy()
+    df_res = df[(df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui') & (df['FORMATION_DATE_OBTENTION'].dt.year == 2025)].copy()
     for name, code in [('Structure Nb_nvx_formes_CRB_2025', 'CRB')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
