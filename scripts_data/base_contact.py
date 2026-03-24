@@ -87,13 +87,16 @@ def nb_bene_suivi_form(df_filtered, filtres_bc, col_groupby):
     """
     df_res = df_filtered[df_filtered['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui'].copy()
 
+    # Filtre spécial GQS
+    filtres_bc['taux_GQS'] = filtres['GQS'] + filtres['PSC'] + filtres['PSE1'] + filtres['PSE2']
+    
     # Ajouter colonnes booléennes par filtre
     for name, code in [('AEO Nb_AAD', 'AAD'),
                        ('Dispositifs_d_urgence Nb_formes_TCAU_2025', 'TCAU'),
                        ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
                        ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
                        ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
-                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS'),
+                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'taux_GQS'),
                        ('Structure Nb_formes_CRB_2025', 'CRB')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
@@ -106,7 +109,7 @@ def nb_bene_suivi_form(df_filtered, filtres_bc, col_groupby):
                        ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
                        ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
                        ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
-                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS'),
+                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'taux_GQS'),
                        ('Structure Nb_formes_CRB_2025', 'CRB')]:
         codes_attendus = set(filtres_bc.get(code, []))
         codes_trouves = codes_df.intersection(codes_attendus)
@@ -142,7 +145,7 @@ def nb_bene_suivi_form(df_filtered, filtres_bc, col_groupby):
                        ('Dispositifs_d_urgence Nb_formes_TCEO_2025', 'TCEO'),
                        ('Dispositifs_d_urgence Nb_formes_PSP_2025', 'PSP'),
                        ('Dispositifs_d_urgence Nb_formes_IRR_2025', 'IRR'),
-                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'GQS'),
+                       ('Dispositifs_d_urgence Nb_formes_GQS_2025', 'taux_GQS'),
                        ('Structure Nb_formes_CRB_2025', 'CRB')]]].sum()
     for col in totaux.index:
         print(f"{col} : {totaux[col]}")
