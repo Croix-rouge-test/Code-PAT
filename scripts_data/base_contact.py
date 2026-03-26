@@ -88,7 +88,7 @@ def nb_bene_suivi_form(df_filtered, filtres_bc, col_groupby):
     df_res = df_filtered[df_filtered['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui'].copy()
 
     # Filtre spécial GQS
-    filtres_bc['taux_GQS'] = filtres['GQS'] + filtres['PSC'] + filtres['PSE1'] + filtres['PSE2']
+    filtres_bc['taux_GQS'] = filtres_bc['GQS'] + filtres_bc['PSC'] + filtres_bc['PSE1'] + filtres_bc['PSE2']
     
     # Ajouter colonnes booléennes par filtre
     for name, code in [('AEO Nb_AAD', 'AAD'),
