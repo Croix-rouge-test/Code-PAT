@@ -196,7 +196,7 @@ def rapprochement_libelles(df_ref, df_traiter, colonne_analyser, seuil_alerte=0.
     df_ref['nom_structure'] = df_ref['nom_structure'].fillna('').astype(str)
 
     # Charger le modèle pré-entraîné
-    model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+    model = SentenceTransformer('modelsparaphrase-MiniLM-L6-v2')
 
     # Obtenir les embeddings des libellés de référence
     reference_labels = df_ref['nom_structure'].tolist()
