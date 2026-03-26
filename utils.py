@@ -32,9 +32,6 @@ import io
 import re
 import shutil
 import zipfile
-from google.colab import drive, files
-
-from google.colab import auth
 from google.auth import default
 import unicodedata
 import re

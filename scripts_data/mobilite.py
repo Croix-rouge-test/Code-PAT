@@ -11,9 +11,6 @@ import pandas as pd
 from PyPDF2 import PdfReader, PdfWriter
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
-from PyPDF2 import PdfReader, PdfWriter
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from reportlab.pdfgen import canvas as rl_canvas
 from reportlab.lib.utils import ImageReader
 import math
@@ -32,9 +29,6 @@ import io
 import re
 import shutil
 import zipfile
-from google.colab import drive, files
-
-from google.colab import auth
 from google.auth import default
 import unicodedata
 import re

@@ -1,6 +1,5 @@
 import traceback
 import pandas as pd
-from google.colab import auth
 from google.auth import default
 import unicodedata
 import re
