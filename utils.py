@@ -736,11 +736,11 @@ def check_sums_against_final(
 
 def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusionner_DT, df_ref_structure,df_ref_structure_DT):
   colonnes_indicateurs = ['n_structure',
-    "Financier Prod_2024",
-    "Financier ResNet_2024",
-    "Financier ResCorrProd_2024",
-    "Financier TresoBrute_2024",
-    "Financier Mois_AvanceTreso_2024",
+    "Financier Prod_2025",
+    "Financier ResNet_2025",
+    "Financier ResCorrProd_2025",
+    "Financier TresoBrute_2025",
+    "Financier Mois_AvanceTreso_2025",
     "Structure Nb_Benevoles",
     "Structure Nb_nvx_Benevoles_2025",
     "Structure Nb_Adherents",

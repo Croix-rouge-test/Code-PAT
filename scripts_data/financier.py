@@ -45,206 +45,66 @@ def dept_clean(x):
   else : return str(int(x))
 
 
-def import_clean_donnees_financieres(financier,df_ref_structure, mapping_df):
+def import_clean_donnees_financieres(client,df_ref_structure, mapping_df):
 
-
-
-
-  # Import
-  dt_prod = get_as_dataframe(financier.worksheet('DT_Prod'), skiprows=3,evaluate_formulas=True)
-  dt_resnet = get_as_dataframe(financier.worksheet('DT_Res Net'), skiprows=3,evaluate_formulas=True)
-  dt_resnet_corr_prod = get_as_dataframe(financier.worksheet('DT_Res corrélé Prod'), skiprows=3, evaluate_formulas=True)
-  dt_treso_brute = get_as_dataframe(financier.worksheet('DT_Trés brute'), skiprows=3,evaluate_formulas=True)
-  dt_ul_ant_prod = get_as_dataframe(financier.worksheet('DT-UL-Ant_Prod'), skiprows=3, evaluate_formulas=True)
-  dt_ul_ant_res_net = get_as_dataframe(financier.worksheet('DT-UL-Ant_Res Net'), skiprows=3, evaluate_formulas=True)
-  dt_ul_res_net_corr_prod = get_as_dataframe(financier.worksheet('DT-UL-Res corrélé Prod'), skiprows=3, evaluate_formulas=True)
-  dt_ul_treso_brute = get_as_dataframe(financier.worksheet('DT-UL_Tréso brute'), skiprows=3, evaluate_formulas=True)
-
-
-
-
-  # Renommer colonnes
-  dt_prod = renommer_par_nom_table(dt_prod, "financier_DT", mapping_df)
-  dt_resnet = renommer_par_nom_table(dt_resnet, "financier_DT", mapping_df)
-  dt_resnet_corr_prod = renommer_par_nom_table(dt_resnet_corr_prod, "financier_DT", mapping_df)
-  dt_treso_brute = renommer_par_nom_table(dt_treso_brute, "financier_DT", mapping_df)
-  dt_ul_ant_prod = renommer_par_nom_table(dt_ul_ant_prod, "financier_DT_UL", mapping_df)
-  dt_ul_ant_res_net = renommer_par_nom_table(dt_ul_ant_res_net, "financier_DT_UL", mapping_df)
-  dt_ul_res_net_corr_prod = renommer_par_nom_table(dt_ul_res_net_corr_prod, "financier_DT_UL", mapping_df)
-  dt_ul_treso_brute = renommer_par_nom_table(dt_ul_treso_brute, "financier_DT_UL", mapping_df)
-
-
-
-
-  dt_prod = dt_prod[['n_dept','Réalisé 2024 Total Année','libelle_structure']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier Prod_2024'}).iloc[:dt_prod.shape[0]-2]
-  dt_prod['libelle_structure'] = 'DT - ' + dt_prod['libelle_structure']
-  dt_resnet = dt_resnet[['n_dept','Réalisé 2024 Total Année']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier ResNet_2024'}).iloc[:dt_resnet.shape[0]-2]
-  dt_resnet_corr_prod = dt_resnet_corr_prod[['n_dept','Réalisé 2024 Total Année']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier ResCorrProd_2024'}).iloc[:dt_resnet_corr_prod.shape[0]-2]
-  dt_treso_brute = dt_treso_brute[['n_dept','Tréso nette au 31/12/2024','Financier Mois_AvanceTreso_2024']].rename(columns = {'Tréso nette au 31/12/2024' : "Financier TresoBrute_2024"}).iloc[:dt_treso_brute.shape[0]-2]
-
-
-
-
-  dt_ul_ant_prod = dt_ul_ant_prod[['n_structure','Réalisé 2024 Total Année','libelle_structure']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier Prod_2024'}).iloc[:dt_ul_ant_prod.shape[0]-1]
-  dt_ul_ant_res_net = dt_ul_ant_res_net[['n_structure','Réalisé 2024 Total Année']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier ResNet_2024'}).iloc[:dt_ul_ant_res_net.shape[0]-1]
-  dt_ul_res_net_corr_prod = dt_ul_res_net_corr_prod[['n_structure','Réalisé 2024 Total Année']].rename(columns = {'Réalisé 2024 Total Année' : 'Financier ResCorrProd_2024'}).iloc[:dt_ul_res_net_corr_prod.shape[0]-1]
-  dt_ul_treso_brute = dt_ul_treso_brute[['n_structure','Tréso nette au 31/12/2024','Financier Mois_AvanceTreso_2024']].rename(columns = {'Tréso nette au 31/12/2024' : "Financier TresoBrute_2024"}).iloc[:dt_ul_treso_brute.shape[0]-1]
-
-
-
-
-
-  dt_prod['n_dept'] = dt_prod['n_dept'].apply(dept_clean)
-  dt_resnet['n_dept'] = dt_resnet['n_dept'].apply(dept_clean)
-  dt_resnet_corr_prod['n_dept'] = dt_resnet_corr_prod['n_dept'].apply(dept_clean)
-  dt_treso_brute['n_dept'] = dt_treso_brute['n_dept'].apply(dept_clean)
-
-
-
-
-  dt_ul_ant_prod['n_structure'] = dt_ul_ant_prod['n_structure'].astype(int).astype(str)
-  dt_ul_ant_res_net['n_structure'] = dt_ul_ant_res_net['n_structure'].astype(int).astype(str)
-  dt_ul_res_net_corr_prod['n_structure'] = dt_ul_res_net_corr_prod['n_structure'].astype(int).astype(str)
-  dt_ul_treso_brute['n_structure'] = dt_ul_treso_brute['n_structure'].astype(int).astype(str)
-
-
-
-
-  # Normalement le seul doublon est DT de la dordogne Code structure : 3968, on garde la première occurence
-
-
-
-
-  dt_ul_ant_prod = dt_ul_ant_prod.drop_duplicates(subset="n_structure", keep="first")
-  dt_ul_ant_res_net = dt_ul_ant_res_net.drop_duplicates(subset="n_structure", keep="first")
-  dt_ul_res_net_corr_prod = dt_ul_res_net_corr_prod.drop_duplicates(subset="n_structure", keep="first")
-  dt_ul_treso_brute = dt_ul_treso_brute.drop_duplicates(subset="n_structure", keep="first")
-
-
-
-
-  # On garde seulement unités locales et DT
+  query_rattachement_benevole = """
+    SELECT *
+    FROM `crf-pat.dataset_PAT_2025.donnees_financieres_2025`
+    """
   
-  dt_ul_ant_prod['n_structure'] = dt_ul_ant_prod['n_structure'].astype(int)
-  dt_ul_ant_res_net['n_structure'] = dt_ul_ant_res_net['n_structure'].astype(int)
-  dt_ul_res_net_corr_prod['n_structure'] = dt_ul_res_net_corr_prod['n_structure'].astype(int)
-  dt_ul_treso_brute['n_structure'] = dt_ul_treso_brute['n_structure'].astype(int)
-
-  mask = dt_ul_ant_prod['n_structure'].isin(set(df_ref_structure['n_structure'].drop_duplicates().values))
-  dt_ul_ant_prod = dt_ul_ant_prod[mask]
+    #SELECT rattachement_benevole_nivol_id_fk, rattachement_benevole_structure_id_fk
+  financier = client.query(query_rattachement_benevole).to_dataframe().rename(columns={'N__Dept':'n_dept','N_structure':'n_structure','Type_structure':'type_structure'})
+  df_financier = financier.rename(columns={'Produits_d_exploitation_2025' : 'Financier Prod_2025','Résultat_net_par_structure' : 'Financier ResNet_2025', 'Trésorerie_nette_par_structure' : "Financier TresoBrute_2025", 'Résultat_corrélé_au_Chiffres_d_affaire' : 'Financier ResCorrProd_2025'})
+  df_financier = df_financier[['n_structure','Financier Prod_2025', 'Financier ResNet_2025', 'Financier TresoBrute_2025', 'Financier ResCorrProd_2025']].apply(pd.to_numeric, errors='coerce')
 
 
-
-
-  return dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso_brute, dt_ul_ant_prod, dt_ul_ant_res_net, dt_ul_res_net_corr_prod, dt_ul_treso_brute
-
-
-
-
-
-
-
-
-def fusion_donnees_financieres(dt_prod, dt_resnet, dt_resnet_corr_prod, dt_treso_brute,dt_ul_ant_prod, dt_ul_ant_res_net, dt_ul_res_net_corr_prod, dt_ul_treso_brute, df_ref_structure):
-  # Données par DT
-  df_financier_DT = pd.merge(dt_prod, dt_resnet, on="n_dept", how="left")
-  df_financier_DT = pd.merge(df_financier_DT, dt_resnet_corr_prod, on="n_dept", how="left")
-  df_financier_DT = pd.merge(df_financier_DT, dt_treso_brute, on="n_dept", how="left")
-
-
-
-
-  # Données par structures
-  df_financier_DT_UL = pd.merge(dt_ul_ant_prod,dt_ul_ant_res_net, on="n_structure", how="left")
-  df_financier_DT_UL = pd.merge(df_financier_DT_UL, dt_ul_res_net_corr_prod, on="n_structure", how="left")
-  df_financier_DT_UL = pd.merge(df_financier_DT_UL, dt_ul_treso_brute, on="n_structure", how="left")
+  df_financier_DT = financier[(financier['type_structure'] == 'DELEGATION DEPARTEMENTALE - DD') | (financier['type_structure'] == 'DELEGATION TERRITORIALE - DT')]
+  df_financier_DT = df_financier_DT.rename(columns={'Produits_d_exploitation_consolidés__DT_' : 'Financier Prod_2025','Résultat_net_consolidé_par_DT' : 'Financier ResNet_2025', 'Trésorerie_nette_consolidée_par_DT' : "Financier TresoBrute_2025"})
+  df_financier_DT = df_financier_DT[['n_structure','Financier Prod_2025', 'Financier ResNet_2025', 'Financier TresoBrute_2025']].apply(pd.to_numeric, errors='coerce')
+  df_financier_DT['Financier ResCorrProd_2025'] = df_financier_DT['Financier ResNet_2025']/df_financier_DT['Financier Prod_2025']
   
-  df_financier_DT = pd.merge(df_ref_structure[df_ref_structure['type_structure'] == "DELEGATION TERRITORIALE - DT"][['DT_de_rattachement','n_dept']].drop_duplicates(), df_financier_DT, on = 'n_dept', how = 'inner')
-  df_financier_DT = df_financier_DT.drop_duplicates(['DT_de_rattachement'])
 
-  _ , _ , _, df_financier_DT_UL = apply_rattachement_successif(df_ref_structure, df_financier_DT_UL, col = 'n_structure')
-
-  # masque sur le groupe particulier
-  mask = df_financier_DT_UL['n_structure'] == 4381
-  df_subset = df_financier_DT_UL.loc[mask].copy()
-
-  # filtrer la ligne UL ou DT pour Treso et Mois_Avance
-  mask_dt_ul = df_subset['libelle_structure'].str.contains('DT|UL', case=False, na=False)
-  df_dt_ul = df_subset.loc[mask_dt_ul]
-
-  # récupérer la valeur si elle existe, sinon NaN
-  treso_non_na = df_dt_ul['Financier TresoBrute_2024'].dropna()
-  treso_value = treso_non_na.iloc[0] if not treso_non_na.empty else np.nan
-
-  avance_non_na = df_dt_ul['Financier Mois_AvanceTreso_2024'].dropna()
-  avance_value = avance_non_na.iloc[0] if not avance_non_na.empty else np.nan
-
-  # somme pour Prod et ResNet
-  prod_sum = df_subset['Financier Prod_2024'].sum()
-  resnet_sum = df_subset['Financier ResNet_2024'].sum()
-
-  # recalcul du ratio uniquement si agrégation réelle
-  rescorr = resnet_sum / prod_sum if len(df_subset) > 1 and prod_sum != 0 else df_subset['Financier ResCorrProd_2024'].iloc[0]
-
-  # mise à jour du dataframe original
-  df_financier_DT_UL.loc[mask, 'Financier Prod_2024'] = prod_sum
-  df_financier_DT_UL.loc[mask, 'Financier ResNet_2024'] = resnet_sum
-  df_financier_DT_UL.loc[mask, 'Financier ResCorrProd_2024'] = rescorr
-  df_financier_DT_UL.loc[mask, 'Financier TresoBrute_2024'] = treso_value
-  df_financier_DT_UL.loc[mask, 'Financier Mois_AvanceTreso_2024'] = avance_value
-
-  df_financier_DT_UL = df_financier_DT_UL.drop_duplicates(subset=['n_structure'], keep='first')
+  return df_financier, df_financier_DT, financier
 
 
 
-  # Pas de numéro de structure pour le dataframe contenant les DT, on fera le merge sur le numéro de département
-  return df_financier_DT, df_financier_DT_UL
-
-
-
-
-def verifier_n_dept(df_financier_DT,df_ref_structure):
+def verifications_financiers(df_financier,df_financier_DT,df_ref_structure, financier):
  
-  # Doublons
-  doublons = df_financier_DT[df_financier_DT.duplicated(subset=['n_dept'])]
-  if doublons.shape[0] > 0 :
-    print(' ❌ Il y a des doublons :')
-    display(df_financier_DT[df_financier_DT.duplicated(subset=['n_dept'])])
-  else :
-    print(' ✅ Aucun doublon')
+    print('Vérificiations par structure :')
+    verifier_colonne_structure(df_financier, "n_structure", df_ref_structure)
+
+    print('')
+    financier_struct_verif = financier[['Produits_d_exploitation_2025','Résultat_net_par_structure','Trésorerie_nette_par_structure']].apply(pd.to_numeric, errors='coerce').sum()
+
+    if financier_struct_verif['Produits_d_exploitation_2025'] != df_financier['Financier Prod_2025'].sum():
+        print(f"❌ la somme des produits d'exploitation par structure dans le dataframe ({df_financier['Financier Prod_2025'].sum()}) ne correspond pas à la somme des produits d'exploitation par structure dans les données financières ({financier_struct_verif['Produits_d_exploitation_2022']}).")
+    elif financier_struct_verif['Résultat_net_par_structure'] != df_financier['Financier ResNet_2025'].sum():
+        print(f"❌ la somme des résultats nets par structure dans le dataframe ({df_financier['Financier ResNet_2025'].sum()}) ne correspond pas à la somme des résultats nets par structure dans les données financières ({financier_struct_verif['Résultat_net_par_structure']}).")
+    elif financier_struct_verif['Trésorerie_nette_par_structure'] != df_financier['Financier TresoBrute_2025'].sum():
+        print(f"❌ la somme des trésoreries nettes par structure dans le dataframe ({df_financier['Financier TresoBrute_2025'].sum()}) ne correspond pas à la somme des trésoreries nettes par structure dans les données financières ({financier_struct_verif['Trésorerie_nette_par_structure']}).")
+    else:
+        print("✅ les sommes des produits d'exploitation par structure, des résultats nets par structure et des trésoreries nettes par structure dans le dataframe correspondent aux sommes correspondantes dans les données financières.")
+
+    print('')
+    print('Vérificiations par DT :')
+
+    verifier_colonne_structure(df_financier_DT, "n_structure", df_ref_structure[df_ref_structure['type_structure'].str.contains('DT')])
+    print('')
+    financier_DT_verif = financier[['Produits_d_exploitation_consolidés__DT_','Résultat_net_consolidé_par_DT','Trésorerie_nette_consolidée_par_DT']].apply(pd.to_numeric, errors='coerce').sum()
+
+    if financier_DT_verif['Produits_d_exploitation_consolidés__DT_'] != df_financier_DT['Financier Prod_2025'].sum():
+        print(f"❌ la somme des produits d'exploitation consolidés par DT dans le dataframe ({df_financier_DT['Financier Prod_2025'].sum()}) ne correspond pas à la somme des produits d'exploitation consolidés par DT dans les données financières ({financier_DT_verif['Produits_d_exploitation_consolidés__DT_']}).")
+    elif financier_DT_verif['Résultat_net_consolidé_par_DT'] != df_financier_DT['Financier ResNet_2025'].sum():
+        print(f"❌ la somme des résultats nets par structure dans le dataframe ({df_financier_DT['Financier ResNet_2025'].sum()}) ne correspond pas à la somme des résultats nets par structure dans les données financières ({financier_DT_verif['Résultat_net_consolidé_par_DT']}).")
+    elif financier_DT_verif['Trésorerie_nette_consolidée_par_DT'] != df_financier_DT['Financier TresoBrute_2025'].sum():
+        print(f"❌ la somme des trésoreries nettes par structure dans le dataframe ({df_financier_DT['Financier TresoBrute_2025'].sum()}) ne correspond pas à la somme des trésoreries nettes par structure dans les données financières ({financier_DT_verif['Trésorerie_nette_consolidée_par_DT']}).")
+    else:
+        print("✅ les sommes des produits d'exploitation consolidés par DT, des résultats nets par structure et des trésoreries nettes par structure dans le dataframe correspondent aux sommes correspondantes dans les données financières.")
+
+    
 
 
-
-
-  # Taille des données
-  if df_financier_DT['n_dept'].shape[0] == 107 :
-    print(' ✅ Pas de département manquant')
-  else :
-    print(' ❌ Il manque des départements : ')
-    manquants_financier = set(df_financier_DT['n_dept'])
-    manquants_struct = set(df_ref_structure['n_dept'])
-    manquants = manquants_financier.union(manquants_struct) - manquants_struct.intersection(manquants_financier)
-    print(manquants)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
 
 
 
@@ -253,25 +113,11 @@ def verifier_n_dept(df_financier_DT,df_ref_structure):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#################################################################
+# 
+# DPS ET FGP
+# 
+# ###############################################################
 
 
 
