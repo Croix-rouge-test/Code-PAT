@@ -421,7 +421,7 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
     # ======================
     df_res = df[
         (df['FORMATION_RESULTAT'] == 'Apte') &
-        (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2025])) &
+        (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024,2025])) &
         (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')
     ].copy()
 
@@ -434,7 +434,7 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
     # ======================
     # Calcul hiérarchie secours
     # ======================
-    nivols = calcul_secours_par_annee(df_res, filtres_bc, [2025])
+    nivols = calcul_secours_par_annee(df_res, filtres_bc, [2024,2025])
 
     set_pse1 = set(nivols['LISTE_PSE1'])
     set_pse2 = set(nivols['LISTE_PSE2'])

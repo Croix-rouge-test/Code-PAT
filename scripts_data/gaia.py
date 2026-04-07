@@ -79,8 +79,8 @@ def indicateurs_gaia(df_gaia):
   # Filtre : date_fin = NaT OU = 31/12/2025
   target = pd.Timestamp("2025-12-31")
   df_gaia_rattachement_benevole = df_gaia_rattachement_benevole.loc[
-      df_gaia_rattachement_benevole["rattachement_benevole_date_fin"].isna()
-      | (df_gaia_rattachement_benevole["rattachement_benevole_date_fin"] >= target) & (df_gaia_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
+      (df_gaia_rattachement_benevole["rattachement_benevole_date_fin"].isna()
+      | (df_gaia_rattachement_benevole["rattachement_benevole_date_fin"] >= target)) & (df_gaia_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
   ]
  
   df_gaia_rattachement_benevole = df_gaia_rattachement_benevole.rename(columns={
