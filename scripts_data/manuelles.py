@@ -92,15 +92,17 @@ def clean_PST(df_PST):
     return df_PST
 
 
-def clean_declenchement(df_declenchement):
+def clean_declenchement(df_declenchement, df_conventions):
     df = df_declenchement.drop(df_declenchement.index[0]).copy()
 
+    df = pd.merge(df_declenchement, df_conventions[["DT Annuaire Opé", "Nombre de participations à des exercices organisés par les secours publics"]], left_on="COUNTA of Catégorie", right_on="DT Annuaire Opé", how="left")
 
     df.rename(
         columns={
             'COUNTA of Catégorie': 'Département',
             'Catégorie': 'Etablissements',
             'Unnamed: 2': 'Exercice',
+            'Nombre de participations à des exercices organisés par les secours publics': 'Exercice_convention',
             'Unnamed: 3': 'Fonctionnement',
             'Unnamed: 4': 'Opérations',
             'Unnamed: 5': 'Grand Total'
@@ -108,11 +110,13 @@ def clean_declenchement(df_declenchement):
         inplace=True
     )
 
-
+    df['Exercice_convention'] = df['Exercice_convention'].fillna(0).astype(int)
     df[['Grand Total', 'Exercice']] = df[['Grand Total', 'Exercice']].fillna(0)
+    df['Exercice'] = df['Exercice'].fillna(0).astype(int) + df['Exercice_convention']
 
 
-    df["nb_declenchements"] = df["Grand Total"] - df["Exercice"]
+
+    df["nb_declenchements"] = df["Grand Total"].astype(int) - df["Exercice"].astype(int)
 
 
     df[["n_dept", "DT"]] = df["Département"].str.split(" - ", expand=True)
@@ -339,7 +343,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
 ):
     df_OCR_clean = clean_OCR(df_OCR)
     df_PST_clean = clean_PST(df_PST)
-    df_declenchement_clean = clean_declenchement(df_declenchement)
+    df_declenchement_clean = clean_declenchement(df_declenchement, df_conventions)
     df_redcall_clean = clean_redcall(df_redcall)
     df_CAICHUCMCC_clean = clean_CAICHUCMCC(df_CAICHUCMCC)
     df_conventions_clean = clean_conventions(df_conventions)
