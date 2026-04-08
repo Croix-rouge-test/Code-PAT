@@ -1151,7 +1151,7 @@ def vision_conso(df_alldata, df_alldata_DT):
   df_grouped = (
       df_alldata[['DT_de_rattachement',"AEO Structures_menant_activite"]]
       .groupby('DT_de_rattachement')["AEO Structures_menant_activite"]
-      .apply(lambda x: (x != "Activité AEO/AAD non menée").sum())
+      .apply(lambda x: (x != "Activité AEO non menée").sum())
       .reset_index()
   )
 
