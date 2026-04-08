@@ -421,7 +421,7 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
     # ======================
     df_res = df[
         (df['FORMATION_RESULTAT'] == 'Apte') &
-        (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025])) &
+        (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024,2025])) &
         (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')
     ].copy()
 
@@ -514,8 +514,16 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
 def nb_bene_aptes_autres(df, filtres_bc, col_groupby):
     """
     Nombre de personnes aptes aux formations
+
+    Enlever les nivols AGQS et FIPSEN de FPSC, et enlever nivols FPS de AGQS FIPSEN et FPSC
     """
     df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025]))].copy()
+
+    # Identifier les NIVOLs à exclure
+    fps_nivols = set(df_res[df_res['FORMATION_CODE'].isin(filtres_bc['FPS'])]['NIVOL_ID_FK'])
+    fpsc_nivols = set(df_res[df_res['FORMATION_CODE'].isin(filtres_bc['FPSC'])]['NIVOL_ID_FK'])
+    agqs_nivols = set(df_res[df_res['FORMATION_CODE'].isin(filtres_bc['AGQS'])]['NIVOL_ID_FK'])
+    fipsen_nivols = set(df_res[df_res['FORMATION_CODE'].isin(filtres_bc['FIPSEN'])]['NIVOL_ID_FK'])
 
     for name, code in [('Formation_grand_public Nb_FPSC', 'FPSC'),
                        ('Formation_grand_public Nb_AGQS', 'AGQS'),
@@ -539,6 +547,11 @@ def nb_bene_aptes_autres(df, filtres_bc, col_groupby):
         print(f"  Codes manquants: {codes_manquants}")
 
         df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
+
+    # Appliquer les exclusions
+    df_res['Formation_grand_public Nb_FPSC'] = df_res['Formation_grand_public Nb_FPSC'] & (~df_res['NIVOL_ID_FK'].isin(fps_nivols)) & (~df_res['NIVOL_ID_FK'].isin(agqs_nivols)) & (~df_res['NIVOL_ID_FK'].isin(fipsen_nivols))
+    df_res['Formation_grand_public Nb_AGQS'] = df_res['Formation_grand_public Nb_AGQS'] & (~df_res['NIVOL_ID_FK'].isin(fps_nivols)) #& (~df_res['NIVOL_ID_FK'].isin(fpsc_nivols))
+    df_res['Formation_grand_public Nb_FIPSEN'] = df_res['Formation_grand_public Nb_FIPSEN'] & (~df_res['NIVOL_ID_FK'].isin(fps_nivols)) #& (~df_res['NIVOL_ID_FK'].isin(fpsc_nivols))
 
     # Fonction de comptage
     def count_unique(group, col_name):
@@ -744,16 +757,16 @@ def nb_nvx_forme_crb(client, df, filtres_bc, col_groupby):
 
     query_nvx_bene = """SELECT DISTINCT
         rattachement_benevole_nivol_id_fk
-        FROM crf-pat.dataset_PAT_2025.crf_pat_2025_rattachement_benevole
-        WHERE rattachement_benevole_date_debut >= DATE('2025-01-01')
-        AND rattachement_benevole_date_debut < DATE('2026-01-01')"""
+        FROM crf-pat.dataset_PAT_2025.crf_pat_2025_rattachement_benevole"""
+        # WHERE rattachement_benevole_date_debut >= DATE('2025-01-01')
+        # AND rattachement_benevole_date_debut < DATE('2026-01-01')"""
 
     df_nvx_bene = client.query(query_nvx_bene).to_dataframe()
     df_nvx_bene = df_nvx_bene.rename(columns = {'rattachement_benevole_nivol_id_fk' : 'NIVOL_ID_FK'})['NIVOL_ID_FK'].drop_duplicates()
 
     df = pd.merge(df, df_nvx_bene, on = 'NIVOL_ID_FK', how = 'inner')
 
-    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui') & (df['FORMATION_DATE_OBTENTION'].dt.year == 2025)].copy()
+    df_res = df[(df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui') & (df['FORMATION_DATE_OBTENTION'].dt.year == 2025)].copy()
     for name, code in [('Structure Nb_nvx_formes_CRB_2025', 'CRB')]:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
 
@@ -1034,6 +1047,13 @@ def clean_base_contact(client, df_ref_structure):
     )
 
     df_rattachement_benevole = df_rattachement_benevole.drop_duplicates("rattachement_benevole_nivol_id_fk")
+
+    target = pd.Timestamp("2025-12-31")
+    df_rattachement_benevole = df_rattachement_benevole.loc[
+        (df_rattachement_benevole["rattachement_benevole_date_fin"].isna()
+        | (df_rattachement_benevole["rattachement_benevole_date_fin"] >= target)) & (df_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
+    ]
+    
     df_rattachement_benevole = df_rattachement_benevole[["rattachement_benevole_nivol_id_fk","rattachement_benevole_structure_id_fk"]]
 
 
@@ -1117,10 +1137,10 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
         'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1'], #ajout formation continue FC
         'PSE1_i' : ['APTE PSE1', 'PSE1', 'RATPSE1'],
         'RECPSE1' : ['RECPSE1', 'FCPSE1'],
-        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2', 'FCPSE2', 'FCPSE'], #ajout formation continue FC + PSE
+        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2', 'FCPSE2', 'FCPSE', 'PSE AGSU'], #ajout formation continue FC + PSE
         'PSE2_i' : ['PSE','PSE2','RATPSE2'],
         'RECPSE2' : ['RECPSE2', 'FCPSE2'],
-        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'], #suppression CIP3 et ajout FCCI
+        'CI' : ['CI P1 P2', 'CI','CIP2' ,'RECCI', 'REC PSECI' ,'RECPSECI', 'FCCI'], #'RATCI', 'CIP1','CI EXT' 
         'CI_i' : ['CI', 'CI P1 P2', 'CI P1', 'CI P2', 'CI EXT', 'RATCI'],
         'RECCI' : ['RECCI', 'REC PSECI', 'RECPSECI'],
         'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'], #ajout de 'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'
@@ -1281,7 +1301,7 @@ def correction_indic_BC_DT(df_ref_structure, indicateurs_base_contact, indicateu
     indicateurs_base_contact_DT['n_structure'] = pd.to_numeric(indicateurs_base_contact_DT['n_structure'], errors='coerce').fillna(0).astype(int)
     indicateurs_base_contact_DT = indicateurs_base_contact_DT.merge(df_rattachement_structure2, on="n_structure", how="left").copy()
 
-    indicateurs_base_contact_DT=pd.merge(indicateurs_base_contact_DT, indicateurs_base_contact_2, on="DT_de_rattachement")
+    indicateurs_base_contact_DT = pd.merge(indicateurs_base_contact_DT, indicateurs_base_contact_2, on="DT_de_rattachement")
     indicateurs_base_contact_DT = indicateurs_base_contact_DT.drop(columns="DT_de_rattachement")
 
     return indicateurs_base_contact_DT
