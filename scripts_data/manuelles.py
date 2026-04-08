@@ -95,7 +95,7 @@ def clean_PST(df_PST):
 def clean_declenchement(df_declenchement, df_conventions):
     df = df_declenchement.drop(df_declenchement.index[0]).copy()
 
-    df = pd.merge(df_declenchement, df_conventions[["DT Annuaire Opé", "Nombre de participations à des exercices organisés par les secours publics"]], left_on="COUNTA of Catégorie", right_on="DT Annuaire Opé", how="left")
+    df = pd.merge(df, df_conventions[["DT Annuaire Opé", "Nombre de participations à des exercices organisés par les secours publics"]], left_on="COUNTA of Catégorie", right_on="DT Annuaire Opé", how="left")
 
     df.rename(
         columns={
