@@ -421,7 +421,7 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
     # ======================
     df_res = df[
         (df['FORMATION_RESULTAT'] == 'Apte') &
-        (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024,2025])) &
+        (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2025])) &
         (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')
     ].copy()
 
@@ -434,7 +434,7 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby):
     # ======================
     # Calcul hiérarchie secours
     # ======================
-    nivols = calcul_secours_par_annee(df_res, filtres_bc, [2024,2025])
+    nivols = calcul_secours_par_annee(df_res, filtres_bc, [2025])
 
     set_pse1 = set(nivols['LISTE_PSE1'])
     set_pse2 = set(nivols['LISTE_PSE2'])
@@ -517,7 +517,7 @@ def nb_bene_aptes_autres(df, filtres_bc, col_groupby):
 
     Enlever les nivols AGQS et FIPSEN de FPSC, et enlever nivols FPS de AGQS FIPSEN et FPSC
     """
-    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2024, 2025]))].copy()
+    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_DATE_OBTENTION'].dt.year.isin([2025]))].copy()
 
     # Identifier les NIVOLs à exclure
     fps_nivols = set(df_res[df_res['FORMATION_CODE'].isin(filtres_bc['FPS'])]['NIVOL_ID_FK'])
@@ -987,16 +987,16 @@ def clean_base_contact(client, df_ref_structure):
         'solidar20' : ['PASSOLIDAR2020','ESOLIDAR2026','SOLIDAR2020'], # suppression'PASSSOLIDAR2020'
         'AAD' : ['AAD'], # suppression'IAD','MAO'
         'FAAD' : ['FAAD','EPIAF FAAD'],
-        'FPSC' : ['FCFPSC','RATFCFPSC', 'FPSC', 'RECFPSC', 'PICF FPSC', "PAE3"], #ajout de 'FPSC', 'RECFPSC', 'PICF FPSC'
+        'FPSC' : ['FCFPSC','RATFCFPSC', 'FPSC', 'RECFPSC', 'PICF FPSC', 'PAE3'], #ajout de 'FPSC', 'RECFPSC', 'PICF FPSC'
         'AGQS' : ['AGQS'], # suppression'RATAGQS'
         'FIPSEN' : ['FIPSEN','RECFIPSEN'],
         'PSE1' : ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1'], #ajout formation continue FC
         'PSE1_i' : ['APTE PSE1', 'PSE1', 'RATPSE1'],
         'RECPSE1' : ['RECPSE1', 'FCPSE1'],
-        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2', 'FCPSE2', 'FCPSE'], #ajout formation continue FC + PSE
+        'PSE2' : ['RECPSE2','PSE2','RECPSE2', 'PSE', 'RATPSE2', 'FCPSE2', 'FCPSE', 'PSE AGSU'], #ajout formation continue FC + PSE
         'PSE2_i' : ['PSE','PSE2','RATPSE2'],
         'RECPSE2' : ['RECPSE2', 'FCPSE2'],
-        'CI' : ['CI P1 P2', 'CI', 'CIP1' ,'CIP2' ,'CI EXT','RECCI', 'REC PSECI' ,'RECPSECI', 'RATCI', 'FCCI'], #suppression CIP3 et ajout FCCI
+        'CI' : ['CI P1 P2', 'CI','CIP2' ,'RECCI', 'REC PSECI' ,'RECPSECI', 'FCCI'], #'RATCI', 'CIP1','CI EXT' 
         'CI_i' : ['CI', 'CI P1 P2', 'CI P1', 'CI P2', 'CI EXT', 'RATCI'],
         'RECCI' : ['RECCI', 'REC PSECI', 'RECPSECI'],
         'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'], #ajout de 'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'
