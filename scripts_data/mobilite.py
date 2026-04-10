@@ -58,22 +58,50 @@ def filtres_mobilite(mobilite,mapping_df, df_ref_structure):
 
 
 def indicateurs_mobilite(df_mobilite, df_ref_structure, col_structure):
-  """
-  Calcul les indicateurs utilisant les données mobilité, certaines colonne seront utilisées plus tard pour des fusions
-  """
+    mobilite_dt = dt_rattachement(df_mobilite, df_ref_structure).copy()
+    mobilite_dt = pd.merge(mobilite_dt, df_ref_structure['n_structure'].drop_duplicates(), on='n_structure', how="inner")
 
-  mobilite_dt = dt_rattachement(df_mobilite, df_ref_structure)
-  mobilite_dt = pd.merge(mobilite_dt, df_ref_structure['n_structure'].drop_duplicates(), on='n_structure', how="inner")
-  if col_structure != 'n_structure' :
-    mobilite_dt = mobilite_dt.drop(['n_structure'], axis = 1).rename(columns = {col_structure : 'n_structure'})
-    mobilite_dt['n_structure'] = mobilite_dt['n_structure'].astype(int)
+    # structure d'origine pour compter les structures distinctes
+    mobilite_dt['n_structure_origine'] = pd.to_numeric(
+        mobilite_dt['n_structure'], errors='coerce'
+    )
 
-  mobilite_dt_n_struc = mobilite_dt.groupby('n_structure').size().rename("AEO Structure_activite_mobile")
+    if col_structure != 'n_structure':
+        mobilite_dt[col_structure] = (
+            mobilite_dt[col_structure]
+            .astype(str)
+            .str.strip()
+            .replace('', np.nan)
+        )
 
-  mobilite_dt_nb_pa_bene = mobilite_dt.groupby('n_structure').sum(['nb_pa']).rename(columns = {'nb_pa':'AEO Nb_PA_dispos_mobiles'}).reset_index()
+        mobilite_dt[col_structure] = pd.to_numeric(
+            mobilite_dt[col_structure], errors='coerce'
+        )
 
-  dt_return = pd.merge(mobilite_dt_n_struc, mobilite_dt_nb_pa_bene, on='n_structure', how="left")
-  return dt_return
+        mobilite_dt = mobilite_dt[mobilite_dt[col_structure].notna()].copy()
+        mobilite_dt['n_structure'] = mobilite_dt[col_structure].astype(int)
+
+    else:
+        mobilite_dt['n_structure'] = pd.to_numeric(
+            mobilite_dt['n_structure'], errors='coerce'
+        )
+        mobilite_dt = mobilite_dt[mobilite_dt['n_structure'].notna()].copy()
+        mobilite_dt['n_structure'] = mobilite_dt['n_structure'].astype(int)
+
+    mobilite_dt['n_structure_origine'] = mobilite_dt['n_structure_origine'].astype(int)
+
+    dt_return = (
+        mobilite_dt.groupby('n_structure', as_index=False)
+        .agg(
+            **{
+                'AEO Structure_activite_mobile': ('n_structure_origine', 'nunique'),
+                'AEO Nb_PA_dispos_mobiles': ('nb_pa', 'sum')
+            }
+        )
+    )
+
+    return dt_return
+
 
 
 
