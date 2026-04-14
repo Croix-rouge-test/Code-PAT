@@ -319,7 +319,7 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
             'Avance de tréso en mois': 'Financier Mois_AvanceTreso_2025'
         })[['n_dept', 'Financier TresoBrute_2025', 'Financier Mois_AvanceTreso_2025']],
         
-        df_ref_structure[['n_dept', 'DT_de_rattachement']].drop_duplicates(),
+        df_ref_structure[~df_ref_structure['type_structure'].isin(['REGION - DR' , 'INSTANCES NATIONALES - IN', 'IMPLANTATION LOCALE HORS AL - IL'])][['n_dept','DT_de_rattachement']].drop_duplicates(),
         
         on='n_dept',
         how='inner'
@@ -352,6 +352,10 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
     
     caf = get_as_dataframe(financier_2025.worksheet('CAF'), skiprows=3, evaluate_formulas=True)
 
+    # Filtre brute pour enlever structure dupiquée
+
+    caf = caf[(caf['N° Smartview'] != 'AS3968HA')]
+
     caf.columns = [
         ''.join(c if c.isalnum() else '_' for c in str(col))
         for col in caf.columns
@@ -367,8 +371,8 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
     df_caf['n_structure'] = df_caf['n_structure'].astype(int)
 
 
-    df_caf_DT = pd.merge(caf, df_ref_structure[['n_dept','DT_de_rattachement']].drop_duplicates(), on='n_dept', how='inner').rename(columns={'Réalisé_2025_Total_Année' : 'Financier caf_2025'})
-    df_caf_DT = df_caf_DT[(df_caf_DT['n_structure'] == 'D')][['DT_de_rattachement','Financier caf_2025']]
+    df_caf_DT = pd.merge(caf[(caf['n_structure'] == 'D')], df_ref_structure[~df_ref_structure['type_structure'].isin(['REGION - DR' , 'INSTANCES NATIONALES - IN', 'IMPLANTATION LOCALE HORS AL - IL'])][['n_dept','DT_de_rattachement']].drop_duplicates(), on='n_dept', how='inner').rename(columns={'Réalisé_2025_Total_Année' : 'Financier caf_2025'})
+    df_caf_DT = df_caf_DT[['DT_de_rattachement','Financier caf_2025']]
     df_caf_DT['Financier caf_2025'] = df_caf_DT['Financier caf_2025'].apply(pd.to_numeric, errors='coerce')
     # df_caf_DT = df_caf_DT.groupby('DT_de_rattachement').agg({'Financier caf_2025':'sum'}).reset_index()
     df_caf_DT = df_caf_DT.rename(columns={'DT_de_rattachement':'n_structure'})
