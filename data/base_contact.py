@@ -550,8 +550,8 @@ def nb_bene_aptes_autres(df, filtres_bc, col_groupby):
 
     # Appliquer les exclusions
     df_res['Formation_grand_public Nb_FPSC'] = df_res['Formation_grand_public Nb_FPSC'] & (~df_res['NIVOL_ID_FK'].isin(fps_nivols)) & (~df_res['NIVOL_ID_FK'].isin(agqs_nivols)) & (~df_res['NIVOL_ID_FK'].isin(fipsen_nivols))
-    df_res['Formation_grand_public Nb_AGQS'] = df_res['Formation_grand_public Nb_AGQS'] & (~df_res['NIVOL_ID_FK'].isin(fps_nivols)) #& (~df_res['NIVOL_ID_FK'].isin(fpsc_nivols))
-    df_res['Formation_grand_public Nb_FIPSEN'] = df_res['Formation_grand_public Nb_FIPSEN'] & (~df_res['NIVOL_ID_FK'].isin(fps_nivols)) #& (~df_res['NIVOL_ID_FK'].isin(fpsc_nivols))
+    df_res['Formation_grand_public Nb_AGQS'] = df_res['Formation_grand_public Nb_AGQS'] & (~df_res['NIVOL_ID_FK'].isin(fps_nivols)) & (~df_res['NIVOL_ID_FK'].isin(fpsc_nivols))
+    df_res['Formation_grand_public Nb_FIPSEN'] = df_res['Formation_grand_public Nb_FIPSEN'] & (~df_res['NIVOL_ID_FK'].isin(fps_nivols)) & (~df_res['NIVOL_ID_FK'].isin(fpsc_nivols))
 
     # Fonction de comptage
     def count_unique(group, col_name):
@@ -1077,7 +1077,7 @@ def clean_base_contact(client, df_ref_structure):
 
     df_formation_count_session = df_formation_session_resultat.copy()
     df_formation_count_session = df_formation_count_session.rename(columns={"FORMATION_SESSION_STRUCTURE_ID_FK": "n_structure"})
-    _ , _ , _, df_formation_count_session = apply_rattachement_successif(df_ref_structure, df_formation_count_session, col = 'n_structure')
+    #_ , _ , _, df_formation_count_session = apply_rattachement_successif(df_ref_structure, df_formation_count_session, col = 'n_structure')
 
     df_formation_count_session = dt_rattachement(df_formation_count_session, df_ref_structure)
     df_formation_count_session_2025 = df_formation_count_session[df_formation_count_session['FORMATION_DATE_OBTENTION'].dt.year == 2025].copy()
@@ -1092,10 +1092,10 @@ def clean_base_contact(client, df_ref_structure):
     #     .fillna(df_formation_session_resultat.loc[mask_2025, "FORMATION_SESSION_STRUCTURE_ID_FK"])
     # )
 
-    _ , _ , _, df_formation_session_resultat = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat, col = 'n_structure')
+    #_ , _ , _, df_formation_session_resultat = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat, col = 'n_structure')
 
 
-    _ , _ , _, df_formation_session_resultat_fpg = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat_fpg, col = 'n_structure')
+    #_ , _ , _, df_formation_session_resultat_fpg = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat_fpg, col = 'n_structure')
     df_formation_session_resultat_fpg = dt_rattachement(df_formation_session_resultat_fpg, df_ref_structure)
 
 
