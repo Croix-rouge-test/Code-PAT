@@ -753,11 +753,23 @@ def fusion_bc_final(df_ref_structure, df_ref_structure_DT,nb_bene_suivi_formatio
 def nb_nvx_forme_crb(client, df, filtres_bc, col_groupby):
     """ 
     Nombre de nouveaux bénévoles formés CRB, on détermine les nouveaux bénévoles grâce à la requête SQL
+    # Il faut que le bénévole ne soit jamais apparu avant et que le bénévole soit toujours présent au 12-31-2025
     """
 
-    query_nvx_bene = """SELECT DISTINCT
-        rattachement_benevole_nivol_id_fk
-        FROM crf-pat.dataset_PAT_2025.crf_pat_2025_rattachement_benevole"""
+    query_nvx_bene = """SELECT
+                DISTINCT rattachement_benevole_nivol_id_fk
+            FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_rattachement_benevole` t
+            WHERE 
+                -- Date de début en 2025
+                EXTRACT(YEAR FROM rattachement_benevole_date_debut) = 2025
+
+                -- Jamais apparu avant 2025
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_rattachement_benevole` t2
+                    WHERE t2.rattachement_benevole_nivol_id_fk = t.rattachement_benevole_nivol_id_fk
+                    AND t2.rattachement_benevole_date_debut < '2025-01-01'
+                )"""
         # WHERE rattachement_benevole_date_debut >= DATE('2025-01-01')
         # AND rattachement_benevole_date_debut < DATE('2026-01-01')"""
 
@@ -806,6 +818,8 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby):
     Taux d'intervenants secouristes (IS) i.e. sont formés PSE1 ou PSE2 ou CI; qui sont actifs dans pegass
     Numérateur : Nombre d'IS actifs dans pegass en 2025 (également présents dans l'ensemble PSE1, PSE2, CI 2024, 2025 de base contact formation_session_resultat, la raison pour cela étant qu'il est possible qu'il y ai des activités secouristes menée par des gens qui ne sont pas dans la base contact)
     Dénominateur : Nombre de PSE1, PSE2 et CI aptes en 2025 (donc formés 2024-2025)
+
+    On enlève tous les nivols absents au 31-12-2025 dans pegass, même s'ils ont fait une activité en 2025
     """
     # Utiliser
     query_is = """WITH codes_actifs AS (
@@ -925,6 +939,7 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
   df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
   _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
 
+  df_res = df_res.drop('DT_de_rattachement', axis = 1)
   df_res = dt_rattachement(df_res, df_ref_structure)
 
   df_res = df_res.drop_duplicates(['n_structure','NIVOL_ID_FK'])
@@ -1194,8 +1209,8 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
 
     # Indicateurs fusion
 
-    nb_actifs_solidar = nb_bene_actifs_solidar(client, df_formation_session_resultat, filtres_bc, df_ref_structure, 'n_structure')
-    nb_actifs_solidar_DT = nb_bene_actifs_solidar(client, df_formation_session_resultat, filtres_bc, df_ref_structure, 'DT_de_rattachement')
+    nb_actifs_solidar = nb_bene_actifs_solidar(client, df_formation_session_resultat_fpg, filtres_bc, df_ref_structure, 'n_structure')
+    nb_actifs_solidar_DT = nb_bene_actifs_solidar(client, df_formation_session_resultat_fpg, filtres_bc, df_ref_structure, 'DT_de_rattachement')
 
     taux_is_actifs = taux_IS(client, df_formation_session_resultat, filtres_bc, df_ref_structure, 'n_structure')
     taux_is_actifs_DT = taux_IS(client, df_formation_session_resultat, filtres_bc, df_ref_structure, 'DT_de_rattachement')

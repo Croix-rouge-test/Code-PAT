@@ -108,26 +108,46 @@ def indicateurs_gaia(df_gaia):
 
 
 def indicateurs_gaia_nvx(df_gaia):
-  # Vérification que la colonne est au format datetime
-  df_gaia['rattachement_benevole_date_fin'] = pd.to_datetime(df_gaia['rattachement_benevole_date_fin'], errors='coerce')
-  df_gaia['rattachement_benevole_date_debut'] = pd.to_datetime(df_gaia['rattachement_benevole_date_debut'], errors='coerce')
+  # Conversion en datetime
+  df_gaia['rattachement_benevole_date_fin'] = pd.to_datetime(
+      df_gaia['rattachement_benevole_date_fin'], errors='coerce'
+  )
+  df_gaia['rattachement_benevole_date_debut'] = pd.to_datetime(
+      df_gaia['rattachement_benevole_date_debut'], errors='coerce'
+  )
 
+  # garder uniquement les bénévoles dont la première apparition est en 2025
+  first_dates = df_gaia.groupby('rattachement_benevole_nivol_id_fk')[
+      'rattachement_benevole_date_debut'
+  ].min()
 
-  # Filtrage : date debut année = 2025
+  nivols_2025_only = first_dates[first_dates.dt.year == 2025].index
+
+  df_gaia = df_gaia[
+      df_gaia['rattachement_benevole_nivol_id_fk'].isin(nivols_2025_only)
+  ]
+
+  # 🔹 Ensuite ton filtre initial (optionnel mais plus strict)
   df_gaia = df_gaia[
       df_gaia['rattachement_benevole_date_debut'].dt.year == 2025
   ]
- 
+
+  # Renommage
   df_gaia = df_gaia.rename(columns={
-    'rattachement_benevole_structure_id_fk': 'n_structure',
-    'rattachement_benevole_nivol_id_fk': 'Structure Nb_nvx_Benevoles_2025'
+      'rattachement_benevole_structure_id_fk': 'n_structure',
+      'rattachement_benevole_nivol_id_fk': 'Structure Nb_nvx_Benevoles_2025'
   })
- # On compte le nb de volontaires de l'urgence
-  nb_nvx_benevoles = (df_gaia.groupby('n_structure')['Structure Nb_nvx_Benevoles_2025'].nunique()).reset_index()
-  
+
+  # Agrégation
+  nb_nvx_benevoles = (
+      df_gaia.groupby('n_structure')['Structure Nb_nvx_Benevoles_2025']
+      .nunique()
+      .reset_index()
+  )
+
   print(f"Nombre de structures agrégées : {len(nb_nvx_benevoles)}")
 
-  # Somme totale nationale
+  # Total national
   total_nvx_benevoles = nb_nvx_benevoles['Structure Nb_nvx_Benevoles_2025'].sum()
   print(f"Nombre total de nouveaux bénévoles uniques : {total_nvx_benevoles}")
   
