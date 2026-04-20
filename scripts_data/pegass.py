@@ -472,6 +472,8 @@ def rows_not_in_merge(df_left: pd.DataFrame, df_right: pd.DataFrame, id_col: str
 
 #CODE POUR IMPORTER LES TABLES
 
+
+
 def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2025"):
     """
     Charge les tables BigQuery nécessaires et renvoie tous les DataFrames importés
@@ -530,6 +532,7 @@ def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2
     # Renommage colonnes (comme ton code)
     df_ref_action_groupe_action.columns = ["action_id_fk", "ACTION_LIBELLE", "GROUPE_ACTION_ID_FK"]
 
+
     return (
         df_ref_activite_benevole,
         df_pegass_activite,
@@ -537,8 +540,9 @@ def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2
         df_pegass_activite_seance_inscription,
         ref_structure1,
         df_rattachement_court,
-        df_ref_action_groupe_action,
+        df_ref_action_groupe_action
     )
+
 
 
 # CODE DE CALCUL DES INDICATEURS
@@ -551,7 +555,8 @@ def calcul_PEGASS_indicateurs(
     df_pegass_activite,
     df_pegass_activite_seance,
     df_pegass_activite_seance_inscription,
-    df_rattachement_court
+    df_rattachement_court,
+    df_nivols_gaia
 ):
     """
     Reprend la séquence "Merge les tables" + calcul indicateurs (linéaire),
@@ -606,6 +611,9 @@ def calcul_PEGASS_indicateurs(
 
     df_pegass_ben_activite_synthetique = rattache_structure(df_pegass_ben_activite_synthetique, Structure_de_rattachement1)
     df_pegass_activite_merge2          = rattache_structure(df_pegass_activite_merge2,          Structure_de_rattachement1)
+
+    liste_nivols_date_fixe = df_nivols_gaia['rattachement_benevole_nivol_id_fk'].drop_duplicates().tolist()
+    df_pegass_ben_activite_synthetique = df_pegass_ben_activite_synthetique[df_pegass_ben_activite_synthetique['PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK'].isin(liste_nivols_date_fixe)]
 
     # #Calcul nb de bénévoles
     nb_ben_Maraude_Pegass = compute_nb_benevoles_indicator(
