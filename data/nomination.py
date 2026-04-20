@@ -1,8 +1,39 @@
+import traceback
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload
+import io
+from PyPDF2 import PdfReader, PdfWriter
+import json
+import gspread
+from gspread_dataframe import get_as_dataframe
 import pandas as pd
+from PyPDF2 import PdfReader, PdfWriter
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+from reportlab.pdfgen import canvas as rl_canvas
+from reportlab.lib.utils import ImageReader
+import math
 import os
+import matplotlib.pyplot as plt
+from IPython.display import Image, display
+import fitz  # PyMuPDF
+from PIL import Image as PILImage
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
+import matplotlib.ticker as mtick
+from matplotlib.patches import Patch
 import io
 import re
+import shutil
+import zipfile
+from google.auth import default
+import unicodedata
+import re
+import torch
+from sentence_transformers import SentenceTransformer, util
 import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
@@ -51,13 +82,15 @@ def fusion_nomination(df_nomination, df_ref_nomination):
 
 
 
-def indicateurs_nomination_AEO(df_NOMINATION, annee=2025):
+def indicateurs_nomination_AEO(df_NOMINATION,df_nivols_gaia, annee=2025):
     # Filtre sur les libellés appropriés
     libelles_AEO = ["RTAAD", "RLAAD", "RLACOR", "RLACORA"]
     referents_AEO = df_NOMINATION[
         df_NOMINATION["nomination_libcourt"].isin(libelles_AEO)
     ]
 
+    liste_nivols_date_fixe = df_nivols_gaia['rattachement_benevole_nivol_id_fk'].drop_duplicates().tolist()
+    referents_AEO = referents_AEO[referents_AEO['nomination_nivol_id_fk'].isin(liste_nivols_date_fixe)]
 
     # On compte le nb de RTAEO & RLAEO
     referents_AEO = (referents_AEO.groupby('nomination_structure_id_fk')['nomination_nivol_id_fk'].nunique().reset_index(name='AEO Nb_responsables'))
@@ -74,12 +107,15 @@ def indicateurs_nomination_AEO(df_NOMINATION, annee=2025):
 
 
 
-def indicateurs_nomination_OCR(df_NOMINATION, annee=2025):
+def indicateurs_nomination_OCR(df_NOMINATION, df_nivols_gaia, annee=2025):
     # Filtre sur les libellés appropriés
     libelles_OCR = ["RTOCR", "RLOCR"]
     referents_OCR = df_NOMINATION[
         df_NOMINATION["nomination_libcourt"].isin(libelles_OCR)
     ]
+
+    liste_nivols_date_fixe = df_nivols_gaia['rattachement_benevole_nivol_id_fk'].drop_duplicates().tolist()
+    referents_OCR = referents_OCR[referents_OCR['nomination_nivol_id_fk'].isin(liste_nivols_date_fixe)]
     # On compte le nb de RTAEO & RLAEO
     referents_OCR = (referents_OCR.groupby('nomination_structure_id_fk')['nomination_nivol_id_fk'].nunique().reset_index(name='OCR Nb_referents'))
     referents_OCR = referents_OCR.rename(columns ={'nomination_structure_id_fk': 'n_structure'})
@@ -103,7 +139,6 @@ def indicateurs_nominationAEO_DT(referents_AEO, rattachement_court):
     on="n_structure",
     how="left"
     )
-
 
     # Groupby sur DT_de_rattachement
     referents_AEO_DT = (df_referents_AEO.groupby('DT_de_rattachement')['AEO Nb_responsables'].sum()).reset_index()

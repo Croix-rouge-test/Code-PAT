@@ -39,6 +39,40 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
+def import_table_GAIA_date_fixe(client, project_id="crf-pat", dataset_id="dataset_PAT_2025"):
+    """
+    Charge la table GAIA nécessaires et renvoie le DataFrame importé.
+    """
+    query = f"""
+    SELECT *
+    FROM `{project_id}.{dataset_id}.crf_pat_2025_rattachement_benevole`
+    """
+
+    df_rattachement_benevole = client.query(query).to_dataframe()
+    df_rattachement_benevole["rattachement_benevole_date_fin"] = pd.to_datetime(df_rattachement_benevole["rattachement_benevole_date_fin"])
+
+    df_rattachement_benevole["rattachement_benevole_date_debut"] = pd.to_datetime(
+    df_rattachement_benevole["rattachement_benevole_date_debut"],
+    errors="coerce"
+    )
+
+    df_rattachement_benevole = (
+        df_rattachement_benevole
+        .sort_values("rattachement_benevole_date_debut", ascending=False)
+        .drop_duplicates(subset="rattachement_benevole_nivol_id_fk", keep="first")
+        .copy()
+    )
+
+    df_rattachement_benevole = df_rattachement_benevole.drop_duplicates("rattachement_benevole_nivol_id_fk")
+
+    target = pd.Timestamp("2025-12-31")
+    df_rattachement_benevole = df_rattachement_benevole.loc[
+        (df_rattachement_benevole["rattachement_benevole_date_fin"].isna()
+        | (df_rattachement_benevole["rattachement_benevole_date_fin"] >= target)) & (df_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
+    ]
+    
+    df_rattachement_benevole = df_rattachement_benevole[["rattachement_benevole_nivol_id_fk"]]
+    return df_rattachement_benevole
 
 def clean_gaia(client, df_ref_structure):
   query_gaia = """
@@ -108,26 +142,51 @@ def indicateurs_gaia(df_gaia):
 
 
 def indicateurs_gaia_nvx(df_gaia):
-  # Vérification que la colonne est au format datetime
-  df_gaia['rattachement_benevole_date_fin'] = pd.to_datetime(df_gaia['rattachement_benevole_date_fin'], errors='coerce')
-  df_gaia['rattachement_benevole_date_debut'] = pd.to_datetime(df_gaia['rattachement_benevole_date_debut'], errors='coerce')
+  # Conversion en datetime
+  df_gaia['rattachement_benevole_date_fin'] = pd.to_datetime(
+      df_gaia['rattachement_benevole_date_fin'], errors='coerce'
+  )
+  df_gaia['rattachement_benevole_date_debut'] = pd.to_datetime(
+      df_gaia['rattachement_benevole_date_debut'], errors='coerce'
+  )
 
+  # garder uniquement les bénévoles dont la première apparition est en 2025
+  first_dates = df_gaia.groupby('rattachement_benevole_nivol_id_fk')[
+      'rattachement_benevole_date_debut'
+  ].min()
 
-  # Filtrage : date debut année = 2025
+  nivols_2025_only = first_dates[first_dates.dt.year == 2025].index
+
+  df_gaia = df_gaia[
+      df_gaia['rattachement_benevole_nivol_id_fk'].isin(nivols_2025_only)
+  ]
+
   df_gaia = df_gaia[
       df_gaia['rattachement_benevole_date_debut'].dt.year == 2025
   ]
- 
+
+  target = pd.Timestamp("2025-12-31")
+  df_gaia = df_gaia.loc[
+      (df_gaia["rattachement_benevole_date_fin"].isna()
+      | (df_gaia["rattachement_benevole_date_fin"] >= target)) & (df_gaia["rattachement_benevole_date_debut"]  <= target)
+  ]
+
+  # Renommage
   df_gaia = df_gaia.rename(columns={
-    'rattachement_benevole_structure_id_fk': 'n_structure',
-    'rattachement_benevole_nivol_id_fk': 'Structure Nb_nvx_Benevoles_2025'
+      'rattachement_benevole_structure_id_fk': 'n_structure',
+      'rattachement_benevole_nivol_id_fk': 'Structure Nb_nvx_Benevoles_2025'
   })
- # On compte le nb de volontaires de l'urgence
-  nb_nvx_benevoles = (df_gaia.groupby('n_structure')['Structure Nb_nvx_Benevoles_2025'].nunique()).reset_index()
-  
+
+  # Agrégation
+  nb_nvx_benevoles = (
+      df_gaia.groupby('n_structure')['Structure Nb_nvx_Benevoles_2025']
+      .nunique()
+      .reset_index()
+  )
+
   print(f"Nombre de structures agrégées : {len(nb_nvx_benevoles)}")
 
-  # Somme totale nationale
+  # Total national
   total_nvx_benevoles = nb_nvx_benevoles['Structure Nb_nvx_Benevoles_2025'].sum()
   print(f"Nombre total de nouveaux bénévoles uniques : {total_nvx_benevoles}")
   
