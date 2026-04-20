@@ -472,40 +472,7 @@ def rows_not_in_merge(df_left: pd.DataFrame, df_right: pd.DataFrame, id_col: str
 
 #CODE POUR IMPORTER LES TABLES
 
-def import_table_GAIA(client, project_id="crf-pat", dataset_id="dataset_PAT_2025"):
-    """
-    Charge la table GAIA nécessaires et renvoie le DataFrame importé.
-    """
-    query = f"""
-    SELECT *
-    FROM `{project_id}.{dataset_id}.crf_pat_2025_rattachement_benevole`
-    """
 
-    df_rattachement_benevole = client.query(query).to_dataframe()
-    df_rattachement_benevole["rattachement_benevole_date_fin"] = pd.to_datetime(df_rattachement_benevole["rattachement_benevole_date_fin"])
-
-    df_rattachement_benevole["rattachement_benevole_date_debut"] = pd.to_datetime(
-    df_rattachement_benevole["rattachement_benevole_date_debut"],
-    errors="coerce"
-    )
-
-    df_rattachement_benevole = (
-        df_rattachement_benevole
-        .sort_values("rattachement_benevole_date_debut", ascending=False)
-        .drop_duplicates(subset="rattachement_benevole_nivol_id_fk", keep="first")
-        .copy()
-    )
-
-    df_rattachement_benevole = df_rattachement_benevole.drop_duplicates("rattachement_benevole_nivol_id_fk")
-
-    target = pd.Timestamp("2025-12-31")
-    df_rattachement_benevole = df_rattachement_benevole.loc[
-        (df_rattachement_benevole["rattachement_benevole_date_fin"].isna()
-        | (df_rattachement_benevole["rattachement_benevole_date_fin"] >= target)) & (df_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
-    ]
-    
-    df_rattachement_benevole = df_rattachement_benevole[["rattachement_benevole_nivol_id_fk"]]
-    return df_rattachement_benevole
 
 def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2025"):
     """
@@ -565,7 +532,6 @@ def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2
     # Renommage colonnes (comme ton code)
     df_ref_action_groupe_action.columns = ["action_id_fk", "ACTION_LIBELLE", "GROUPE_ACTION_ID_FK"]
 
-    df_nivols_gaia = import_table_GAIA(client, project_id, dataset_id)
 
     return (
         df_ref_activite_benevole,
@@ -574,8 +540,7 @@ def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2
         df_pegass_activite_seance_inscription,
         ref_structure1,
         df_rattachement_court,
-        df_ref_action_groupe_action,
-        df_nivols_gaia
+        df_ref_action_groupe_action
     )
 
 
@@ -647,7 +612,7 @@ def calcul_PEGASS_indicateurs(
     df_pegass_ben_activite_synthetique = rattache_structure(df_pegass_ben_activite_synthetique, Structure_de_rattachement1)
     df_pegass_activite_merge2          = rattache_structure(df_pegass_activite_merge2,          Structure_de_rattachement1)
 
-    liste_nivols_date_fixe = df_ref_structure['rattachement_benevole_nivol_id_fk'].drop_duplicates().tolist()
+    liste_nivols_date_fixe = df_nivols_gaia['rattachement_benevole_nivol_id_fk'].drop_duplicates().tolist()
     df_pegass_ben_activite_synthetique = df_pegass_ben_activite_synthetique[df_pegass_ben_activite_synthetique['PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK'].isin(liste_nivols_date_fixe)]
 
     # #Calcul nb de bénévoles

@@ -39,6 +39,40 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
+def import_table_GAIA_date_fixe(client, project_id="crf-pat", dataset_id="dataset_PAT_2025"):
+    """
+    Charge la table GAIA nécessaires et renvoie le DataFrame importé.
+    """
+    query = f"""
+    SELECT *
+    FROM `{project_id}.{dataset_id}.crf_pat_2025_rattachement_benevole`
+    """
+
+    df_rattachement_benevole = client.query(query).to_dataframe()
+    df_rattachement_benevole["rattachement_benevole_date_fin"] = pd.to_datetime(df_rattachement_benevole["rattachement_benevole_date_fin"])
+
+    df_rattachement_benevole["rattachement_benevole_date_debut"] = pd.to_datetime(
+    df_rattachement_benevole["rattachement_benevole_date_debut"],
+    errors="coerce"
+    )
+
+    df_rattachement_benevole = (
+        df_rattachement_benevole
+        .sort_values("rattachement_benevole_date_debut", ascending=False)
+        .drop_duplicates(subset="rattachement_benevole_nivol_id_fk", keep="first")
+        .copy()
+    )
+
+    df_rattachement_benevole = df_rattachement_benevole.drop_duplicates("rattachement_benevole_nivol_id_fk")
+
+    target = pd.Timestamp("2025-12-31")
+    df_rattachement_benevole = df_rattachement_benevole.loc[
+        (df_rattachement_benevole["rattachement_benevole_date_fin"].isna()
+        | (df_rattachement_benevole["rattachement_benevole_date_fin"] >= target)) & (df_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
+    ]
+    
+    df_rattachement_benevole = df_rattachement_benevole[["rattachement_benevole_nivol_id_fk"]]
+    return df_rattachement_benevole
 
 def clean_gaia(client, df_ref_structure):
   query_gaia = """
@@ -127,9 +161,14 @@ def indicateurs_gaia_nvx(df_gaia):
       df_gaia['rattachement_benevole_nivol_id_fk'].isin(nivols_2025_only)
   ]
 
-  # 🔹 Ensuite ton filtre initial (optionnel mais plus strict)
   df_gaia = df_gaia[
       df_gaia['rattachement_benevole_date_debut'].dt.year == 2025
+  ]
+
+  target = pd.Timestamp("2025-12-31")
+  df_gaia = df_gaia.loc[
+      (df_gaia["rattachement_benevole_date_fin"].isna()
+      | (df_gaia["rattachement_benevole_date_fin"] >= target)) & (df_gaia["rattachement_benevole_date_debut"]  <= target)
   ]
 
   # Renommage
