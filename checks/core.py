@@ -9,7 +9,11 @@ from gspread_dataframe import get_as_dataframe
 import re
 from utils import save_dataframe_to_sheet
 
-
+##################################################################################################################
+# ------------------------------
+# Comparaison des sommes des colonnes entre les deux dataframes UL et DT
+# ------------------------------
+##################################################################################################################
 
 sys.path.append(os.path.abspath("/Code-PAT/checks"))
 
@@ -300,5 +304,577 @@ def compare_and_print(df1, df2, columns=None, df1_name="DataFrame1", df2_name="D
     
     return results
 
+###############################################################################################################
+# ------------------------------
+# Comparaison des données par DT entre UL agg par DT de rattachement et données DT
+# ------------------------------
+###############################################################################################################
 
+# ---------------------------------------------------------------------------
+# 1. Helpers — clé DT
+# ---------------------------------------------------------------------------
+ 
+def _extract_dt_integer(value) -> str:
+    """
+    Extrait le(s) entier(s) présent(s) dans une valeur de DT_de_rattachement.
+ 
+    Exemples :
+        "DT_042"  -> "42"
+        "042"     -> "42"
+        42        -> "42"
+        "Région 3 - DT 12" -> "12"  (dernier entier trouvé)
+ 
+    Args:
+        value: La valeur brute de la cellule DT_de_rattachement.
+ 
+    Returns:
+        str: L'entier extrait sous forme de chaîne, ou str(value) en fallback.
+    """
+    if pd.isna(value):
+        return None
+    text = str(value).strip()
+    numbers = re.findall(r'\d+', text)
+    if numbers:
+        return str(int(numbers[-1]))   # dernier entier, sans zéros en tête
+    return text
+ 
+ 
+def _normalize_dt_key(value) -> str:
+    """
+    Normalise une clé DT (n_structure ou DT_de_rattachement) pour la jointure.
+ 
+    Supprime les zéros en tête et met en chaîne.
+    """
+    if pd.isna(value):
+        return None
+    numbers = re.findall(r'\d+', str(value))
+    if numbers:
+        return str(int(numbers[-1]))
+    return str(value).strip()
+ 
+ 
+# ---------------------------------------------------------------------------
+# 2. Groupby df_UL
+# ---------------------------------------------------------------------------
+ 
+def group_ul_by_dt(
+    df_UL: pd.DataFrame,
+    dt_col: str = 'DT_de_rattachement',
+    columns: list = None,
+    extract_integer: bool = True,
+) -> pd.DataFrame:
+    """
+    Groupe df_UL par DT et agrège les colonnes numériques par somme.
+ 
+    Args:
+        df_UL (pd.DataFrame): DataFrame source UL.
+        dt_col (str): Nom de la colonne DT dans df_UL.
+        columns (list, optional): Colonnes numériques à conserver avant groupby.
+                                  Si None, toutes les colonnes numériques sont utilisées.
+        extract_integer (bool): Si True, extrait uniquement l'entier de dt_col
+                                 pour faciliter la jointure avec n_structure.
+ 
+    Returns:
+        pd.DataFrame: DataFrame groupé, indexé sur la clé DT normalisée.
+    """
+    df = df_UL.copy()
+ 
+    # Clé de jointure normalisée
+    key_col = '__dt_key__'
+    if extract_integer:
+        df[key_col] = df[dt_col].apply(_extract_dt_integer)
+    else:
+        df[key_col] = df[dt_col].apply(_normalize_dt_key)
+ 
+    # Colonnes à agréger
+    if columns is None:
+        num_cols = df.select_dtypes(include='number').columns.tolist()
+    else:
+        num_cols = [c for c in columns if c in df.columns]
+ 
+    df_grouped = (
+        df.groupby(key_col, dropna=True)[num_cols]
+        .sum()
+        .reset_index()
+        .rename(columns={key_col: '__dt_key__'})
+    )
+    df_grouped = df_grouped.set_index('__dt_key__')
+    return df_grouped
+ 
+ 
+# ---------------------------------------------------------------------------
+# 3. Comparaison ligne par ligne
+# ---------------------------------------------------------------------------
+ 
+def compare_dt_row_by_row(
+    df_DT: pd.DataFrame,
+    df_UL: pd.DataFrame,
+    columns: list = None,
+    dt_key_dt: str = 'n_structure',
+    dt_col_ul: str = 'DT_de_rattachement',
+    extract_integer: bool = True,
+) -> pd.DataFrame:
+    """
+    Compare df_DT et df_UL (groupé par DT) ligne par ligne.
+ 
+    La jointure se fait sur la clé DT normalisée :
+      - df_DT  : colonne ``dt_key_dt`` (ex: n_structure)
+      - df_UL  : colonne ``dt_col_ul``  (ex: DT_de_rattachement)
+ 
+    Args:
+        df_DT (pd.DataFrame): DataFrame DT (référence).
+        df_UL (pd.DataFrame): DataFrame UL brut (sera groupé en interne).
+        columns (list, optional): Colonnes numériques à comparer.
+                                   Si None, toutes les colonnes numériques communes.
+        dt_key_dt (str): Colonne-clé dans df_DT.
+        dt_col_ul (str): Colonne DT dans df_UL.
+        extract_integer (bool): Extraction de l'entier dans DT_de_rattachement.
+ 
+    Returns:
+        pd.DataFrame: Résultat de comparaison avec les colonnes :
+            DT_key | Colonne | Valeur_DT | Valeur_UL | Différence | Pourcentage | Statut
+    
+    Raises:
+        ValueError: Si les dataframes sont vides ou sans colonnes communes.
+    """
+    if df_DT.empty or df_UL.empty:
+        raise ValueError("Les dataframes ne peuvent pas être vides.")
+ 
+    # --- Préparer df_DT avec clé normalisée ---
+    df_dt = df_DT.copy()
+    df_dt['__dt_key__'] = df_dt[dt_key_dt].apply(_normalize_dt_key)
+    df_dt = df_dt.set_index('__dt_key__')
+ 
+    # --- Grouper df_UL ---
+    df_ul_grouped = group_ul_by_dt(
+        df_UL,
+        dt_col=dt_col_ul,
+        columns=columns,
+        extract_integer=extract_integer,
+    )
+ 
+    # --- Colonnes à comparer ---
+    if columns is None:
+        num_dt = df_dt.select_dtypes(include='number').columns
+        num_ul = df_ul_grouped.select_dtypes(include='number').columns
+        columns = list(set(num_dt) & set(num_ul))
+ 
+    if not columns:
+        raise ValueError("Aucune colonne numérique commune trouvée.")
+ 
+    # --- Clés communes ---
+    common_keys = sorted(set(df_dt.index) & set(df_ul_grouped.index))
+    if not common_keys:
+        raise ValueError("Aucune DT commune entre df_DT et df_UL groupé.")
+ 
+    # --- Construction du résultat ---
+    rows = []
+    for key in common_keys:
+        for col in columns:
+            v_dt = df_dt.loc[key, col] if col in df_dt.columns else float('nan')
+            v_ul = df_ul_grouped.loc[key, col] if col in df_ul_grouped.columns else float('nan')
+ 
+            # NaN -> 0
+            v_dt = 0.0 if pd.isna(v_dt) else float(v_dt)
+            v_ul = 0.0 if pd.isna(v_ul) else float(v_ul)
+ 
+            diff = _calculate_difference(v_dt, v_ul)
+            rows.append({
+                'DT_key':      key,
+                'Colonne':     col,
+                'Valeur_DT':   v_dt,
+                'Valeur_UL':   v_ul,
+                'Différence':  diff['difference'],
+                'Pourcentage': diff['percentage'],
+                'Statut':      _get_status_marker(diff['is_equal'], diff['difference']),
+            })
+ 
+    return pd.DataFrame(rows)
+ 
+ 
+# ---------------------------------------------------------------------------
+# 4. Affichage console
+# ---------------------------------------------------------------------------
+ 
+def print_dt_comparison_report(
+    df_result: pd.DataFrame,
+    df_dt_name: str = "df_DT",
+    df_ul_name: str = "df_UL (groupé)",
+) -> None:
+    """
+    Affiche un rapport console lisible à partir du DataFrame de résultats.
+ 
+    Args:
+        df_result (pd.DataFrame): Sortie de compare_dt_row_by_row().
+        df_dt_name (str): Libellé affiché pour df_DT.
+        df_ul_name (str): Libellé affiché pour df_UL groupé.
+    """
+    if df_result.empty:
+        print("Aucun résultat à afficher.")
+        return
+ 
+    print("\n" + "=" * 80)
+    print(f"RAPPORT DE COMPARAISON LIGNE PAR LIGNE : {df_dt_name} vs {df_ul_name}")
+    print("=" * 80)
+ 
+    for dt_key, group in df_result.groupby('DT_key', sort=False):
+        print(f"\n🏷  DT : {dt_key}")
+        for _, row in group.iterrows():
+            print(f"   📊 {row['Colonne']}")
+            print(f"      {df_dt_name} : {_format_value(row['Valeur_DT'])}")
+            print(f"      {df_ul_name}  : {_format_value(row['Valeur_UL'])}")
+            pct = row['Pourcentage']
+            pct_str = "∞" if pct == float('inf') else f"{pct:,.2f}%"
+            print(f"      Δ : {_format_value(row['Différence'])} ({pct_str})")
+            print(f"      Statut : {row['Statut']}")
+ 
+    print("\n" + "=" * 80 + "\n")
+ 
+ 
+# ---------------------------------------------------------------------------
+# 5. Export Google Sheets + wrapper principal
+# ---------------------------------------------------------------------------
+ 
+def compare_dt_and_export(
+    df_DT: pd.DataFrame,
+    df_UL: pd.DataFrame,
+    columns: list = None,
+    dt_key_dt: str = 'n_structure',
+    dt_col_ul: str = 'DT_de_rattachement',
+    extract_integer: bool = True,
+    df_dt_name: str = "df_DT",
+    df_ul_name: str = "df_UL",
+    google_sheets_url: str = None,
+    sheet_name: str = None,
+    show_all: bool = True,
+) -> pd.DataFrame:
+    """
+    Wrapper principal : compare df_DT et df_UL, affiche le rapport,
+    et exporte optionnellement vers Google Sheets.
+ 
+    Args:
+        df_DT (pd.DataFrame): DataFrame DT.
+        df_UL (pd.DataFrame): DataFrame UL brut.
+        columns (list, optional): Colonnes à comparer (None = toutes communes).
+        dt_key_dt (str): Colonne-clé dans df_DT.
+        dt_col_ul (str): Colonne DT dans df_UL.
+        extract_integer (bool): Extraction entier dans DT_de_rattachement.
+        df_dt_name (str): Nom affiché pour df_DT.
+        df_ul_name (str): Nom affiché pour df_UL.
+        google_sheets_url (str, optional): URL ou ID du Google Sheet cible.
+        sheet_name (str, optional): Onglet cible dans le Google Sheet.
+        show_all (bool): Si False, exporte uniquement les lignes avec écart (Statut ≠ ✓ ÉGAL).
+ 
+    Returns:
+        pd.DataFrame: DataFrame complet des résultats de comparaison.
+    """
+    df_result = compare_dt_row_by_row(
+        df_DT, df_UL, columns, dt_key_dt, dt_col_ul, extract_integer
+    )
+    print_dt_comparison_report(df_result, df_dt_name, df_ul_name)
+ 
+    if google_sheets_url:
+        try:
+            df_export = df_result if show_all else df_result[df_result['Statut'] != '✓ ÉGAL']
+ 
+            gspread_client = client_gspread()
+            spreadsheet_id = _extract_spreadsheet_id(google_sheets_url)
+            save_dataframe_to_sheet(spreadsheet_id, gspread_client, df_export, sheet_name)
+            print(f"✅ Résultats exportés → onglet '{sheet_name or 'Première feuille'}'")
+        except Exception as e:
+            print(f"⚠️  Erreur export Google Sheets : {e}")
+ 
+    return df_result
+
+###############################################################################################################
+# ------------------------------
+# Comparaison des sommes des colonnes entre deux dataframes avec rapport détaillé et export vers Google Sheets
+# ------------------------------
+###############################################################################################################
+
+ 
+ 
+# ---------------------------------------------------------------------------
+# Constantes — noms d'onglets par défaut dans le Google Sheet de référence
+# ---------------------------------------------------------------------------
+ 
+SHEET_UL    = 'UL'
+SHEET_DT    = 'DT'
+SHEET_TOTAL = 'Total'
+ 
+ 
+# ---------------------------------------------------------------------------
+# 1. Chargement des feuilles de référence
+# ---------------------------------------------------------------------------
+ 
+def load_reference_sheets(
+    gspread_client,
+    reference_url: str,
+    sheet_ul: str = SHEET_UL,
+    sheet_dt: str = SHEET_DT,
+    sheet_total: str = SHEET_TOTAL,
+) -> dict:
+    """
+    Charge les trois feuilles de référence depuis un Google Sheet.
+ 
+    Les cellules non renseignées (NaN) sont conservées telles quelles :
+    elles signifient « pas de valeur de référence » et seront ignorées
+    lors de la comparaison.
+ 
+    Args:
+        gspread_client: Client gspread authentifié (issu de client_gspread()).
+        reference_url (str): URL ou ID du Google Sheet de référence.
+        sheet_ul (str): Nom de l'onglet UL.
+        sheet_dt (str): Nom de l'onglet DT.
+        sheet_total (str): Nom de l'onglet Total.
+ 
+    Returns:
+        dict: {'UL': df_ul_ref, 'DT': df_dt_ref, 'Total': df_total_ref}
+    """
+    from gspread_dataframe import get_as_dataframe
+ 
+    spreadsheet = gspread_client.open_by_url(reference_url)
+ 
+    def _load(name):
+        ws = spreadsheet.worksheet(name)
+        return get_as_dataframe(ws, evaluate_formulas=True)
+ 
+    return {
+        'UL':    _load(sheet_ul),
+        'DT':    _load(sheet_dt),
+        'Total': _load(sheet_total),
+    }
+ 
+ 
+# ---------------------------------------------------------------------------
+# 2. Comparaison source vs référence
+# ---------------------------------------------------------------------------
+ 
+def compare_with_reference(
+    df_source: pd.DataFrame,
+    df_ref: pd.DataFrame,
+    columns: list = None,
+    id_col: str = None,
+) -> pd.DataFrame:
+    """
+    Compare df_source (données terrain réelles) avec df_ref (feuille de référence).
+ 
+    Règles :
+      - Seules les cellules **renseignées** dans df_ref (non-NaN) sont comparées.
+      - Les NaN dans df_source sont traités comme 0.
+      - La jointure se fait sur id_col (si fourni) ou sur la position des lignes.
+ 
+    Args:
+        df_source (pd.DataFrame): Données source (df_UL ou df_DT).
+        df_ref (pd.DataFrame): Feuille de référence chargée depuis Google Sheets.
+        columns (list, optional): Colonnes numériques à comparer.
+                                   Si None, toutes les colonnes numériques communes
+                                   entre df_source et df_ref.
+        id_col (str, optional): Colonne identifiant pour la jointure (ex: 'n_structure').
+                                 Si None, jointure par position.
+ 
+    Returns:
+        pd.DataFrame: Colonnes :
+            [id_col ou 'Index'] | Colonne | Valeur_Source | Valeur_Ref |
+            Différence | Pourcentage | Statut
+ 
+    Raises:
+        ValueError: Si aucune colonne commune n'est trouvée.
+    """
+    src = df_source.copy()
+    ref = df_ref.copy()
+ 
+    # --- Déterminer les colonnes à comparer ---
+    if columns is None:
+        num_src = set(src.select_dtypes(include='number').columns)
+        num_ref = set(ref.select_dtypes(include='number').columns)
+        columns = list(num_src & num_ref)
+ 
+    if not columns:
+        raise ValueError("Aucune colonne numérique commune entre source et référence.")
+ 
+    # --- Alignement par id_col ou par position ---
+    if id_col and id_col in src.columns and id_col in ref.columns:
+        src = src.set_index(id_col)
+        ref = ref.set_index(id_col)
+        common_idx = src.index.intersection(ref.index)
+        src = src.loc[common_idx]
+        ref = ref.loc[common_idx]
+        index_label = id_col
+    else:
+        # Alignement par position — tronquer à la plus courte
+        min_len = min(len(src), len(ref))
+        src = src.iloc[:min_len].reset_index(drop=True)
+        ref = ref.iloc[:min_len].reset_index(drop=True)
+        index_label = 'Index'
+ 
+    # --- Construire le résultat ---
+    rows = []
+    for idx in src.index:
+        for col in columns:
+            val_ref_raw = ref.loc[idx, col] if col in ref.columns else float('nan')
+ 
+            # Ignorer les cellules non renseignées dans la référence
+            if pd.isna(val_ref_raw):
+                continue
+ 
+            val_src_raw = src.loc[idx, col] if col in src.columns else float('nan')
+ 
+            # NaN dans la source → 0
+            val_src = 0.0 if pd.isna(val_src_raw) else float(val_src_raw)
+            val_ref = float(val_ref_raw)
+ 
+            diff = _calculate_difference(val_ref, val_src)
+            rows.append({
+                index_label:     idx,
+                'Colonne':       col,
+                'Valeur_Source': val_src,
+                'Valeur_Ref':    val_ref,
+                'Différence':    diff['difference'],
+                'Pourcentage':   diff['percentage'],
+                'Statut':        _get_status_marker(diff['is_equal'], diff['difference']),
+            })
+ 
+    return pd.DataFrame(rows)
+ 
+ 
+# ---------------------------------------------------------------------------
+# 3. Affichage console
+# ---------------------------------------------------------------------------
+ 
+def print_reference_comparison_report(
+    df_result: pd.DataFrame,
+    source_name: str = "Source",
+    ref_name: str = "Référence",
+) -> None:
+    """
+    Affiche un rapport console lisible pour la comparaison source vs référence.
+ 
+    Args:
+        df_result (pd.DataFrame): Sortie de compare_with_reference().
+        source_name (str): Libellé des données source.
+        ref_name (str): Libellé des données de référence.
+    """
+    if df_result.empty:
+        print("Aucun résultat à afficher (aucune cellule de référence renseignée ?).")
+        return
+ 
+    id_col = df_result.columns[0]   # première colonne = identifiant
+ 
+    print("\n" + "=" * 80)
+    print(f"RAPPORT COMPARAISON RÉFÉRENCE : {source_name} vs {ref_name}")
+    print("=" * 80)
+ 
+    for id_val, group in df_result.groupby(id_col, sort=False):
+        print(f"\n🏷  {id_col} : {id_val}")
+        for _, row in group.iterrows():
+            pct = row['Pourcentage']
+            pct_str = "∞" if pct == float('inf') else f"{pct:,.2f}%"
+            print(f"   📊 {row['Colonne']}")
+            print(f"      {ref_name}   : {_format_value(row['Valeur_Ref'])}")
+            print(f"      {source_name} : {_format_value(row['Valeur_Source'])}")
+            print(f"      Δ : {_format_value(row['Différence'])} ({pct_str})")
+            print(f"      Statut : {row['Statut']}")
+ 
+    print("\n" + "=" * 80 + "\n")
+ 
+ 
+# ---------------------------------------------------------------------------
+# 4. Wrapper principal
+# ---------------------------------------------------------------------------
+ 
+def compare_reference_and_export(
+    df_UL: pd.DataFrame,
+    df_DT: pd.DataFrame,
+    reference_url: str,
+    output_url: str,
+    columns_ul: list = None,
+    columns_dt: list = None,
+    columns_total: list = None,
+    id_col_ul: str = None,
+    id_col_dt: str = None,
+    sheet_ul_ref: str = SHEET_UL,
+    sheet_dt_ref: str = SHEET_DT,
+    sheet_total_ref: str = SHEET_TOTAL,
+    output_sheet_ul: str = 'Comparaison_UL',
+    output_sheet_dt: str = 'Comparaison_DT',
+    output_sheet_total: str = 'Comparaison_Total',
+    show_all: bool = True,
+) -> dict:
+    """
+    Wrapper principal : charge les feuilles de référence, effectue les trois
+    comparaisons (UL, DT, Total) et exporte les résultats dans un Google Sheet.
+ 
+    La feuille « Total » est comparée contre la somme globale de df_UL
+    (une seule ligne de totaux).
+ 
+    Args:
+        df_UL (pd.DataFrame): Données source UL.
+        df_DT (pd.DataFrame): Données source DT.
+        reference_url (str): URL/ID du Google Sheet de référence (3 onglets).
+        output_url (str): URL/ID du Google Sheet de sortie.
+        columns_ul (list, optional): Colonnes à comparer pour UL.
+        columns_dt (list, optional): Colonnes à comparer pour DT.
+        columns_total (list, optional): Colonnes à comparer pour Total.
+        id_col_ul (str, optional): Colonne-clé pour la jointure UL.
+        id_col_dt (str, optional): Colonne-clé pour la jointure DT.
+        sheet_ul_ref (str): Nom onglet UL dans le fichier de référence.
+        sheet_dt_ref (str): Nom onglet DT dans le fichier de référence.
+        sheet_total_ref (str): Nom onglet Total dans le fichier de référence.
+        output_sheet_ul (str): Nom onglet de sortie pour UL.
+        output_sheet_dt (str): Nom onglet de sortie pour DT.
+        output_sheet_total (str): Nom onglet de sortie pour Total.
+        show_all (bool): Si False, exporte uniquement les lignes avec écart.
+ 
+    Returns:
+        dict: {'UL': df_result_ul, 'DT': df_result_dt, 'Total': df_result_total}
+    """
+    gspread_client  = client_gspread()
+    output_sheet_id = _extract_spreadsheet_id(output_url)
+ 
+    # --- Charger les feuilles de référence ---
+    print("📥 Chargement des feuilles de référence…")
+    refs = load_reference_sheets(
+        gspread_client, reference_url,
+        sheet_ul_ref, sheet_dt_ref, sheet_total_ref,
+    )
+ 
+    results = {}
+ 
+    # --- Comparaison UL ---
+    print("\n🔍 Comparaison UL…")
+    df_res_ul = compare_with_reference(df_UL, refs['UL'], columns_ul, id_col_ul)
+    print_reference_comparison_report(df_res_ul, "df_UL", "Référence UL")
+    results['UL'] = df_res_ul
+ 
+    # --- Comparaison DT ---
+    print("\n🔍 Comparaison DT…")
+    df_res_dt = compare_with_reference(df_DT, refs['DT'], columns_dt, id_col_dt)
+    print_reference_comparison_report(df_res_dt, "df_DT", "Référence DT")
+    results['DT'] = df_res_dt
+ 
+    # --- Comparaison Total (df_UL agrégé en une ligne) ---
+    print("\n🔍 Comparaison Total…")
+    # Construire une ligne de totaux pour df_UL
+    num_cols_ul = df_UL.select_dtypes(include='number').columns.tolist()
+    df_ul_total = df_UL[num_cols_ul].sum().to_frame().T.reset_index(drop=True)
+    df_res_total = compare_with_reference(df_ul_total, refs['Total'], columns_total, None)
+    print_reference_comparison_report(df_res_total, "df_UL (total)", "Référence Total")
+    results['Total'] = df_res_total
+ 
+    # --- Export ---
+    def _export(df_res, sheet_out, label):
+        try:
+            df_out = df_res if show_all else df_res[df_res['Statut'] != '✓ ÉGAL']
+            save_dataframe_to_sheet(output_sheet_id, gspread_client, df_out, sheet_out)
+            print(f"✅ {label} exporté → onglet '{sheet_out}'")
+        except Exception as e:
+            print(f"⚠️  Erreur export {label} : {e}")
+ 
+    print("\n📤 Export vers Google Sheets…")
+    _export(df_res_ul,    output_sheet_ul,    "UL")
+    _export(df_res_dt,    output_sheet_dt,    "DT")
+    _export(df_res_total, output_sheet_total, "Total")
+ 
+    return results
 

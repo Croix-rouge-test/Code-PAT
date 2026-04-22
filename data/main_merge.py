@@ -2,10 +2,25 @@ import os
 import sys
 import pandas as pd
 from typing import List, Dict
+from functools import reduce
 
 sys.path.append(os.path.abspath("./checks")) 
 
 from helpers import *
+
+from utils import *
+
+
+def merge_left_on_df1(df1, l, on):
+
+    def safe_merge(left, right):
+        # Supprime les colonnes déjà présentes (sauf la clé)
+        cols_to_drop = [col for col in right.columns if col in left.columns and col != on]
+        right_clean = right.drop(columns=cols_to_drop)
+
+        return left.merge(right_clean, how='left', on=on)
+
+    return reduce(safe_merge, l, df1)
 
 def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusionner_DT, df_ref_structure,df_ref_structure_DT):
   colonnes_indicateurs = ['n_structure',
