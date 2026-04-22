@@ -1,42 +1,11 @@
-import traceback
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
-import io
-from PyPDF2 import PdfReader, PdfWriter
-import json
-import gspread
-from gspread_dataframe import get_as_dataframe
-import pandas as pd
-from PyPDF2 import PdfReader, PdfWriter
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
-from reportlab.pdfgen import canvas as rl_canvas
-from reportlab.lib.utils import ImageReader
-import math
 import os
-import matplotlib.pyplot as plt
-from IPython.display import Image, display
-import fitz  # PyMuPDF
-from PIL import Image as PILImage
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
-import matplotlib.ticker as mtick
-from matplotlib.patches import Patch
-import io
-import re
-import shutil
-import zipfile
-from google.auth import default
-import unicodedata
-import re
-import torch
-from sentence_transformers import SentenceTransformer, util
+
 import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
+
+from gspread_dataframe import get_as_dataframe
 
 # Clean
 def dept_clean(x):
@@ -531,18 +500,12 @@ def verifications_financiers(df_financier, df_financier_DT, df_ref_structure, fi
 
 
 
-def indicateur_financier_DPS(financier_DPS, df_ref_structure):
+def indicateur_financier_DPS_2024(financier_DPS, df_ref_structure):
     # Filtrer sur la bonne année
   df_Secours_ProduitsDPS = financier_DPS[financier_DPS['annee'] == 2024]
 
-
-
-
   # Filtrer sur l'activité DPS
   df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[df_Secours_ProduitsDPS['imputation_comptable'] == "ACTA204"]
-
-
-
 
   # Extraire le département
   def extraire_et_nettoyer_code_departement(texte):
@@ -551,33 +514,19 @@ def indicateur_financier_DPS(financier_DPS, df_ref_structure):
       return code
   df_Secours_ProduitsDPS['Code Département'] = df_Secours_ProduitsDPS['code_comptable'].apply(extraire_et_nettoyer_code_departement)
 
-
-
-
   # Suppression de la ligne nationnale
   df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[df_Secours_ProduitsDPS["libelle"] != "TOTAL DELEGATION"]
-
-
-
 
   # Suppression des doublons (corse)
   df_Secours_ProduitsDPS = df_Secours_ProduitsDPS.drop_duplicates(subset=['Code Département'], keep='first')
 
-
-
-
   # Conserver les colonnes utiles
   df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[["code_comptable","libelle","Code Département","annee","imputation_comptable","PRODUITS DES POSTES SECOURS"]]
-
-
 
   # Mapping sur le département
   mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
   df_Secours_ProduitsDPS['n_structure'] = df_Secours_ProduitsDPS['Code Département'].map(mapping_dict)
   verifier_mapping(df_Secours_ProduitsDPS, "n_structure", "libelle" ,df_ref_structure)
-
-
-
 
   # Transformation des str en int
   financier_DPS['PRODUITS DES POSTES SECOURS'] = (
@@ -593,20 +542,11 @@ def indicateur_financier_DPS(financier_DPS, df_ref_structure):
           .astype(int)
   )
 
-
-
-
   # Conserver les colonnes utiles
   df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[["n_structure","PRODUITS DES POSTES SECOURS"]]
 
-
-
-
   # Modification du nom de colonne
   df_Secours_ProduitsDPS = df_Secours_ProduitsDPS.rename(columns={"PRODUITS DES POSTES SECOURS":"Secours Produits_DPS_2025"})
-
-
-
 
   return df_Secours_ProduitsDPS
 
@@ -619,13 +559,7 @@ def indicateur_financier_DPS(financier_DPS, df_ref_structure):
 
 
 
-
-
-
-
-
-
-def indicateur_financier_FGP(financier_FGP, df_ref_structure):
+def indicateur_financier_FGP_2024(financier_FGP, df_ref_structure):
   mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
 
   # Suppression de la ligne nationnale
@@ -661,12 +595,6 @@ def indicateur_financier_FGP(financier_FGP, df_ref_structure):
 
   #verifier_mapping(financier_FGP, "n_structure", "Nom Structure" ,df_ref_structure)
   return df_financier_FGP_DT
-
-
-
-
-
-
 
 
 
@@ -718,9 +646,19 @@ def financier_DPS_DT(df_financier_DPS_indicateur, rattachement_court):
 
 
 
+def indicateur_financier_DPS_2024(financier_DPS, df_ref_structure):
 
+    structures = df_ref_structure['n_structure'].drop_duplicates().tolist()
+    df_financier_DPS = financier_DPS.copy().rename(columns={"Produits d'exploitation 2025" : "Secours Produits_DPS_2025"})
+    df_financier_DPS = df_financier_DPS[['n_structure','Secours Produits_DPS_2025']].apply(pd.to_numeric, errors='coerce')
+    df_financier_DPS = df_financier_DPS[df_financier_DPS['n_structure'] in structures]
 
+    DTs = df_ref_structure[df_ref_structure['type_structure'] == "DELEGATION TERRITORIALE - DT"]['n_structure'].drop_duplicates().tolist()
+    df_financier_DPS_DT = financier_DPS.copy().rename(columns={"Produits d'exploitation consolidés (DT)" : "Secours Produits_DPS_2025"})
+    df_financier_DPS_DT = df_financier_DPS_DT[['n_structure','Secours Produits_DPS_2025']].apply(pd.to_numeric, errors='coerce')
+    df_financier_DPS_DT = df_financier_DPS_DT[df_financier_DPS_DT['n_structure'] in DTs]
 
+    return df_financier_DPS, df_financier_DPS_DT
 
 
 
