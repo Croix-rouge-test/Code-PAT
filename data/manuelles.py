@@ -240,33 +240,6 @@ def clean_raw_Textile(df_raw_Textile, df_ref_structure):
     
     return df
 
-def clean_ProdResTextile(df_raw_ProdResTextile):
-    df = df_raw_ProdResTextile.iloc[:-1]
-
-    # Renommer les colonnes
-    df.columns.values[0] = 'code_comptable'
-    df.columns.values[1] = 'libelle'
-    df.columns.values[22] = 'Textile Produit_2024'
-    df.columns.values[24] = 'Textile Resultat_2024'
-
-    # Conserver les lignes liées aux DT
-    df = df[df['code_comptable'].str.contains("DD", na=False)]
-
-# Extraire le département
-    def extraire_et_nettoyer_code_departement(texte):
-        code = texte[-3:] # Extraire les 3 derniers caractères
-        code = code.lstrip('0') # Supprimer les zéros initiaux
-        return code
-
-    df['Code Département'] = df['code_comptable'].apply(extraire_et_nettoyer_code_departement)
-
-    return df
-
-
-
-
-
-
 
 def clean_indicateurs_DUO(df_conventions):
     df = df_conventions[
@@ -303,7 +276,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_CAICHUCMCC,
     df_conventions,
     df_raw_Textile,
-    df_raw_ProdResTextile,
+    #df_raw_ProdResTextile,
     df_ref_structure
 ):
     df_OCR_clean = clean_OCR(df_OCR)
@@ -313,7 +286,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_CAICHUCMCC_clean = clean_CAICHUCMCC(df_CAICHUCMCC)
     df_conventions_clean = clean_conventions(df_conventions)
     df_raw_Textile = clean_raw_Textile(df_raw_Textile, df_ref_structure)
-    df_raw_ProdResTextile = clean_ProdResTextile(df_raw_ProdResTextile)
+    #df_raw_ProdResTextile = clean_ProdResTextile(df_raw_ProdResTextile)
     df_duo_clean = clean_indicateurs_DUO(df_conventions)
 
     return (
@@ -324,7 +297,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
         df_CAICHUCMCC_clean,
         df_conventions_clean,
         df_raw_Textile,
-        df_raw_ProdResTextile,
+        #df_raw_ProdResTextile,
         df_duo_clean
     )
 
@@ -545,23 +518,7 @@ def indicateurs_raw_Textile(df_raw_Textile):
 
    return df
 
-def indicateurs_ProdResTextile(df_raw_ProdResTextile, df_ref_structure):
-    # Mapping sur le département
-    mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
-    df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['Code Département'].map(mapping_dict)
-    verifier_mapping(df_raw_ProdResTextile, "n_structure", "libelle" ,df_ref_structure)
 
-# Conservation des colonnes utiles
-    df = df_raw_ProdResTextile[["n_structure","Textile Produit_2024", "Textile Resultat_2024"]]
-
-# Suppression des espaces et "-"
-    df['Textile Produit_2024'] = df['Textile Produit_2024'].str.replace(r"\s+", "", regex=True)
-    df['Textile Produit_2024'] = df['Textile Produit_2024'].str.replace("-", "")
-    df['Textile Resultat_2024'] = df['Textile Resultat_2024'].str.replace(r"\s+", "", regex=True)
-    df['Textile Resultat_2024'] = df['Textile Resultat_2024'].str.replace("-", "")
-    df = df.rename(columns = {'Textile Produit_2024' : 'Textile Produit_2025', 'Textile Resultat_2024' : 'Textile Resultat_2025'})
-
-    return df
 
 
 
@@ -597,7 +554,6 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_CAICHUCMCC2,
     df_conventions,
     df_raw_Textile,
-    df_raw_ProdResTextile,
     df_duo_clean,
     df_ref_structure
 ):
@@ -608,7 +564,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_CAICHUCMCC_VF = indicateurs_CAICHUCMCC(df_CAICHUCMCC2, df_ref_structure)
     df_conventions2 = indicateurs_conventions(df_conventions, df_ref_structure)
     df_raw_Textile = indicateurs_raw_Textile(df_raw_Textile)
-    df_raw_ProdResTextile = indicateurs_ProdResTextile(df_raw_ProdResTextile , df_ref_structure)
+    # df_raw_ProdResTextile = indicateurs_ProdResTextile(df_raw_ProdResTextile , df_ref_structure)
 
     df_DUO = indicateurs_DUO(df_duo_clean, df_ref_structure)
 
@@ -620,7 +576,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
         df_CAICHUCMCC_VF,
         df_conventions2,
         df_raw_Textile,
-        df_raw_ProdResTextile,
+        # df_raw_ProdResTextile,
         df_DUO
     )
 
@@ -684,34 +640,7 @@ def Textile_DT(df_raw_Textile, rattachement_court):
     return Textile_DT
 
 
-def Textile_financier_DT(df_raw_ProdResTextile, rattachement_court):
-    df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['n_structure'].astype('float64')
-    # Merge données avec rattachement_court
-    textile_financier = pd.merge(df_raw_ProdResTextile, rattachement_court, left_on="n_structure", right_on="n_structure", how="left")
-
-    # Groupby sur DT_de_rattachement
-    Textile_financier__DT = (
-    textile_financier
-        .groupby('DT_de_rattachement')[['Textile Produit_2025', 'Textile Resultat_2025']]
-        .sum()
-        .reset_index()
-    )
-
-    return Textile_financier__DT
-
-
-
-def TEXTILE_DT(df_raw_Textile, df_raw_ProdResTextile, rattachement_court):
-    df_Textile_DT = Textile_DT(df_raw_Textile, rattachement_court)
-    df_Textile_financier__DT = Textile_financier_DT(df_raw_ProdResTextile, rattachement_court)
-
-
-    return (
-        df_Textile_DT,
-        df_Textile_financier__DT,
-    )
-
-def verif_textile(df_raw_Textile_c, df_raw_ProdResTextile_c, df_raw_Textile, df_Textile_DT,df_raw_ProdResTextile, df_Textile_financier_DT, df_ref_structure,rattachement_court):
+def verif_textile(df_raw_Textile_c, df_raw_Textile, df_Textile_DT,df_raw_ProdResTextile, df_ref_structure,rattachement_court):
   df_t = df_raw_Textile_c[df_raw_Textile_c["statut"] == "A jour"]
   df_t = df_t[df_t["Type de point apport"].isin(['Boutique - La Boutique','Vestiaire','Boutique  - Mobile', 'Boutique - Bébé','Boutique - Chez Henry','Boutique - Recylcerie / Meuble','La Boutique'])]
 
@@ -728,9 +657,71 @@ def verif_textile(df_raw_Textile_c, df_raw_ProdResTextile_c, df_raw_Textile, df_
     print('❌ df_Textile_DT n\'est pas bien calculé (suomme de l indicateur != au nombre de lignes des données), différence :', df_Textile_DT.reset_index()['Textile Nb_dispositifs'].sum() - df_raw_Textile_c.shape[0])
 
   verifier_colonne_structure(df_raw_Textile, "n_structure", df_ref_structure)
-  verifier_colonne_structure(df_raw_ProdResTextile, "n_structure", df_ref_structure)
+  # verifier_colonne_structure(df_raw_ProdResTextile, "n_structure", df_ref_structure)
   verifier_colonne_structure(df_Textile_DT.reset_index(), "DT_de_rattachement", rattachement_court)
-  verifier_colonne_structure(df_Textile_financier_DT, "DT_de_rattachement", rattachement_court)
+  # verifier_colonne_structure(df_Textile_financier_DT, "DT_de_rattachement", rattachement_court)
 
 
 
+
+############################################
+######## OBSOLETE - VERSION 2024 ###########
+############################################
+
+
+def clean_ProdResTextile(df_raw_ProdResTextile):
+    df = df_raw_ProdResTextile.iloc[:-1]
+
+    # Renommer les colonnes
+    df.columns.values[0] = 'code_comptable'
+    df.columns.values[1] = 'libelle'
+    df.columns.values[22] = 'Textile Produit_2024'
+    df.columns.values[24] = 'Textile Resultat_2024'
+
+    # Conserver les lignes liées aux DT
+    df = df[df['code_comptable'].str.contains("DD", na=False)]
+
+# Extraire le département
+    def extraire_et_nettoyer_code_departement(texte):
+        code = texte[-3:] # Extraire les 3 derniers caractères
+        code = code.lstrip('0') # Supprimer les zéros initiaux
+        return code
+
+    df['Code Département'] = df['code_comptable'].apply(extraire_et_nettoyer_code_departement)
+
+    return df
+
+
+def indicateurs_ProdResTextile(df_raw_ProdResTextile, df_ref_structure):
+    # Mapping sur le département
+    mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
+    df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['Code Département'].map(mapping_dict)
+    verifier_mapping(df_raw_ProdResTextile, "n_structure", "libelle" ,df_ref_structure)
+
+    # Conservation des colonnes utiles
+    df = df_raw_ProdResTextile[["n_structure","Textile Produit_2024", "Textile Resultat_2024"]]
+
+    # Suppression des espaces et "-"
+    df['Textile Produit_2024'] = df['Textile Produit_2024'].str.replace(r"\s+", "", regex=True)
+    df['Textile Produit_2024'] = df['Textile Produit_2024'].str.replace("-", "")
+    df['Textile Resultat_2024'] = df['Textile Resultat_2024'].str.replace(r"\s+", "", regex=True)
+    df['Textile Resultat_2024'] = df['Textile Resultat_2024'].str.replace("-", "")
+    df = df.rename(columns = {'Textile Produit_2024' : 'Textile Produit_2025', 'Textile Resultat_2024' : 'Textile Resultat_2025'})
+
+    return df
+
+
+def Textile_financier_DT(df_raw_ProdResTextile, rattachement_court):
+    df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['n_structure'].astype('float64')
+    # Merge données avec rattachement_court
+    textile_financier = pd.merge(df_raw_ProdResTextile, rattachement_court, left_on="n_structure", right_on="n_structure", how="left")
+
+    # Groupby sur DT_de_rattachement
+    Textile_financier__DT = (
+    textile_financier
+        .groupby('DT_de_rattachement')[['Textile Produit_2025', 'Textile Resultat_2025']]
+        .sum()
+        .reset_index()
+    )
+
+    return Textile_financier__DT

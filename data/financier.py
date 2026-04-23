@@ -235,7 +235,7 @@ def fusion_donnees_financieres(financial_data, df_ref_structure):
 
     return result
 
-def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024, df_ref_structure, mapping_df):
+def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024,financier_textile,financier_DPS, df_ref_structure, mapping_df):
     
     donnees_2023_2024 = fusion_donnees_financieres(import_clean_donnees_financieres(financier_2023_2024,df_ref_structure, mapping_df), df_ref_structure)
 
@@ -348,6 +348,11 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
     df_caf_DT = df_caf_DT[df_caf_DT['n_structure'].notna()]
     df_caf_DT['n_structure'] = df_caf_DT['n_structure'].apply(keep_integer).astype(int)
 
+    # Textile DPS
+    df_financier_textile, df_financier_textile_DT = indicateur_financier_Textile_2025(financier_textile,df_ref_structure)
+    df_financier_dps, df_financier_dps_DT = indicateur_financier_DPS_2025(financier_DPS,df_ref_structure)
+
+
     df_financier = pd.merge(df_ref_structure['n_structure'].drop_duplicates(), df_financier, on='n_structure', how='left')
     df_financier_DT = pd.merge(df_ref_structure[df_ref_structure['type_structure'] == 'DELEGATION TERRITORIALE - DT']['n_structure'].drop_duplicates(), df_financier_DT, on='n_structure', how='left')
 
@@ -366,6 +371,12 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
 
     df_financier = pd.merge(df_financier,df_tresobrute, on='n_structure', how='left')
     df_financier_DT = pd.merge(df_financier_DT,df_tresobrute_DT, on='n_structure', how='left')
+
+    df_financier = pd.merge(df_financier,df_financier_textile, on='n_structure', how='left')
+    df_financier_DT = pd.merge(df_financier_DT,df_financier_textile_DT, on='n_structure', how='left')
+
+    df_financier = pd.merge(df_financier,df_financier_dps, on='n_structure', how='left')
+    df_financier_DT = pd.merge(df_financier_DT,df_financier_dps_DT, on='n_structure', how='left')
 
     return df_financier, df_financier_DT, financier
 
@@ -492,69 +503,23 @@ def verifications_financiers(df_financier, df_financier_DT, df_ref_structure, fi
 
 #################################################################
 # 
-# DPS ET FGP
+# DPS, FGP et Textile
 # 
 # ###############################################################
 
+def indicateur_financier_DPS_2025(financier_DPS, df_ref_structure):
 
+    structures = df_ref_structure['n_structure'].drop_duplicates().tolist()
+    df_financier_DPS = financier_DPS.copy().rename(columns={"N_structure":"n_structure","Produits d'exploitation 2025" : "Secours Produits_DPS_2025"})
+    df_financier_DPS = df_financier_DPS[['n_structure','Secours Produits_DPS_2025']].apply(pd.to_numeric, errors='coerce')
+    df_financier_DPS = df_financier_DPS[df_financier_DPS['n_structure'].isin(structures)]
 
+    DTs = df_ref_structure[df_ref_structure['type_structure'] == "DELEGATION TERRITORIALE - DT"]['n_structure'].drop_duplicates().tolist()
+    df_financier_DPS_DT = financier_DPS.copy().rename(columns={"N_structure":"n_structure","Produits d'exploitation consolidés (DT)" : "Secours Produits_DPS_2025"})
+    df_financier_DPS_DT = df_financier_DPS_DT[['n_structure','Secours Produits_DPS_2025']].apply(pd.to_numeric, errors='coerce')
+    df_financier_DPS_DT = df_financier_DPS_DT[df_financier_DPS_DT['n_structure'].isin(DTs)]
 
-
-def indicateur_financier_DPS_2024(financier_DPS, df_ref_structure):
-    # Filtrer sur la bonne année
-  df_Secours_ProduitsDPS = financier_DPS[financier_DPS['annee'] == 2024]
-
-  # Filtrer sur l'activité DPS
-  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[df_Secours_ProduitsDPS['imputation_comptable'] == "ACTA204"]
-
-  # Extraire le département
-  def extraire_et_nettoyer_code_departement(texte):
-      code = texte[-3:] # Extraire les 3 derniers caractères
-      code = code.lstrip('0') # Supprimer les zéros initiaux
-      return code
-  df_Secours_ProduitsDPS['Code Département'] = df_Secours_ProduitsDPS['code_comptable'].apply(extraire_et_nettoyer_code_departement)
-
-  # Suppression de la ligne nationnale
-  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[df_Secours_ProduitsDPS["libelle"] != "TOTAL DELEGATION"]
-
-  # Suppression des doublons (corse)
-  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS.drop_duplicates(subset=['Code Département'], keep='first')
-
-  # Conserver les colonnes utiles
-  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[["code_comptable","libelle","Code Département","annee","imputation_comptable","PRODUITS DES POSTES SECOURS"]]
-
-  # Mapping sur le département
-  mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
-  df_Secours_ProduitsDPS['n_structure'] = df_Secours_ProduitsDPS['Code Département'].map(mapping_dict)
-  verifier_mapping(df_Secours_ProduitsDPS, "n_structure", "libelle" ,df_ref_structure)
-
-  # Transformation des str en int
-  financier_DPS['PRODUITS DES POSTES SECOURS'] = (
-      financier_DPS['PRODUITS DES POSTES SECOURS']
-          .astype(str)
-          .str.replace("€", "", regex=False)
-          .str.replace("\u202f", "", regex=False)  # espace insécable fin
-          .str.replace(" ", "", regex=False)
-          .replace("nan", 0)
-          .replace("", 0)
-          .pipe(pd.to_numeric, errors="coerce")
-          .fillna(0)
-          .astype(int)
-  )
-
-  # Conserver les colonnes utiles
-  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[["n_structure","PRODUITS DES POSTES SECOURS"]]
-
-  # Modification du nom de colonne
-  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS.rename(columns={"PRODUITS DES POSTES SECOURS":"Secours Produits_DPS_2025"})
-
-  return df_Secours_ProduitsDPS
-
-
-
-
-
-
+    return df_financier_DPS, df_financier_DPS_DT
 
 
 
@@ -622,8 +587,74 @@ def financier_FGP_DT(df_financier_FGP_indicateur, rattachement_court):
 
 
 
+def indicateur_financier_Textile_2025(financier_Textile, df_ref_structure):
+
+    structures = df_ref_structure['n_structure'].drop_duplicates().tolist()
+    df_financier_Textile = financier_Textile.copy().rename(columns={"N_structure":"n_structure","Produits d'exploitation 2025" : "Textile Produit_2025"})
+    df_financier_Textile = df_financier_Textile[['n_structure','Textile Produit_2025']].apply(pd.to_numeric, errors='coerce')
+    df_financier_Textile = df_financier_Textile[df_financier_Textile['n_structure'].isin(structures)]
+
+    DTs = df_ref_structure[df_ref_structure['type_structure'] == "DELEGATION TERRITORIALE - DT"]['n_structure'].drop_duplicates().tolist()
+    df_financier_Textile_DT = financier_Textile.copy().rename(columns={"N_structure":"n_structure","Produits d'exploitation consolidés (DT)" : "Textile Produit_2025"})
+    df_financier_Textile_DT = df_financier_Textile_DT[['n_structure','Textile Produit_2025']].apply(pd.to_numeric, errors='coerce')
+    df_financier_Textile_DT = df_financier_Textile_DT[df_financier_Textile_DT['n_structure'].isin(DTs)]
+
+    return df_financier_Textile, df_financier_Textile_DT
 
 
+############################################
+######## OBSOLETE - VERSION 2024 ###########
+############################################
+
+def indicateur_financier_DPS_2024(financier_DPS, df_ref_structure):
+    # Filtrer sur la bonne année
+  df_Secours_ProduitsDPS = financier_DPS[financier_DPS['annee'] == 2024]
+
+  # Filtrer sur l'activité DPS
+  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[df_Secours_ProduitsDPS['imputation_comptable'] == "ACTA204"]
+
+  # Extraire le département
+  def extraire_et_nettoyer_code_departement(texte):
+      code = texte[-3:] # Extraire les 3 derniers caractères
+      code = code.lstrip('0') # Supprimer les zéros initiaux
+      return code
+  df_Secours_ProduitsDPS['Code Département'] = df_Secours_ProduitsDPS['code_comptable'].apply(extraire_et_nettoyer_code_departement)
+
+  # Suppression de la ligne nationnale
+  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[df_Secours_ProduitsDPS["libelle"] != "TOTAL DELEGATION"]
+
+  # Suppression des doublons (corse)
+  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS.drop_duplicates(subset=['Code Département'], keep='first')
+
+  # Conserver les colonnes utiles
+  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[["code_comptable","libelle","Code Département","annee","imputation_comptable","PRODUITS DES POSTES SECOURS"]]
+
+  # Mapping sur le département
+  mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
+  df_Secours_ProduitsDPS['n_structure'] = df_Secours_ProduitsDPS['Code Département'].map(mapping_dict)
+  verifier_mapping(df_Secours_ProduitsDPS, "n_structure", "libelle" ,df_ref_structure)
+
+  # Transformation des str en int
+  financier_DPS['PRODUITS DES POSTES SECOURS'] = (
+      financier_DPS['PRODUITS DES POSTES SECOURS']
+          .astype(str)
+          .str.replace("€", "", regex=False)
+          .str.replace("\u202f", "", regex=False)  # espace insécable fin
+          .str.replace(" ", "", regex=False)
+          .replace("nan", 0)
+          .replace("", 0)
+          .pipe(pd.to_numeric, errors="coerce")
+          .fillna(0)
+          .astype(int)
+  )
+
+  # Conserver les colonnes utiles
+  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS[["n_structure","PRODUITS DES POSTES SECOURS"]]
+
+  # Modification du nom de colonne
+  df_Secours_ProduitsDPS = df_Secours_ProduitsDPS.rename(columns={"PRODUITS DES POSTES SECOURS":"Secours Produits_DPS_2025"})
+
+  return df_Secours_ProduitsDPS
 
 
 
@@ -643,24 +674,6 @@ def financier_DPS_DT(df_financier_DPS_indicateur, rattachement_court):
     # Groupby sur DT_de_rattachement
     financier_DPS_DT = (df_financier_DPS.groupby('DT_de_rattachement')['Secours Produits_DPS_2025'].sum())
     return financier_DPS_DT
-
-
-
-def indicateur_financier_DPS_2024(financier_DPS, df_ref_structure):
-
-    structures = df_ref_structure['n_structure'].drop_duplicates().tolist()
-    df_financier_DPS = financier_DPS.copy().rename(columns={"Produits d'exploitation 2025" : "Secours Produits_DPS_2025"})
-    df_financier_DPS = df_financier_DPS[['n_structure','Secours Produits_DPS_2025']].apply(pd.to_numeric, errors='coerce')
-    df_financier_DPS = df_financier_DPS[df_financier_DPS['n_structure'] in structures]
-
-    DTs = df_ref_structure[df_ref_structure['type_structure'] == "DELEGATION TERRITORIALE - DT"]['n_structure'].drop_duplicates().tolist()
-    df_financier_DPS_DT = financier_DPS.copy().rename(columns={"Produits d'exploitation consolidés (DT)" : "Secours Produits_DPS_2025"})
-    df_financier_DPS_DT = df_financier_DPS_DT[['n_structure','Secours Produits_DPS_2025']].apply(pd.to_numeric, errors='coerce')
-    df_financier_DPS_DT = df_financier_DPS_DT[df_financier_DPS_DT['n_structure'] in DTs]
-
-    return df_financier_DPS, df_financier_DPS_DT
-
-
 
 
 
