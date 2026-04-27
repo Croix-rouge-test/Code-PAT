@@ -4,6 +4,8 @@ import pandas as pd
 from typing import List, Dict
 from functools import reduce
 
+sys.path.append(os.path.abspath("../checks")) 
+
 sys.path.append(os.path.abspath("./checks")) 
 
 from helpers import *
