@@ -13,12 +13,28 @@ def clean_OCR(df_OCR):
         "Année",
         "Statut",
         "Nom du Département",
-        "Structure CRf\n(Ville)",
+        "Académie",
         "Nom Commune de l'établissement"
     ]
 
 
     df_OCR[cols_OCR] = df_OCR[cols_OCR].astype(str)
+
+    mapping = {
+    "DT46": "DT DU LOT",
+    "DT64": "DT DES PYRENEES ATLANTIQUES",
+    "DT22": "DT DES COTES D'ARMOR",
+    "DT28": "DT D'EURE ET LOIR",
+    "DT42": "DT DE LA LOIRE",
+    "DT693": "DT DU RHONE",
+    "DT73": "DT DE LA SAVOIE",
+    "DT70": "DT DE HAUTE SAONE",
+    "DT88": "DT DES VOSGES",
+    "UL de Vannes": "UL DU PAYS DE VANNES",
+    "AT Haut-Allier": "AL LE HAUT ALLIER"
+}
+
+    df_OCR["Académie"] = df_OCR["Académie"].replace(mapping)
 
 
     df_OCR[["N° Département", "Nom du Département"]] = (
@@ -77,11 +93,12 @@ def clean_declenchement(df_declenchement, df_conventions):
 
     df['Exercice_convention'] = df['Exercice_convention'].fillna(0).astype(int)
     df[['Grand Total', 'Exercice']] = df[['Grand Total', 'Exercice']].fillna(0)
-    df['Exercice'] = df['Exercice'].fillna(0).astype(int) + df['Exercice_convention']
+    df['Exercice'] = df['Exercice'].fillna(0).astype(int)
 
 
 
     df["nb_declenchements"] = df["Grand Total"].astype(int) - df["Exercice"].astype(int)
+    df["nb_declenchements"] = df['nb_declenchements'] + df['Exercice_convention']
 
 
     df[["n_dept", "DT"]] = df["Département"].str.split(" - ", expand=True)
@@ -320,7 +337,7 @@ def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
     df = rapprochement_libelles(
         df_ref_structure,
         df,
-        "Structure CRf\n(Ville)"
+        "Académie"
     )
 
 
@@ -640,7 +657,7 @@ def Textile_DT(df_raw_Textile, rattachement_court):
     return Textile_DT
 
 
-def verif_textile(df_raw_Textile_c, df_raw_Textile, df_Textile_DT,df_raw_ProdResTextile, df_ref_structure,rattachement_court):
+def verif_textile(df_raw_Textile_c, df_raw_Textile, df_Textile_DT, df_ref_structure,rattachement_court):
   df_t = df_raw_Textile_c[df_raw_Textile_c["statut"] == "A jour"]
   df_t = df_t[df_t["Type de point apport"].isin(['Boutique - La Boutique','Vestiaire','Boutique  - Mobile', 'Boutique - Bébé','Boutique - Chez Henry','Boutique - Recylcerie / Meuble','La Boutique'])]
 

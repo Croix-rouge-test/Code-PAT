@@ -7,7 +7,8 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from gspread_dataframe import get_as_dataframe
 import re
-from utils import save_dataframe_to_sheet
+sys.path.append(os.path.abspath("./")) 
+from utils import *
 
 ##################################################################################################################
 # ------------------------------
@@ -442,7 +443,9 @@ def compare_dt_row_by_row(
  
     # --- Préparer df_DT avec clé normalisée ---
     df_dt = df_DT.copy()
-    df_dt['__dt_key__'] = df_dt[dt_key_dt].apply(_normalize_dt_key)
+
+    df_dt['__dt_key__'] = df_dt[dt_key_dt].astype(int).astype(str)
+    print(set(df_dt['__dt_key__']))
     df_dt = df_dt.set_index('__dt_key__')
  
     # --- Grouper df_UL ---
@@ -465,12 +468,14 @@ def compare_dt_row_by_row(
     # --- Clés communes ---
     common_keys = sorted(set(df_dt.index) & set(df_ul_grouped.index))
     if not common_keys:
+        print(set(df_ul_grouped.index))
         raise ValueError("Aucune DT commune entre df_DT et df_UL groupé.")
  
     # --- Construction du résultat ---
     rows = []
     for key in common_keys:
         for col in columns:
+            print(col)
             v_dt = df_dt.loc[key, col] if col in df_dt.columns else float('nan')
             v_ul = df_ul_grouped.loc[key, col] if col in df_ul_grouped.columns else float('nan')
  
@@ -610,9 +615,7 @@ SHEET_TOTAL = 'Total'
 def load_reference_sheets(
     gspread_client,
     reference_url: str,
-    sheet_ul: str = SHEET_UL,
     sheet_dt: str = SHEET_DT,
-    sheet_total: str = SHEET_TOTAL,
 ) -> dict:
     """
     Charge les trois feuilles de référence depuis un Google Sheet.
@@ -640,9 +643,7 @@ def load_reference_sheets(
         return get_as_dataframe(ws, evaluate_formulas=True)
  
     return {
-        'UL':    _load(sheet_ul),
         'DT':    _load(sheet_dt),
-        'Total': _load(sheet_total),
     }
  
  
@@ -784,84 +785,73 @@ def print_reference_comparison_report(
 # ---------------------------------------------------------------------------
  
 def compare_reference_and_export(
-    df_UL: pd.DataFrame,
     df_DT: pd.DataFrame,
     reference_url: str,
     output_url: str,
-    columns_ul: list = None,
     columns_dt: list = None,
     columns_total: list = None,
     id_col_ul: str = None,
     id_col_dt: str = None,
-    sheet_ul_ref: str = SHEET_UL,
-    sheet_dt_ref: str = SHEET_DT,
-    sheet_total_ref: str = SHEET_TOTAL,
-    output_sheet_ul: str = 'Comparaison_UL',
+    sheet_dt_ref: str = SHEET_DT, 
     output_sheet_dt: str = 'Comparaison_DT',
     output_sheet_total: str = 'Comparaison_Total',
     show_all: bool = True,
 ) -> dict:
-    """
-    Wrapper principal : charge les feuilles de référence, effectue les trois
-    comparaisons (UL, DT, Total) et exporte les résultats dans un Google Sheet.
- 
-    La feuille « Total » est comparée contre la somme globale de df_UL
-    (une seule ligne de totaux).
- 
-    Args:
-        df_UL (pd.DataFrame): Données source UL.
-        df_DT (pd.DataFrame): Données source DT.
-        reference_url (str): URL/ID du Google Sheet de référence (3 onglets).
-        output_url (str): URL/ID du Google Sheet de sortie.
-        columns_ul (list, optional): Colonnes à comparer pour UL.
-        columns_dt (list, optional): Colonnes à comparer pour DT.
-        columns_total (list, optional): Colonnes à comparer pour Total.
-        id_col_ul (str, optional): Colonne-clé pour la jointure UL.
-        id_col_dt (str, optional): Colonne-clé pour la jointure DT.
-        sheet_ul_ref (str): Nom onglet UL dans le fichier de référence.
-        sheet_dt_ref (str): Nom onglet DT dans le fichier de référence.
-        sheet_total_ref (str): Nom onglet Total dans le fichier de référence.
-        output_sheet_ul (str): Nom onglet de sortie pour UL.
-        output_sheet_dt (str): Nom onglet de sortie pour DT.
-        output_sheet_total (str): Nom onglet de sortie pour Total.
-        show_all (bool): Si False, exporte uniquement les lignes avec écart.
- 
-    Returns:
-        dict: {'UL': df_result_ul, 'DT': df_result_dt, 'Total': df_result_total}
-    """
+
     gspread_client  = client_gspread()
     output_sheet_id = _extract_spreadsheet_id(output_url)
- 
+
     # --- Charger les feuilles de référence ---
     print("📥 Chargement des feuilles de référence…")
     refs = load_reference_sheets(
         gspread_client, reference_url,
-        sheet_ul_ref, sheet_dt_ref, sheet_total_ref,
+        sheet_dt_ref,
     )
- 
+
     results = {}
- 
-    # --- Comparaison UL ---
-    print("\n🔍 Comparaison UL…")
-    df_res_ul = compare_with_reference(df_UL, refs['UL'], columns_ul, id_col_ul)
-    print_reference_comparison_report(df_res_ul, "df_UL", "Référence UL")
-    results['UL'] = df_res_ul
- 
+
+
     # --- Comparaison DT ---
-    print("\n🔍 Comparaison DT…")
+    print("\n🔍 Comparaison par DT…")
     df_res_dt = compare_with_reference(df_DT, refs['DT'], columns_dt, id_col_dt)
     print_reference_comparison_report(df_res_dt, "df_DT", "Référence DT")
     results['DT'] = df_res_dt
- 
-    # --- Comparaison Total (df_UL agrégé en une ligne) ---
+
+    # --- Comparaison Total (basée sur df_DT) ---
     print("\n🔍 Comparaison Total…")
-    # Construire une ligne de totaux pour df_UL
-    num_cols_ul = df_UL.select_dtypes(include='number').columns.tolist()
-    df_ul_total = df_UL[num_cols_ul].sum().to_frame().T.reset_index(drop=True)
-    df_res_total = compare_with_reference(df_ul_total, refs['Total'], columns_total, None)
-    print_reference_comparison_report(df_res_total, "df_UL (total)", "Référence Total")
+
+    
+
+    # 🔑 1. Construire UNE ligne de total à partir des DT
+    num_cols_dt = df_DT.select_dtypes(include='number').columns.tolist()
+    df_dt_total = df_DT[num_cols_dt].sum().to_frame().T.reset_index(drop=True)
+
+    # 🔑 2. Récupérer UNE seule ligne de référence (ligne "Total")
+    df_ref_total = refs['DT'][refs['DT']['n_structure'] == 'Total' ]
+
+    if df_ref_total.shape[0] > 1:
+        # 👉 on prend la ligne qui contient "Total" si elle existe
+        mask_total = df_ref_total.astype(str).apply(
+            lambda row: row.str.contains("total", case=False, na=False)
+        ).any(axis=1)
+
+        if mask_total.any():
+            df_ref_total = df_ref_total[mask_total].head(1)
+        else:
+            print("⚠️ Aucune ligne 'Total' trouvée → on prend la première")
+            df_ref_total = df_ref_total.head(1)
+
+    # 🔑 3. Comparaison ligne unique vs ligne unique
+    df_res_total = compare_with_reference(
+        df_dt_total,
+        df_ref_total,
+        columns_total,
+        None
+    )
+
+    print_reference_comparison_report(df_res_total, "df_DT (total)", "Référence Total")
     results['Total'] = df_res_total
- 
+
     # --- Export ---
     def _export(df_res, sheet_out, label):
         try:
@@ -869,12 +859,11 @@ def compare_reference_and_export(
             save_dataframe_to_sheet(output_sheet_id, gspread_client, df_out, sheet_out)
             print(f"✅ {label} exporté → onglet '{sheet_out}'")
         except Exception as e:
-            print(f"⚠️  Erreur export {label} : {e}")
- 
+            print(f"⚠️ Erreur export {label} : {e}")
+
     print("\n📤 Export vers Google Sheets…")
-    _export(df_res_ul,    output_sheet_ul,    "UL")
     _export(df_res_dt,    output_sheet_dt,    "DT")
     _export(df_res_total, output_sheet_total, "Total")
- 
+
     return results
 
