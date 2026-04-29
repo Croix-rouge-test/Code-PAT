@@ -982,7 +982,7 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
 # Fonction principale
 # ------------------------------
 
-def clean_base_contact(client, df_ref_structure):
+def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     """
     Traitements à partir de la table brute big query:
     - Filtre pour garder uniquement les codes formation nécessaires et les nivols absents aux sessions
@@ -1063,7 +1063,7 @@ def clean_base_contact(client, df_ref_structure):
 
     df_rattachement_benevole = df_rattachement_benevole.drop_duplicates("rattachement_benevole_nivol_id_fk")
 
-    target = pd.Timestamp("2025-12-31")
+    target = pd.Timestamp(target_date)
     df_rattachement_benevole = df_rattachement_benevole.loc[
         (df_rattachement_benevole["rattachement_benevole_date_fin"].isna()
         | (df_rattachement_benevole["rattachement_benevole_date_fin"] >= target)) & (df_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
