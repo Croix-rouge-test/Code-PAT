@@ -5,7 +5,7 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
-def import_table_GAIA_date_fixe(client, project_id="crf-pat", dataset_id="dataset_PAT_2025"):
+def import_table_GAIA_date_fixe(client, target_date="2025-12-31", project_id="crf-pat", dataset_id="dataset_PAT_2025"):
     """
     Charge la table GAIA nécessaires et renvoie le DataFrame importé.
     """
@@ -31,7 +31,7 @@ def import_table_GAIA_date_fixe(client, project_id="crf-pat", dataset_id="datase
 
     df_rattachement_benevole = df_rattachement_benevole.drop_duplicates("rattachement_benevole_nivol_id_fk")
 
-    target = pd.Timestamp("2025-12-31")
+    target = pd.Timestamp(target_date)
     df_rattachement_benevole = df_rattachement_benevole.loc[
         (df_rattachement_benevole["rattachement_benevole_date_fin"].isna()
         | (df_rattachement_benevole["rattachement_benevole_date_fin"] >= target)) & (df_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
@@ -56,7 +56,7 @@ def clean_gaia(client, df_ref_structure):
 
 
 
-def indicateurs_gaia(df_gaia):
+def indicateurs_gaia(df_gaia, target_date="2025-12-31"):
 
   # Filtrage : date nulle ou année = 2025
   df_gaia_rattachement_benevole = df_gaia.copy()
@@ -77,7 +77,7 @@ def indicateurs_gaia(df_gaia):
   )
 
   # Filtre : date_fin = NaT OU = 31/12/2025
-  target = pd.Timestamp("2025-12-31")
+  target = pd.Timestamp(target_date)
   df_gaia_rattachement_benevole = df_gaia_rattachement_benevole.loc[
       (df_gaia_rattachement_benevole["rattachement_benevole_date_fin"].isna()
       | (df_gaia_rattachement_benevole["rattachement_benevole_date_fin"] >= target)) & (df_gaia_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
@@ -107,7 +107,7 @@ def indicateurs_gaia(df_gaia):
 
 
 
-def indicateurs_gaia_nvx(df_gaia):
+def indicateurs_gaia_nvx(df_gaia, target_date="2025-12-31"):
   # Conversion en datetime
   df_gaia['rattachement_benevole_date_fin'] = pd.to_datetime(
       df_gaia['rattachement_benevole_date_fin'], errors='coerce'
@@ -131,7 +131,7 @@ def indicateurs_gaia_nvx(df_gaia):
       df_gaia['rattachement_benevole_date_debut'].dt.year == 2025
   ]
 
-  target = pd.Timestamp("2025-12-31")
+  target = pd.Timestamp(target_date)
   df_gaia = df_gaia.loc[
       (df_gaia["rattachement_benevole_date_fin"].isna()
       | (df_gaia["rattachement_benevole_date_fin"] >= target)) & (df_gaia["rattachement_benevole_date_debut"]  <= target)
