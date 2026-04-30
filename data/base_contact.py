@@ -700,7 +700,7 @@ def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
     """
     target = pd.Timestamp(target_date)
     year = target.year
-    df_res = df_filtered[df_filtered['FORMATION_RESULTAT'] == 'Apte')].copy()
+    df_res = df_filtered[df_filtered['FORMATION_RESULTAT'] == 'Apte'].copy()
     result = pd.DataFrame({col_groupby: df_res[col_groupby].unique()})
     result.set_index(col_groupby, inplace=True)
 
