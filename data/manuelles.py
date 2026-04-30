@@ -13,7 +13,7 @@ def clean_OCR(df_OCR):
         "Année",
         "Statut",
         "Nom du Département",
-        "Structure CRf (Ville)",
+        'Structure CRf\n(Ville)',
         "Nom Commune de l'établissement"
     ]
 
@@ -36,7 +36,7 @@ def clean_OCR(df_OCR):
     "UL d'Orthez" : "UL DES TROIS RIVIERES"
 }
 
-    df_OCR["Structure CRf (Ville)"] = df_OCR["Structure CRf (Ville)"].replace(mapping)
+    df_OCR["Structure CRf\n(Ville)"] = df_OCR["Structure CRf\n(Ville)"].replace(mapping)
 
 
     df_OCR[["N° Département", "Nom du Département"]] = (
@@ -339,7 +339,7 @@ def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
     df = rapprochement_libelles(
         df_ref_structure,
         df,
-        "Structure CRf (Ville)"
+        "Structure CRf\n(Ville)"
     )
 
 
