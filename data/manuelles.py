@@ -145,77 +145,46 @@ def clean_redcall(df_redcall):
     return df_grouped
 
 
-def clean_CAICHUCMCC(df_CAICHUCMCC):
-    first_valid_row = df_CAICHUCMCC.dropna(how="all").index[0]
 
 
-    df_CAICHUCMCC.columns = df_CAICHUCMCC.loc[first_valid_row]
-    df_CAICHUCMCC = (
-        df_CAICHUCMCC
-        .loc[first_valid_row + 1:]
-        .reset_index(drop=True)
-    )
 
+def clean_CAIconv(df_CAICHUCMCC_conventions):
 
-    df = df_CAICHUCMCC[
-        ['Dépt', 'Région', 'Département', 'CAI 2023', 'CHU 2023', 'Lots CMCC 2023']
+    df = df_CAICHUCMCC_conventions.copy()
+
+    # FONCTION NORMALISATION
+    def clean_departement(series):
+        return (
+            series
+            .str.replace(
+                "DELEGATION DEPARTEMENTALE",
+                "DELEGATION TERRITORIALE",
+                regex=False
+            )
+            .str.strip()
+        )
+
+    # 1. CAI / CHU / CMCC
+    cols_cai = [
+        'Departement',
+        'Nombre de CAI (conforme guide CHU)',
+        'Nombre de CHU (conforme guide CHU)',
+        'Nombre Lots CMCC'
     ]
 
+    df_cai = df[cols_cai].copy()
 
-    df["Département"] = df["Département"].str.replace(
-        "DELEGATION TERRITORIALE",
-        "DT",
-        regex=False
-    )
+    # nettoyage aussi ici
+    df_cai["Departement"] = clean_departement(df_cai["Departement"])
 
+    # 2. CONVENTIONS CLEAN
+    df = df.rename(columns={'Préfecture': 'Prefecture'})
 
-    codes_a_supprimer = [
-        "NAT", "ARA", "BFC", "BRET", "CVDL", "GE",
-        "HDF", "IDF", "NAQ", "NORM", "OCC",
-        "PACAC", "PDLL", "OM"
-    ]
-
-
-    df = df[~df['Dépt'].isin(codes_a_supprimer)]
-
-
-    df.loc[df['Dépt'] == 978, 'Département'] = 'DT DE ST MARTIN'
-
-
-    return df
-
-
-def clean_conventions(df_conventions):
-    df = df_conventions.rename(columns = {'Préfecture': 'Prefecture', 'Tripartite' : 'Tri partite'})
-    df = df[
-        [
-            'DT Annuaire Opé',
-            'Departement',
-            'Prefecture',
-            'Tri partite',
-            'Recherche de personnes',
-            'SDIS / BMPM / BSPP',
-            'SNCF',
-            'SAMU',
-            'Gendarmerie',
-            'CUMP',
-            'Communes',
-            'Autoroutes',
-            'Autres'
-        ]
-    ]
-
-
-    df["Departement"] = df["Departement"].str.replace(
-        r"DELEGATION DEPARTEMENTALE|DELEGATION TERRITORIALE",
-        "DT",
-        regex=True
-    )
-
-
-    colonnes_oui_non = [
+    cols_conv = [
+        'DT Annuaire Opé',
+        'Departement',
         'Prefecture',
-        'Tri partite',
+        'Tripartite',
         'Recherche de personnes',
         'SDIS / BMPM / BSPP',
         'SNCF',
@@ -227,63 +196,166 @@ def clean_conventions(df_conventions):
         'Autres'
     ]
 
+    df = df[cols_conv].copy()
 
-    colonnes_conv_ope = colonnes_oui_non[1:]
+    # nettoyage aussi ici
+    df["Departement"] = clean_departement(df["Departement"])
 
+    # 3. PUBLIC / PRIVÉ
 
-    # df[colonnes_oui_non] = df[colonnes_oui_non].applymap(
-    #     lambda x: x[-3:] if isinstance(x, str) else x
-    # )
+    colonnes_publiques = [
+        'Prefecture',
+        'SDIS / BMPM / BSPP',
+        'SNCF',
+        'SAMU',
+        'Gendarmerie',
+        'CUMP',
+        'Communes'
+    ]
 
+    colonnes_oui_non = [
+        'Prefecture',
+        'Tripartite',
+        'Recherche de personnes',
+        'SDIS / BMPM / BSPP',
+        'SNCF',
+        'SAMU',
+        'Gendarmerie',
+        'CUMP',
+        'Communes',
+        'Autoroutes',
+        'Autres'
+    ]
 
-    df['Dispositifs_d_urgence Nb_conventions_operateurs'] = (
-        df[colonnes_conv_ope]
-        .apply(lambda row: (row == 'Oui').sum(), axis=1)
+    # remplace Oui -> 1 sinon 0 (vectorisé)
+    df_bool = df[colonnes_oui_non].eq("Oui").astype(int)
+
+    df["Dispositifs_d_urgence Nb_conventions_operateurs_publics"] = df_bool[colonnes_publiques].sum(axis=1)
+    df["Dispositifs_d_urgence Nb_conventions_operateurs_prives"] = df_bool.sum(axis=1) - df["Dispositifs_d_urgence Nb_conventions_operateurs_publics"]
+    df["Dispositifs_d_urgence Nb_conventions_operateurs"] = df["Dispositifs_d_urgence Nb_conventions_operateurs_prives"] + df["Dispositifs_d_urgence Nb_conventions_operateurs_publics"]
+
+    # 4. FUSION
+    df_final = df.merge(
+        df_cai,
+        on="Departement",
+        how="left"
     )
 
+    return df_final
 
-    return df
+
+
 
 def clean_raw_Textile(df_raw_Textile, df_ref_structure):
     # Filtre sur le statut
     df = df_raw_Textile[df_raw_Textile["statut"] == "A jour"]
 
-    # Filtrer sur les bons dispositif
-    print("Point d'apport possible : ",df["Type de point apport"].unique())
-    df = df[df["Type de point apport"].isin(['Boutique - La Boutique','Vestiaire','Boutique  - Mobile', 'Boutique - Bébé','Boutique - Chez Henry','Boutique - Recylcerie / Meuble','La Boutique'])]
-    df = df.rename(columns={'Code structure': 'n_structure'})
-
-    _ , _ , _, df = apply_rattachement_successif(df_ref_structure, df, col = 'n_structure')
-
-    
-    return df
-
-
-def clean_indicateurs_DUO(df_conventions):
-    df = df_conventions[
-        [
-            'DT Annuaire Opé',
-            'Departement',
-            "Nb opérations d'urgence",
-            "Nombre de prises en charge lors de ces opérations d'urgence",
-            "Nombre de participations à des exercices organisés par les secours publics",
-            'Opération type A',
-            'Opération type B',
-            'Opération type A et B',
-            "Points d'Alerte et de Premiers Secours RIS",
-            "Dispositifs Prévisionnel de Secours de Petite Envergure RIS",
-            "Dispositifs Prévisionnel de Secours de Moyenne Envergure RIS",
-            "Dispositifs Prévisionnel de Secours de Grande Envergure RIS"
-        ]
+    boutiques = [
+        "Boutique - La Boutique",
+        "Boutique  - Mobile",
+        "Boutique - Bébé",
+        "Boutique - Chez Henry",
+        "Boutique - Recylcerie / Meuble",
+        "La Boutique",
     ]
 
-    df["Departement"] = df["Departement"].str.replace(
-        r"DELEGATION DEPARTEMENTALE|DELEGATION TERRITORIALE",
-        "DT",
-        regex=True
+    vestiaires = [
+        "Vestiaire"
+    ]
+
+    types_conserves = boutiques + vestiaires
+
+    df = df[
+        df["Type de point apport"].isin(types_conserves)
+    ].copy()
+
+    # VARIABLE TYPE DISPOSITIF
+
+    df["type_dispositif_textile"] = "Autre"
+
+    df.loc[
+        df["Type de point apport"].isin(boutiques),
+        "type_dispositif_textile"
+    ] = "Boutique"
+
+    df.loc[
+        df["Type de point apport"].isin(vestiaires),
+        "type_dispositif_textile"
+    ] = "Vestiaire"
+
+    # RATTACHEMENT STRUCTURE
+
+    df = df.rename(
+        columns={"Code structure": "n_structure"}
+    )
+
+    _, _, _, df = apply_rattachement_successif(
+        df_ref_structure,
+        df,
+        col="n_structure"
     )
 
     return df
+
+
+
+
+
+
+
+def clean_CR_operations(df):
+   
+    # Colonnes à conserver
+    columns_to_keep = [
+        "Horodateur",
+        "Typologie",
+        "Département concerné par l'opération ou l'exercice :",
+        "DT",
+        "Date et heure du début de l'opération :",
+        "Date et heure de la fin de l'opération :",
+        "Origine du déclenchement :",
+        "Description de l'événement :",
+        "Agrément concerné :",
+        "Nombre de personnes accompagnées ou prises en charge :",
+    ]
+
+    # Sélection des colonnes
+    df_clean = df[columns_to_keep].copy()
+
+    # Conversion en datetime
+    start_col = "Date et heure du début de l'opération :"
+
+    df_clean[start_col] = pd.to_datetime(
+        df_clean[start_col],
+        format="%d/%m/%Y %H:%M:%S",
+        errors="coerce"
+    )
+
+    # Filtre année 2026
+    df_clean = df_clean[df_clean[start_col].dt.year == 2026]
+
+    # Extraction du nom du département
+    dep_col = "Département concerné par l'opération ou l'exercice :"
+
+    df_clean["Département"] = (
+        df_clean[dep_col]
+        .str.split(" - ", expand=True)[1]
+        .str.strip()
+    )
+
+    df_clean["Num_departement"] = (
+    df_clean[dep_col]
+    .str.split(" - ", expand=True)[0]
+    .str.strip()
+    )
+
+    return df_clean
+
+
+
+
+
+
 
 
 def clean_OCR_PST_DEC_RED_CAI_CONV(
@@ -291,9 +363,9 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_PST,
     df_declenchement,
     df_redcall,
-    df_CAICHUCMCC,
-    df_conventions,
+    df_CAICHUCMCC_conventions,
     df_raw_Textile,
+    df_CRope,
     #df_raw_ProdResTextile,
     df_ref_structure
 ):
@@ -301,23 +373,23 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_PST_clean = clean_PST(df_PST)
     df_declenchement_clean = clean_declenchement(df_declenchement, df_conventions)
     df_redcall_clean = clean_redcall(df_redcall)
-    df_CAICHUCMCC_clean = clean_CAICHUCMCC(df_CAICHUCMCC)
-    df_conventions_clean = clean_conventions(df_conventions)
-    df_raw_Textile = clean_raw_Textile(df_raw_Textile, df_ref_structure)
+    df_CAIconv_clean = clean_CAIconv(df_CAICHUCMCC_conventions)
+    df_raw_Textile_clean = clean_raw_Textile(df_raw_Textile, df_ref_structure)
     #df_raw_ProdResTextile = clean_ProdResTextile(df_raw_ProdResTextile)
-    df_duo_clean = clean_indicateurs_DUO(df_conventions)
+    df_CRope_clean = clean_CR_operations(df_CRope)
 
     return (
         df_OCR_clean,
         df_PST_clean,
         df_declenchement_clean,
         df_redcall_clean,
-        df_CAICHUCMCC_clean,
-        df_conventions_clean,
-        df_raw_Textile,
+        df_CAIconv_clean,
+        df_raw_Textile_clean,
         #df_raw_ProdResTextile,
-        df_duo_clean
+        df_CRope_clean
     )
+
+
 
 
 
@@ -325,13 +397,12 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
 def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
     df = df_OCR.copy()
 
-    df = df[df["Statut"].isin(["En cours", "Projet"])]
+    df = df[df["Statut"].isin(["En cours", "Projet", "Terminée"])]
     df = df[df["Année"] == "2025-2026"]
 
     df = df[
         ["Année", "Statut", "Nom du Département", "Numéro du Département", "Structure CRf\n(Ville)"]
     ]
-
 
     df = rapprochement_libelles(df_ref_structure, df, "Structure CRf\n(Ville)")
 
@@ -349,18 +420,21 @@ def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
     df = df["n_structure"].value_counts().reset_index()
     df = df.rename(columns={"count": "OCR Nb_deployees"})
 
-
     return df
+
+
+
+
+
+
 
 
 def indicateurs_PST(df_PST, df_ref_structure):
     df = df_PST.copy()
 
-
     df = df[
         ["Territoire", "PST constitué", "Nom structure DT", "N° Département"]
     ]
-
 
     df = rapprochement_libelles(
         df_ref_structure,
@@ -368,13 +442,10 @@ def indicateurs_PST(df_PST, df_ref_structure):
         "Nom structure DT"
     )
 
-
     mask = df["n_structure"].isna() | (df["n_structure"] == "")
-
 
     df["N° Département"] = df["N° Département"].astype(str)
     df_ref_structure["n_dept"] = df_ref_structure["n_dept"].astype(str)
-
 
     mapping_dict = (
         df_ref_structure[
@@ -384,9 +455,7 @@ def indicateurs_PST(df_PST, df_ref_structure):
         .to_dict()
     )
 
-
     df.loc[mask, "n_structure"] = df.loc[mask, "N° Département"].map(mapping_dict)
-
 
     df["PST constitué"] = (
         df["PST constitué"]
@@ -394,7 +463,6 @@ def indicateurs_PST(df_PST, df_ref_structure):
         .str.strip()
         .str.lower()
     )
-
 
     def statut_pst(valeur):
         if valeur == "oui":
@@ -407,26 +475,25 @@ def indicateurs_PST(df_PST, df_ref_structure):
 
     df["Dispositifs_d_urgence PST"] = df["PST constitué"].apply(statut_pst)
 
-
     df.loc[
         df["Territoire"] == "DT  42 - Loire",
         ["n_structure", "nom_structure"]
     ] = [47, "DT DE LA LOIRE"]
 
-
     return df
+
+
+
+
 
 
 def indicateurs_declenchements(df_declenchement2, df_ref_structure):
     df = df_declenchement2.copy()
 
-
     df["DT"] = df["DT"].astype(str)
     df["n_dept"] = df["n_dept"].astype(str)
 
-
     df = rapprochement_libelles(df_ref_structure, df, "DT")
-
 
     mask = df["n_structure"] == ""
     mapping_dict = (
@@ -437,25 +504,24 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
         .to_dict()
     )
 
-
     df.loc[mask, "n_structure"] = df.loc[mask, "n_dept"].map(mapping_dict)
 
-
     df = df.dropna(subset=["n_structure"])
-
 
     df.loc[
         df["Département"] == "42 - Loire",
         ["n_structure", "nom_structure"]
     ] = [47, "DT DE LA LOIRE"]
 
-
     df = df.rename(
         columns={"nb_declenchements": "Dispositifs_d_urgence Nb_declenchements"}
     )
 
-
     return df
+
+
+
+
 
 
 def indicateurs_redcall(df_RC_grouped, df_ref_structure):
@@ -479,114 +545,316 @@ def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     return df
 
 
-def indicateurs_CAICHUCMCC(df_CAICHUCMCC2, df_ref_structure):
+
+
+
+
+def indicateurs_bilanus2025(
+    df_CAICHUCMCC_conventions,
+    df_ref_structure
+):
+
+    # 1. SÉLECTION COLONNES
+    colonnes = [
+        "Departement",
+        'Nombre de CAI (conforme guide CHU)',
+        'Nombre de CHU (conforme guide CHU)',
+        'Nombre Lots CMCC',
+        "Prefecture",
+        "Dispositifs_d_urgence Nb_conventions_operateurs_publics",
+        "Dispositifs_d_urgence Nb_conventions_operateurs_prives",
+        "Dispositifs_d_urgence Nb_conventions_operateurs"
+    ]
+
+    df = df_CAICHUCMCC_conventions[colonnes].copy()
+
+    # 2. NORMALISATION LIBELLÉS
+    df["Departement"] = (
+        df["Departement"]
+        .str.replace(
+            "DELEGATION TERRITORIALE",
+            "DT",
+            regex=False
+        )
+        .str.strip()
+    )
+
+    # 2. RAPPROCHEMENT LIBELLÉS
     df = rapprochement_libelles(
         df_ref_structure,
-        df_CAICHUCMCC2,
+        df,
+        "Departement"
+    )
+
+    # 3. RENOMMAGE FINAL
+    df = df.rename(columns={
+        "Nombre de CAI (conforme guide CHU)": "Dispositifs_d_urgence Nb_lots_CAI",
+        "Nombre de CHU (conforme guide CHU)": "Dispositifs_d_urgence Nb_lots_CHU",
+        "Nombre Lots CMCC": "Dispositifs_d_urgence Nb_lots_CMCC",
+        "Prefecture": "Dispositifs_d_urgence Nb_conventions_prefecture"
+    })
+
+    return df
+
+
+
+
+
+
+def indicateurs_raw_Textile(df_raw_Textile):
+
+    # INDICATEUR NB BOUTIQUES
+
+    indic_boutiques = (
+        df_raw_Textile[
+            df_raw_Textile["type_dispositif_textile"]
+            == "Boutique"
+        ]
+        .groupby("n_structure")
+        .size()
+        .reset_index(name="Textile Nb_boutiques")
+    )
+
+    # INDICATEUR NB VESTIAIRES
+
+    indic_vestiaires = (
+        df_raw_Textile[
+            df_raw_Textile["type_dispositif_textile"]
+            == "Vestiaire"
+        ]
+        .groupby("n_structure")
+        .size()
+        .reset_index(name="Textile Nb_vestiaires")
+    )
+
+    # FUSION
+
+    df_final = indic_boutiques.merge(
+        indic_vestiaires,
+        on="n_structure",
+        how="outer"
+    )
+
+    # Remplacer NaN par 0
+    indic_cols = [
+        "Textile Nb_boutiques",
+        "Textile Nb_vestiaires"
+    ]
+
+    df_final[indic_cols] = (
+        df_final[indic_cols]
+        .fillna(0)
+        .astype(int)
+    )
+
+    return df_final
+
+
+
+
+
+
+def indicateurs_CRope(df, df_ref_structure):
+    """
+    Calcule les indicateurs DUO par département / structure.
+
+    Indicateurs :
+    - Dispositifs_d_urgence Nb_operations
+    - Dispositifs_d_urgence Nb_jours_operations
+    - Dispositifs_d_urgence Ope_secours
+    - Dispositifs_d_urgence Ope_soutien_pop
+    - Dispositifs_d_urgence Nb_personnes_prises_charge
+    """
+
+    # RAPPROCHEMENT STRUCTURES
+
+    df = rapprochement_libelles(
+        df_ref_structure,
+        df,
         "Département"
     )
 
+    mask = df["n_structure"] == ""
 
-    df = df.rename(
-        columns={
-            "CAI 2023": "Dispositifs_d_urgence Nb_lots_CAI",
-            "CHU 2023": "Dispositifs_d_urgence Nb_lots_CHU",
-            "Lots CMCC 2023": "Dispositifs_d_urgence Nb_lots_CMCC"
-        }
+    mapping_dict = (
+        df_ref_structure[
+            df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"
+        ]
+        .set_index("n_dept")["n_structure"]
+        .to_dict()
     )
 
+    df.loc[mask, "n_structure"] = (
+        df.loc[mask, "Num_departement"]
+        .map(mapping_dict)
+    )
 
-    return df
+    # PREPARATION DES DONNEES
+
+    start_col = "Date et heure du début de l'opération :"
+    end_col = "Date et heure de la fin de l'opération :"
+
+    # Conversion datetime
+    df[start_col] = pd.to_datetime(df[start_col], errors="coerce", dayfirst=True)
+    df[end_col] = pd.to_datetime(df[end_col], errors="coerce", dayfirst=True)
+
+    # Calcul durée en jours
+    df["nb_jours_operation"] = (
+        (df[end_col] - df[start_col]).dt.total_seconds() / 86400
+    )
+
+    # Sécurisation
+    df["nb_jours_operation"] = (
+        df["nb_jours_operation"]
+        .fillna(0)
+        .clip(lower=0)
+    )
+
+    # Conversion nombre personnes
+    people_col = "Nombre de personnes accompagnées ou prises en charge :"
+
+    df[people_col] = pd.to_numeric(
+        df[people_col],
+        errors="coerce"
+    ).fillna(0)
+
+    # INDICATEUR NB OPERATIONS
+
+    df_operations = (
+        df[df["Typologie"].str.contains("Opérations", na=False)]
+        .groupby("n_structure")
+        .size()
+        .reset_index(name="Dispositifs_d_urgence Nb_operations")
+    )
+
+    # INDICATEUR NB JOURS OPERATIONS
+
+    df_jours = (
+        df[df["Typologie"].str.contains("Opérations", na=False)]
+        .groupby("n_structure")["nb_jours_operation"]
+        .sum()
+        .reset_index(name="Dispositifs_d_urgence Nb_jours_operations")
+    )
+
+    # INDICATEUR OPE SECOURS (Agrément A)
+
+    agrement_col = "Agrément concerné :"
+
+    df_secours = (
+        df[
+            df[agrement_col]
+            .str.contains("Agrément A", na=False)
+        ]
+        .groupby("n_structure")
+        .size()
+        .reset_index(name="Dispositifs_d_urgence Ope_secours")
+    )
+
+    # INDICATEUR OPE SOUTIEN POP (Agrément B)
+
+    df_soutien = (
+        df[
+            df[agrement_col]
+            .str.contains("Agrément B", na=False)
+        ]
+        .groupby("n_structure")
+        .size()
+        .reset_index(name="Dispositifs_d_urgence Ope_soutien_pop")
+    )
+
+    # INDICATEUR NB PERSONNES PRISES EN CHARGE
+
+    df_personnes = (
+        df.groupby("n_structure")[people_col]
+        .sum()
+        .reset_index(
+            name="Dispositifs_d_urgence Nb_personnes_prises_charge"
+        )
+    )
+
+    # MERGE FINAL
+
+    df_final = df_operations.merge(
+        df_jours,
+        on="n_structure",
+        how="outer"
+    )
+
+    df_final = df_final.merge(
+        df_secours,
+        on="n_structure",
+        how="outer"
+    )
+
+    df_final = df_final.merge(
+        df_soutien,
+        on="n_structure",
+        how="outer"
+    )
+
+    df_final = df_final.merge(
+        df_personnes,
+        on="n_structure",
+        how="outer"
+    )
+
+    return df_final
 
 
-def indicateurs_conventions(df_conventions, df_ref_structure):
-    df = df_conventions[
-        ["Departement", "Prefecture", "Dispositifs_d_urgence Nb_conventions_operateurs"]
-    ].copy()
 
 
-    df = rapprochement_libelles(
-        df_ref_structure,
+
+def indicateurs_tracabilite_textile(df_tracabilite_textile, df_ref_structure):
+
+    df = df_tracabilite_textile[["Code structure","Remonte des données chaque trimestre" ]].copy()
+
+    df = df.rename(columns={"Remontee des données chaque trimestre": "Textile tracabilite_flux" })
+
+    # 3. MERGE AVEC REF STRUCTURE
+    df = df_ref_structure.merge(
         df,
-        "Departement"
-    )
-
-
-    df = df.rename(
-        columns={
-            "Prefecture": "Dispositifs_d_urgence Nb_conventions_prefecture"
-        }
-    )
-
-
-    return df
-
-def indicateurs_raw_Textile(df_raw_Textile):
-   # Agréger sur le Code structure
-   df = df_raw_Textile.groupby("n_structure").size().reset_index(name="Textile Nb_dispositifs")
-
-   return df
-
-
-
-
-
-def indicateurs_DUO(df_conventions, df_ref_structure):
-    df = df_conventions[
-        ["Departement", "Nb opérations d'urgence", "Nombre de prises en charge lors de ces opérations d'urgence","Nombre de participations à des exercices organisés par les secours publics","Opération type A", "Opération type B", "Opération type A et B","Points d'Alerte et de Premiers Secours RIS",'Dispositifs Prévisionnel de Secours de Petite Envergure RIS','Dispositifs Prévisionnel de Secours de Moyenne Envergure RIS','Dispositifs Prévisionnel de Secours de Grande Envergure RIS']
-    ].copy()
-
-    df = rapprochement_libelles(
-        df_ref_structure,
-        df,
-        "Departement"
-    )
-
-    df["Dispositifs_d_urgence Nb_agrements2"] = df[["Opération type A", "Opération type B", "Opération type A et B"]].sum(axis=1)
-    df["Secours Nb_agrements_DPS_2025_2"] = df[["Points d'Alerte et de Premiers Secours RIS", "Dispositifs Prévisionnel de Secours de Petite Envergure RIS", "Dispositifs Prévisionnel de Secours de Moyenne Envergure RIS", "Dispositifs Prévisionnel de Secours de Grande Envergure RIS"]].sum(axis=1)
-
-    df = df.rename(
-        columns={
-            "Nb opérations d'urgence": "Dispositifs_d_urgence Nb_operations2",
-            "Nombre de prises en charge lors de ces opérations d'urgence": "Dispositifs_d_urgence Nb_personnes_prises_charge2",
-            "Nombre de participations à des exercices organisés par les secours publics": "Dispositifs_d_urgence Nb_exercices2"
-        }
+        left_on="n_structure",
+        right_on="Code structure",
+        how="left"
     )
 
     return df
+
+
+
+
 
 def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR,
     df_PST,
     df_declenchement2,
     df_RC_grouped,
-    df_CAICHUCMCC2,
-    df_conventions,
+    df_CAICHUCMCC_conventions,
     df_raw_Textile,
-    df_duo_clean,
+    df_CRope_clean,
+    df_tracabilite_textile,
     df_ref_structure
 ):
     df_OCR_Nb_deployees = indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure)
     df_Dispositifs_d_urgence_PST = indicateurs_PST(df_PST, df_ref_structure)
     df_declenchement3 = indicateurs_declenchements(df_declenchement2, df_ref_structure)
     df_redcall2 = indicateurs_redcall(df_RC_grouped, df_ref_structure)
-    df_CAICHUCMCC_VF = indicateurs_CAICHUCMCC(df_CAICHUCMCC2, df_ref_structure)
-    df_conventions2 = indicateurs_conventions(df_conventions, df_ref_structure)
-    df_raw_Textile = indicateurs_raw_Textile(df_raw_Textile)
+    df_CAICHUCMCC_conventionsVF = indicateurs_bilanus2025(df_CAICHUCMCC_conventions, df_ref_structure)
+    df_raw_TextileVF = indicateurs_raw_Textile(df_raw_Textile)
     # df_raw_ProdResTextile = indicateurs_ProdResTextile(df_raw_ProdResTextile , df_ref_structure)
-
-    df_DUO = indicateurs_DUO(df_duo_clean, df_ref_structure)
+    df_CRopeVF = indicateurs_CRope(df_CRope_clean, df_ref_structure)
+    df_tracabilite_textileVF = indicateurs_tracabilite_textile(df_tracabilite_textile, df_ref_structure)
 
     return (
         df_OCR_Nb_deployees,
         df_Dispositifs_d_urgence_PST,
         df_declenchement3,
         df_redcall2,
-        df_CAICHUCMCC_VF,
-        df_conventions2,
-        df_raw_Textile,
+        df_CAICHUCMCC_conventionsVF,
+        df_raw_TextileVF,
         # df_raw_ProdResTextile,
-        df_DUO
+        df_CRopeVF,
+        df_tracabilite_textileVF
     )
 
 
@@ -601,9 +869,6 @@ def indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court):
     on="n_structure",
     how="left"
     )
-
-
-
 
     # Groupby sur DT_de_rattachement
     Nb_OCR_DT = (OCR_Nb_deployees.groupby('DT_de_rattachement')['OCR Nb_deployees'].sum())
@@ -633,11 +898,12 @@ def OCR_RedCall_DT(df_OCR_Nb_deployees, df_redcall2, rattachement_court):
     Nb_OCR_DT = indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court)
     RedCall_DT = indicateurs_redcall_DT(df_redcall2, rattachement_court)
 
-
     return (
         Nb_OCR_DT,
         RedCall_DT,
     )
+
+
 
 def Textile_DT(df_raw_Textile, rattachement_court):
     df_raw_Textile['n_structure'] = df_raw_Textile['n_structure'].astype('float64')
