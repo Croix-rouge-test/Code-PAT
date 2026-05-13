@@ -17,38 +17,37 @@ def clean_OCR(df_OCR):
         "Nom Commune de l'établissement"
     ]
 
-
     df_OCR[cols_OCR] = df_OCR[cols_OCR].astype(str)
 
     mapping = {
     "DT46": "DT DU LOT",
     "DT64": "DT DES PYRENEES ATLANTIQUES",
     "DT22": "DT DES COTES D'ARMOR",
-    "DT28": "DT D'EURE ET LOIR",
-    "DT42": "DT DE LA LOIRE",
-    "DT693": "DT DU RHONE",
-    "DT73": "DT DE LA SAVOIE",
-    "DT70": "DT DE HAUTE SAONE",
-    "DT88": "DT DES VOSGES",
+    "DT18": "DT DU CHER",
+    "DT 28 ": "DT D'EURE ET LOIR",
+    "DT 42 ? ": "DT DE LA LOIRE",
+    "DT 69": "DT DU RHONE",
+    "DT 73": "DT DE LA SAVOIE",
+    "DT 70": "DT DE HAUTE SAONE",
+    "DT 88": "DT DES VOSGES",
     "UL de Vannes": "UL DU PAYS DE VANNES",
     "AT Haut-Allier": "AL LE HAUT ALLIER",
-    "UL Villefranche sur Saône" : "UL BEAUJOLAIS VALS DE SAONE",
-    "UL d'Orthez" : "UL DES TROIS RIVIERES"
-}
+    "UL Villefranche sur Saône": "UL BEAUJOLAIS VALS DE SAONE",
+    "UL d'Orthez": "UL DES TROIS RIVIERES",
+    "Arras": "UL D'ARRAS" 
+    }
 
-    df_OCR["Structure CRf\n(Ville)"] = df_OCR["Structure CRf\n(Ville)"].replace(mapping)
+  
+    # Remplacer les valeurs vides (NaN ou chaînes vides)
+    df_OCR['Structure CRf\n(Ville)'] = df_OCR['Structure CRf\n(Ville)'].fillna('nan')
 
+    mask = df_OCR['Structure CRf\n(Ville)'].str.strip() == 'nan'
 
-    df_OCR[["N° Département", "Nom du Département"]] = (
-        df_OCR["Nom du Département"]
-        .str.strip()
-        .str.split("-", n=1, expand=True)
+    df_OCR.loc[mask, 'Structure CRf\n(Ville)'] = (
+        'DT ' + df_OCR.loc[mask, 'Nom du Département']
     )
 
-
-    df_OCR["N° Département"] = df_OCR["N° Département"].str.strip()
-    df_OCR["Nom du Département"] = df_OCR["Nom du Département"].str.strip()
-
+    df_OCR["Structure CRf\n(Ville)"] = df_OCR["Structure CRf\n(Ville)"].replace(mapping)
 
     return df_OCR
 
@@ -326,22 +325,15 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
 def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
     df = df_OCR.copy()
 
-
     df = df[df["Statut"].isin(["En cours", "Projet"])]
     df = df[df["Année"] == "2025-2026"]
 
-
     df = df[
-        ["Année", "Statut", "Nom du Département", "N° Département", "Structure CRf\n(Ville)"]
+        ["Année", "Statut", "Nom du Département", "Numéro du Département", "Structure CRf\n(Ville)"]
     ]
 
 
-    df = rapprochement_libelles(
-        df_ref_structure,
-        df,
-        'Structure CRf\n(Ville)'
-    )
-
+    df = rapprochement_libelles(df_ref_structure, df, "Structure CRf\n(Ville)")
 
     mask = df["n_structure"] == ""
     mapping_dict = (
@@ -352,9 +344,7 @@ def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
         .to_dict()
     )
 
-
-    df.loc[mask, "n_structure"] = df.loc[mask, "N° Département"].map(mapping_dict)
-
+    df.loc[mask, "n_structure"] = df.loc[mask, "Numéro du Département"].map(mapping_dict)
 
     df = df["n_structure"].value_counts().reset_index()
     df = df.rename(columns={"count": "OCR Nb_deployees"})

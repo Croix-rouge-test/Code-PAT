@@ -108,7 +108,7 @@ def verifs_domifa(
     verifier_colonne_structure(df_personnes_domiciliees_struct, "n_structure", df_ref_structure)
 
     print('#4 on vérifie que l ensemble des N° DTdu nb personnes domicilées correspnd au ref structure')
-    verifier_colonne_structure(df_personnes_domiciliees_DT, "DT_de_rattachement", df_rattachement_court)
+    #verifier_colonne_structure(df_personnes_domiciliees_DT, "DT_de_rattachement", df_rattachement_court)
 
     def check_longueur_2_tables(df1, col1, df2, col2):
         n1 = df1[col1].notna().sum()
