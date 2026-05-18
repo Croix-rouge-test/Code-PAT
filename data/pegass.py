@@ -440,7 +440,7 @@ def rows_not_in_merge(df_left: pd.DataFrame, df_right: pd.DataFrame, id_col: str
 
 
 
-def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2025"):
+def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2026"):
     """
     Charge les tables BigQuery nécessaires et renvoie tous les DataFrames importés
     (et ref_structure1 calculé comme dans ton code).
@@ -455,19 +455,19 @@ def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2
 
     query = f"""
     SELECT *
-    FROM `{project_id}.{dataset_id}.crf_pat_2025_pegass_activite`
+    FROM `{project_id}.{dataset_id}.crf_pat_2026_pegass_activite`
     """
     df_pegass_activite = client.query(query).to_dataframe()
 
     query = f"""
     SELECT *
-    FROM `{project_id}.{dataset_id}.crf_pat_2025_pegass_activite_seance`
+    FROM `{project_id}.{dataset_id}.crf_pat_2026_pegass_activite_seance`
     """
     df_pegass_activite_seance = client.query(query).to_dataframe()
 
     query = f"""
     SELECT *
-    FROM `{project_id}.{dataset_id}.crf_pat_2025_pegass_activite_seance_inscription`
+    FROM `{project_id}.{dataset_id}.crf_pat_2026_pegass_activite_seance_inscription`
     """
     df_pegass_activite_seance_inscription = client.query(query).to_dataframe()
 

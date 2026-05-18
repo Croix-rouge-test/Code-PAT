@@ -14,7 +14,7 @@ def clean_impact(client,df_ref_structure):
 
   query_impact = """
   SELECT *
-  FROM crf-pat.dataset_PAT_2025.crf_pat_2025_impact_indicateur_suivi
+  FROM crf-pat.dataset_PAT_2026.crf_pat_2026_impact_indicateur_suivi
   """
 
 
@@ -33,7 +33,7 @@ def fusion_impact(df_impact, df_ref_impact):
   #FTILRE SUR ANNEE 2025
 
   # Filtrage : date nulle ou année = 2025
-  df_impact = df_impact[ (df_impact['impact_date_debut'].dt.year == 2025)]
+  df_impact = df_impact[ (df_impact['impact_date_debut'].dt.year == 2026)]
   # left = pd.merge(df1, df2, on="id", how="left")
 
    # 🔎 Vérification du nombre de lignes après filtre
@@ -168,7 +168,7 @@ def indicateurs_impact_agrementDPS(df_IMPACT):
     print(f"Nombre de structures agrégées : {len(IMPACT_agrementDPS)}")
 
     # Somme totale nationale
-    total_agrements = IMPACT_agrementDPS['Secours Nb_agrements_DPS_2025'].sum()
+    total_agrements = IMPACT_agrementDPS['Secours Nb_agrements_DPS_2026'].sum()
     print(f"Somme totale agréments DPS : {total_agrements}")
 
     return IMPACT_agrementDPS

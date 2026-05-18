@@ -5,13 +5,13 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
-def import_table_GAIA_date_fixe(client, project_id="crf-pat", dataset_id="dataset_PAT_2025"):
+def import_table_GAIA_date_fixe(client, project_id="crf-pat", dataset_id="dataset_PAT_2026"):
     """
     Charge la table GAIA nécessaires et renvoie le DataFrame importé.
     """
     query = f"""
     SELECT *
-    FROM `{project_id}.{dataset_id}.crf_pat_2025_rattachement_benevole`
+    FROM `{project_id}.{dataset_id}.crf_pat_2026_rattachement_benevole`
     """
 
     df_rattachement_benevole = client.query(query).to_dataframe()
@@ -43,7 +43,7 @@ def import_table_GAIA_date_fixe(client, project_id="crf-pat", dataset_id="datase
 def clean_gaia(client, df_ref_structure):
   query_gaia = """
   SELECT *
-  FROM crf-pat.dataset_PAT_2025.crf_pat_2025_rattachement_benevole
+  FROM crf-pat.dataset_PAT_2026.crf_pat_2026_rattachement_benevole
   """
   df_gaia_rattachement_benevole = client.query(query_gaia).to_dataframe()
   # Vérification que la colonne est au format datetime

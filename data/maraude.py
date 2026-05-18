@@ -9,7 +9,7 @@ def import_maraude(client):
     """
     query = """
     SELECT *
-    FROM `crf-pat.dataset_PAT_2025.crf_pat_2025_maraude`
+    FROM `crf-pat.dataset_PAT_2026.crf_pat_2026_maraude`
     """
     df_maraude = client.query(query).to_dataframe()
 

@@ -14,7 +14,7 @@ def clean_nomination(client, df_ref_structure):
 
   query_nomination = """
   SELECT *
-  FROM crf-pat.dataset_PAT_2025.crf_pat_2025_nomination
+  FROM crf-pat.dataset_PAT_2026.crf_pat_2026_nomination
   """
   df_ref_nomination = client.query(query_ref_nomination).to_dataframe()
   df_nomination = client.query(query_nomination).to_dataframe()
@@ -26,12 +26,12 @@ def clean_nomination(client, df_ref_structure):
 
 
 def fusion_nomination(df_nomination, df_ref_nomination):
-  #FTILRE SUR ANNEE NULLE OU FIN EN 2025
+  #FTILRE SUR ANNEE NULLE OU FIN EN 2026
 
 
-  # Filtrage : date nulle ou année = 2025
+  # Filtrage : date nulle ou année = 2026
   df_nomination = df_nomination[
-      df_nomination['nomination_date_fin_nomination'].isna() | (df_nomination['nomination_date_fin_nomination'].dt.year == 2025)
+      df_nomination['nomination_date_fin_nomination'].isna() | (df_nomination['nomination_date_fin_nomination'].dt.year == 2026)
   ]
 
 
@@ -49,7 +49,7 @@ def fusion_nomination(df_nomination, df_ref_nomination):
 
 
 
-def indicateurs_nomination_AEO(df_NOMINATION,df_nivols_gaia, annee=2025):
+def indicateurs_nomination_AEO(df_NOMINATION,df_nivols_gaia, annee=2026):
     # Filtre sur les libellés appropriés
     libelles_AEO = ["RTAAD", "RLAAD", "RLACOR", "RLACORA"]
     referents_AEO = df_NOMINATION[
@@ -74,7 +74,7 @@ def indicateurs_nomination_AEO(df_NOMINATION,df_nivols_gaia, annee=2025):
 
 
 
-def indicateurs_nomination_OCR(df_NOMINATION, df_nivols_gaia, annee=2025):
+def indicateurs_nomination_OCR(df_NOMINATION, df_nivols_gaia, annee=2026):
     # Filtre sur les libellés appropriés
     libelles_OCR = ["RTOCR", "RLOCR"]
     referents_OCR = df_NOMINATION[
