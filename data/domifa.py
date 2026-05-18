@@ -38,7 +38,6 @@ def clean_domifa(client,df_ref_structure):
   #Rapprochement libelles
   df_domiciliation = rapprochement_libelles(ref_structure1, df_domiciliation, "Structure")
   df_domiciliation['n_structure'] = df_domiciliation['n_structure'].astype(str).astype(int)
-  df_domiciliation = pd.merge(df_domiciliation, df_ref_structure[["n_structure", "DT_de_rattachement"]].drop_duplicates(), on="n_structure", how="left")
 
   return df_domiciliation, df_rattachement_court
 
