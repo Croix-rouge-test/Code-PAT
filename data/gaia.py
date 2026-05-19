@@ -53,7 +53,7 @@ def clean_gaia(client, df_ref_structure, target_date="2025-12-31"):
   
   query_gaia = f"""
   SELECT *
-  FROM "crf-pat".{dataset_id}.crf_pat_{year}_rattachement_benevole
+  FROM crf-pat.{dataset_id}.crf_pat_{year}_rattachement_benevole
   """
   df_gaia_rattachement_benevole = client.query(query_gaia).to_dataframe()
   # Vérification que la colonne est au format datetime

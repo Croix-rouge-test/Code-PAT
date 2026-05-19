@@ -501,8 +501,9 @@ def import_tables_PEGASS(client,target_date = '2025-12-31',  project_id="crf-pat
 
     # Renommage colonnes (comme ton code)
     df_ref_action_groupe_action.columns = ["action_id_fk", "ACTION_LIBELLE", "GROUPE_ACTION_ID_FK"]
+    df_pegass_activite["PEGASS_ACTIVITE_DATE_DEBUT"] = pd.to_datetime(df_pegass_activite["PEGASS_ACTIVITE_DATE_DEBUT"], errors="coerce")
 
-    df_pegass_activite = df_pegass_activite[(df_pegass_activite["PEGASS_ACTIVITE_DATE_DEBUT"].dt.year == year) & (df_pegass_activite["PEGASS_ACTIVITE_DATE_DEBUT"].dt.year <= target)]
+    df_pegass_activite = df_pegass_activite[(df_pegass_activite["PEGASS_ACTIVITE_DATE_DEBUT"].dt.year == year) & (df_pegass_activite["PEGASS_ACTIVITE_DATE_DEBUT"] <= target)]
 
 
     return (
