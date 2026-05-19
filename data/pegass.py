@@ -446,10 +446,12 @@ def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2
     (et ref_structure1 calculé comme dans ton code).
     """
 
+    dataset_id_2025 = "dataset_PAT_2025"
+
     # ---- Imports ----
     query = f"""
     SELECT *
-    FROM `{project_id}.{dataset_id}.crf_activite_ref_activite_benevole`
+    FROM `{project_id}.{dataset_id_2025}.crf_activite_ref_activite_benevole`
     """
     df_ref_activite_benevole = client.query(query).to_dataframe()
 
@@ -473,7 +475,7 @@ def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2
 
     query = f"""
     SELECT *
-    FROM `{project_id}.{dataset_id}.Ref_structure`
+    FROM `{project_id}.{dataset_id_2025}.Ref_structure`
     """
     df_ref_structure = client.query(query).to_dataframe()
 
@@ -485,13 +487,13 @@ def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT_2
 
     query = f"""
     SELECT *
-    FROM `{project_id}.{dataset_id}.rattachement_court`
+    FROM `{project_id}.{dataset_id_2025}.rattachement_court`
     """
     df_rattachement_court = client.query(query).to_dataframe()
 
     query = f"""
     SELECT *
-    FROM `{project_id}.{dataset_id}.crf_as_ref_action_groupe_action`
+    FROM `{project_id}.{dataset_id_2025}.crf_as_ref_action_groupe_action`
     """
     df_ref_action_groupe_action = client.query(query).to_dataframe()
 
