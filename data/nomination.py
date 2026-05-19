@@ -25,13 +25,13 @@ def clean_nomination(client, df_ref_structure):
   return df_ref_nomination, df_nomination
 
 
-def fusion_nomination(df_nomination, df_ref_nomination):
-  #FTILRE SUR ANNEE NULLE OU FIN EN 2026
+def fusion_nomination(df_nomination, df_ref_nomination, target_year=2025):
+  #FTILRE SUR ANNEE NULLE OU FIN EN target_year
 
 
-  # Filtrage : date nulle ou année = 2026
+  # Filtrage : date nulle ou année = target_year
   df_nomination = df_nomination[
-      df_nomination['nomination_date_fin_nomination'].isna() | (df_nomination['nomination_date_fin_nomination'].dt.year == 2026)
+      df_nomination['nomination_date_fin_nomination'].isna() | (df_nomination['nomination_date_fin_nomination'].dt.year == target_year)
   ]
 
 

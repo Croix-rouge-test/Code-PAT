@@ -29,11 +29,11 @@ def clean_impact(client,df_ref_structure):
   return df_ref_impact, df_impact
 
 
-def fusion_impact(df_impact, df_ref_impact):
-  #FTILRE SUR ANNEE 2025
+def fusion_impact(df_impact, df_ref_impact, target_year=2025):
+  #FTILRE SUR ANNEE target_year
 
-  # Filtrage : date nulle ou année = 2025
-  df_impact = df_impact[ (df_impact['impact_date_debut'].dt.year == 2026)]
+  # Filtrage : date nulle ou année = target_year
+  df_impact = df_impact[ (df_impact['impact_date_debut'].dt.year == target_year)]
   # left = pd.merge(df1, df2, on="id", how="left")
 
    # 🔎 Vérification du nombre de lignes après filtre
