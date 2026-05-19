@@ -3,21 +3,26 @@ import pandas as pd
 # ---------------------------------------------------------------------
 # Import
 # ---------------------------------------------------------------------
-def import_maraude(client):
+def import_maraude(client, target_date="2025-12-31"):
     """
     Charge les données Maraude + rattachement_court depuis BigQuery.
     """
-    query = """
+
+    target = pd.Timestamp(target_date)
+    year = target.year
+    query = f"""
     SELECT *
-    FROM `crf-pat.dataset_PAT_2026.crf_pat_2026_maraude`
+    FROM `crf-pat.dataset_PAT_{year}.crf_pat_{year}_maraude`
     """
     df_maraude = client.query(query).to_dataframe()
 
-    query = """
+    query = f"""
     SELECT *
-    FROM `crf-pat.dataset_PAT_2025.rattachement_court`
+    FROM `crf-pat.dataset_PAT_{year}.rattachement_court`
     """
     df_rattachement_court = client.query(query).to_dataframe()
+
+    df_maraude = df_maraude[df_maraude["maraude_date_debut"].dt.year == year]
 
     return df_maraude, df_rattachement_court
 
@@ -96,9 +101,6 @@ def prep_nb_maraudes_sigma(df, filtre_annee_fn=None):
     d = d.drop_duplicates()
     d = d.loc[d["maraude_statut"] == "FINISHED"].copy()
 
-    if filtre_annee_fn is not None:
-        filtre_annee_fn(d, "maraude_date_debut")
-
     return d
 
 
@@ -127,9 +129,6 @@ def prep_nb_personnes_rencontrees_sigma(df, filtre_annee_fn=None):
     d = d.drop_duplicates()
     d = d.loc[d["maraude_statut"] == "FINISHED"].copy()
     d = d.loc[d["maraude_rencontre_contact_realise"] == "Oui"].copy()
-
-    if filtre_annee_fn is not None:
-        filtre_annee_fn(d, "maraude_date_debut")
 
     return d
 

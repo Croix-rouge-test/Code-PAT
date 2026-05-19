@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
 
-def clean_impact(client,df_ref_structure):
+def clean_impact(client,df_ref_structure, target_date="2025-12-31"):
 
   query_ref_impact = """
   SELECT *
@@ -17,23 +17,26 @@ def clean_impact(client,df_ref_structure):
   FROM crf-pat.dataset_PAT_2026.crf_pat_2026_impact_indicateur_suivi
   """
 
+  target = pd.Timestamp(target_date)
+  year = target.year
 
   df_ref_impact = client.query(query_ref_impact).to_dataframe()
   df_impact = client.query(query_impact).to_dataframe()
   # Vérification que la colonne est au format datetime
   df_impact['impact_date_fin'] = pd.to_datetime(df_impact['impact_date_fin'], errors='coerce')
   df_impact['impact_date_debut'] = pd.to_datetime(df_impact['impact_date_debut'], errors='coerce')
+  # Filtrage : date nulle ou année = target_year
+  df_impact = df_impact[ (df_impact['impact_date_debut'].dt.year == year) & ((df_impact['impact_date_fin'] <= target))]
   _ , _ , _, df_impact = apply_rattachement_successif(df_ref_structure, df_impact, col = 'impact_structure_id_fk')
 
 
   return df_ref_impact, df_impact
 
 
-def fusion_impact(df_impact, df_ref_impact, target_year=2025):
+def fusion_impact(df_impact, df_ref_impact):
   #FTILRE SUR ANNEE target_year
 
-  # Filtrage : date nulle ou année = target_year
-  df_impact = df_impact[ (df_impact['impact_date_debut'].dt.year == target_year)]
+
   # left = pd.merge(df1, df2, on="id", how="left")
 
    # 🔎 Vérification du nombre de lignes après filtre

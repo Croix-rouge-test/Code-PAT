@@ -440,11 +440,15 @@ def rows_not_in_merge(df_left: pd.DataFrame, df_right: pd.DataFrame, id_col: str
 
 
 
-def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT"):
+def import_tables_PEGASS(client,target_date = '2025-12-31',  project_id="crf-pat"):
     """
     Charge les tables BigQuery nécessaires et renvoie tous les DataFrames importés
     (et ref_structure1 calculé comme dans ton code).
     """
+    target = pd.Timestamp(target_date)
+    year = target.year
+
+    dataset_id = f"dataset_PAT_{year}"
 
     # ---- Imports ----
     query = f"""
@@ -497,6 +501,8 @@ def import_tables_PEGASS(client, project_id="crf-pat", dataset_id="dataset_PAT")
 
     # Renommage colonnes (comme ton code)
     df_ref_action_groupe_action.columns = ["action_id_fk", "ACTION_LIBELLE", "GROUPE_ACTION_ID_FK"]
+
+    df_pegass_activite = df_pegass_activite[(df_pegass_activite["PEGASS_ACTIVITE_DATE_DEBUT"].dt.year == year) & (df_pegass_activite["PEGASS_ACTIVITE_DATE_DEBUT"].dt.year <= target)]
 
 
     return (
@@ -642,7 +648,7 @@ def calcul_PEGASS_indicateurs(
     nb_Ecrivain_public_Pegass = indicator_nb_activites(
         nb_activite_Pegass,
         Ecrivain_public,
-        "AEO activite__ecrivain_public_fixe"
+        "AEO activite_ecrivain_public_fixe"
     )
 
 
@@ -675,7 +681,7 @@ def calcul_PEGASS_indicateurs(
     # Calcul Action Menée et non menée pour Ecrivain public
     nb_Ecrivain_public_Pegass1  = add_statut_action(
         nb_Ecrivain_public_Pegass,
-        col_nb="AEO activite__ecrivain_public_fixe",
+        col_nb="AEO activite_ecrivain_public_fixe",
         out_col="AEO Structure_ecrivain_public_fixe",
         label_yes="Ecrivain public",
         treat_zero_as_no=True
