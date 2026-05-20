@@ -623,9 +623,9 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
 
     result = pd.merge(result, df_nb_aptes, on = col_groupby, how = 'outer')
 
-    for code, nb, alias in [('PSE1','Secours Nb_PSE1', 'Secours Taux_recy26_PSE1'),
-                        ('PSE2', 'Secours Nb_PSE2', 'Secours Taux_recy26_PSE2'),
-                        ('CI','Secours Nb_CI', 'Secours Taux_recy26_CI')]:
+    for code, nb, alias in [('PSE1','Secours Nb_PSE1', f'Secours Taux_recy{year+1-2000}26_PSE1'),
+                        ('PSE2', 'Secours Nb_PSE2', f'Secours Taux_recy{year+1-2000}26_PSE2'),
+                        ('CI','Secours Nb_CI', f'Secours Taux_recy{year+1-2000}26_CI')]:
         mask = result[nb] < result['nb_recy_'+code]
         print(f"nb_recy_{code} : {result['nb_recy_'+code].sum()}")
 
@@ -640,7 +640,7 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
       )
 
     result = result.reset_index()
-    return result[[col_groupby, 'Secours Taux_recy26_PSE1', 'Secours Taux_recy26_PSE2', 'Secours Taux_recy26_CI']]
+    return result[[col_groupby, f'Secours Taux_recy{year+1-2000}26_PSE1', f'Secours Taux_recy{year+1-2000}26_PSE2', f'Secours Taux_recy{year+1-2000}26_CI']]
 
 def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
     """
@@ -679,9 +679,9 @@ def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
 
     result = pd.merge(result, df_nb_aptes, on = col_groupby, how = 'outer')
 
-    for code, nb, alias in [('PSE1','Secours Nb_PSE1', 'Secours Taux_ren25_PSE1'),
-                        ('PSE2', 'Secours Nb_PSE2', 'Secours Taux_ren25_PSE2'),
-                        ('CI','Secours Nb_CI', 'Secours Taux_ren25_CI')]:
+    for code, nb, alias in [('PSE1','Secours Nb_PSE1', f'Secours Taux_ren{year-2000}_PSE1'),
+                        ('PSE2', 'Secours Nb_PSE2', f'Secours Taux_ren{year-2000}_PSE2'),
+                        ('CI','Secours Nb_CI', f'Secours Taux_ren{year-2000}_CI')]:
         mask = result[nb] < result['nb_ren_'+code]
         print(f"nb_ren_{code} : {result['nb_ren_'+code].sum()}")
 
@@ -695,7 +695,7 @@ def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
       )
 
     result = result.reset_index()
-    return result[[col_groupby, 'Secours Taux_ren25_PSE1', 'Secours Taux_ren25_PSE2', 'Secours Taux_ren25_CI']]
+    return result[[col_groupby, f'Secours Taux_ren{year-2000}_PSE1', f'Secours Taux_ren{year-2000}_PSE2', f'Secours Taux_ren{year-2000}_CI']]
 
 
 # ------------------------------
@@ -1266,11 +1266,11 @@ def correction_indic_BC_DT(df_ref_structure, indicateurs_base_contact, indicateu
           'Secours Nb_sessions_FPSE', 'Secours Nb_PSE1', 'Secours Nb_PSE2',
           'Secours Nb_CI', 'Formation_grand_public Nb_FPSC',
           'Formation_grand_public Nb_AGQS', 'Formation_grand_public Nb_FIPSEN',
-          'Secours Taux_recy26_PSE1', 'Secours Taux_recy26_PSE2',
-          'Secours Taux_recy26_CI', 'Secours Taux_ren25_PSE1',
-          'Secours Taux_ren25_PSE2', 'Secours Taux_ren25_CI',
+          f'Secours Taux_recy{year+1-2000}_PSE1', f'Secours Taux_recy{year+1-2000}_PSE2',
+          f'Secours Taux_recy{year+1-2000}_CI', f'Secours Taux_ren{year-2000}_PSE1',
+          f'Secours Taux_ren{year-2000}_PSE2', f'Secours Taux_ren{year-2000}_CI',
           'Maraude Nb_benevoles_actifs_formes', 'Secours Taux_IS_actifs',
-          'Structure Nb_nvx_formes_CRB_2025',
+          f'Structure Nb_nvx_formes_CRB_{year}',
           'Dispositifs_d_urgence Structures_menant_activite_TCAU',
           'Dispositifs_d_urgence Structures_menant_activite_PSP',
           'Dispositifs_d_urgence Structures_menant_activite_GQS']].copy()
