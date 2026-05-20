@@ -140,7 +140,7 @@ def indicateurs_impact_agrementAB(df_IMPACT):
 
 
 
-def indicateurs_impact_agrementDPS(df_IMPACT):
+def indicateurs_impact_agrementDPS(df_IMPACT, year):
     # Filtre sur les libellés appropriés
     libelles_Urgences = [10119, 10125, 10126, 10127, 10128, 10129, 10115, 10132, 10133, 10134, 10135, 10136, 10137]
     IMPACT_Urgences = df_IMPACT[df_IMPACT["impact_indicateur_activite_benevole_id_fk"].isin(libelles_Urgences)]
@@ -165,13 +165,13 @@ def indicateurs_impact_agrementDPS(df_IMPACT):
 
     IMPACT_agrementDPS = (
     IMPACT_Urgences
-    .groupby('impact_structure_id_fk')['impact_reponse'].sum().reset_index(name='Secours Nb_agrements_DPS_2025'))
+    .groupby('impact_structure_id_fk')['impact_reponse'].sum().reset_index(name='Secours Nb_agrements_DPS_' + str(year)))
     IMPACT_agrementDPS = IMPACT_agrementDPS.rename(columns ={'impact_structure_id_fk': 'n_structure'})
 
     print(f"Nombre de structures agrégées : {len(IMPACT_agrementDPS)}")
 
     # Somme totale nationale
-    total_agrements = IMPACT_agrementDPS['Secours Nb_agrements_DPS_2026'].sum()
+    total_agrements = IMPACT_agrementDPS['Secours Nb_agrements_DPS_' + str(year)].sum()
     print(f"Somme totale agréments DPS : {total_agrements}")
 
     return IMPACT_agrementDPS
@@ -227,7 +227,7 @@ def indicateurs_IMPACTagrementAB_DT(IMPACT_agrementAB, rattachement_court):
 
 
 
-def indicateurs_IMPACTagrementDPS_DT(IMPACT_agrementDPS, rattachement_court):
+def indicateurs_IMPACTagrementDPS_DT(IMPACT_agrementDPS, rattachement_court, year):
     # Merge données avec rattachement_court
     df_IMPACT_agrementDPS = pd.merge(
     IMPACT_agrementDPS,
@@ -238,12 +238,12 @@ def indicateurs_IMPACTagrementDPS_DT(IMPACT_agrementDPS, rattachement_court):
 
 
     # Groupby sur DT_de_rattachement
-    IMPACT_agrementDPS_DT = (df_IMPACT_agrementDPS.groupby('DT_de_rattachement')['Secours Nb_agrements_DPS_2025'].sum()).reset_index()
+    IMPACT_agrementDPS_DT = (df_IMPACT_agrementDPS.groupby('DT_de_rattachement')['Secours Nb_agrements_DPS_' + str(year)].sum()).reset_index()
     
     print(f"Nombre de structures agrégées : {len(IMPACT_agrementDPS_DT)}")
 
     # Somme totale nationale
-    total_agrementDPS_DT = IMPACT_agrementDPS_DT['Secours Nb_agrements_DPS_2025'].sum()
+    total_agrementDPS_DT = IMPACT_agrementDPS_DT['Secours Nb_agrements_DPS_' + str(year)].sum()
     print(f"Somme totale agréments DPS DT: {total_agrementDPS_DT}")
     
     return IMPACT_agrementDPS_DT

@@ -22,6 +22,8 @@ def import_maraude(client, target_date="2025-12-31"):
     """
     df_rattachement_court = client.query(query).to_dataframe()
 
+    df_maraude["maraude_date_debut"] = pd.to_datetime(df_maraude["maraude_date_debut"], errors="coerce")
+
     df_maraude = df_maraude[df_maraude["maraude_date_debut"].dt.year == year]
 
     return df_maraude, df_rattachement_court

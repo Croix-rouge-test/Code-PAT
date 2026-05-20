@@ -34,13 +34,6 @@ def clean_nomination(client, df_ref_structure, target_date="2025-12-31"):
 def fusion_nomination(df_nomination, df_ref_nomination):
   #FTILRE SUR ANNEE NULLE OU FIN EN target_year
 
-
-  # Filtrage : date nulle ou année = target_year
-  df_nomination = df_nomination[
-      df_nomination['nomination_date_fin_nomination'].isna() | (df_nomination['nomination_date_fin_nomination'].dt.year == target_year)
-  ]
-
-
   df_NOMINATION = pd.merge(
      df_nomination,
      df_ref_nomination,

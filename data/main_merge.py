@@ -472,3 +472,39 @@ def vision_conso(df_alldata, df_alldata_DT):
   df_alldata_DT = pd.merge(df_alldata_DT, df_grouped, on='DT_de_rattachement', how='left')  
 
   return df_alldata, df_alldata_DT
+
+
+def ajouter_au_all_data(all_data, df, nom_bloc="", cle="n_structure"):
+
+    if df is None or df.empty:
+        print(f"⚠️ {nom_bloc} : dataframe vide ou absent")
+        return all_data
+
+    if cle not in df.columns:
+        raise ValueError(f"❌ {nom_bloc} : la colonne {cle} est absente")
+
+    all_data = all_data.set_index(cle)
+    df = df.set_index(cle)
+
+    # Colonnes déjà existantes → mise à jour sans changer l'ordre
+    colonnes_existantes = [
+        c for c in df.columns if c in all_data.columns
+    ]
+
+    if colonnes_existantes:
+        print(f"⚠️ {nom_bloc} : remplacement colonnes {colonnes_existantes}")
+        all_data.update(df[colonnes_existantes])
+
+    # Nouvelles colonnes
+    nouvelles_colonnes = [
+        c for c in df.columns if c not in all_data.columns
+    ]
+
+    if nouvelles_colonnes:
+        all_data = all_data.join(df[nouvelles_colonnes])
+
+    all_data = all_data.reset_index()
+
+    print(f"✅ {nom_bloc} ajouté au all_data")
+
+    return all_data

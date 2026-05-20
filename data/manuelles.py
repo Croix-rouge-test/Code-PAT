@@ -366,12 +366,11 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_CAICHUCMCC_conventions,
     df_raw_Textile,
     df_CRope,
-    #df_raw_ProdResTextile,
     df_ref_structure
 ):
     df_OCR_clean = clean_OCR(df_OCR)
     df_PST_clean = clean_PST(df_PST)
-    df_declenchement_clean = clean_declenchement(df_declenchement, df_conventions)
+    df_declenchement_clean = clean_declenchement(df_declenchement, df_CAICHUCMCC_conventions)
     df_redcall_clean = clean_redcall(df_redcall)
     df_CAIconv_clean = clean_CAIconv(df_CAICHUCMCC_conventions)
     df_raw_Textile_clean = clean_raw_Textile(df_raw_Textile, df_ref_structure)
@@ -911,7 +910,7 @@ def Textile_DT(df_raw_Textile, rattachement_court):
     textile = pd.merge(df_raw_Textile, rattachement_court, on="n_structure", how="left")
 
     # Groupby sur DT_de_rattachement
-    Textile_DT = (textile.groupby('DT_de_rattachement')['Textile Nb_dispositifs'].sum())
+    Textile_DT = (textile.groupby('DT_de_rattachement')[["Textile Nb_boutiques","Textile Nb_vestiaires"]].sum())
     return Textile_DT
 
 
@@ -921,15 +920,25 @@ def verif_textile(df_raw_Textile_c, df_raw_Textile, df_Textile_DT, df_ref_struct
 
 
 
-  if df_Textile_DT.reset_index()['Textile Nb_dispositifs'].sum() == df_t.shape[0]:
+  if df_Textile_DT.reset_index()['Textile Nb_boutiques'].sum() == df_t.shape[0]:
     print('✅ df_Textile_DT est bien calculé (suomme de l indicateur == au nombre de lignes des données)')
   else:
-    print('❌ df_Textile_DT n\'est pas bien calculé (suomme de l indicateur != au nombre de lignes des données), différence :', df_Textile_DT.reset_index()['Textile Nb_dispositifs'].sum() - df_raw_Textile_c.shape[0])
+    print('❌ df_Textile_DT n\'est pas bien calculé (suomme de l indicateur != au nombre de lignes des données), différence :', df_Textile_DT.reset_index()['Textile Nb_boutiques'].sum() - df_raw_Textile_c.shape[0])
 
-  if df_raw_Textile['Textile Nb_dispositifs'].sum() == df_t.shape[0]:
+  if df_raw_Textile['Textile Nb_boutiques'].sum() == df_t.shape[0]:
     print('✅ df_Textile_DT est bien calculé (suomme de l indicateur == au nombre de lignes des données)')
   else:
-    print('❌ df_Textile_DT n\'est pas bien calculé (suomme de l indicateur != au nombre de lignes des données), différence :', df_Textile_DT.reset_index()['Textile Nb_dispositifs'].sum() - df_raw_Textile_c.shape[0])
+    print('❌ df_Textile_DT n\'est pas bien calculé (suomme de l indicateur != au nombre de lignes des données), différence :', df_Textile_DT.reset_index()['Textile Nb_boutiques'].sum() - df_raw_Textile_c.shape[0])
+
+  if df_Textile_DT.reset_index()['Textile Nb_vestiaires'].sum() == df_t.shape[0]:
+    print('✅ df_Textile_DT est bien calculé (suomme de l indicateur == au nombre de lignes des données)')
+  else:
+    print('❌ df_Textile_DT n\'est pas bien calculé (suomme de l indicateur != au nombre de lignes des données), différence :', df_Textile_DT.reset_index()['Textile Nb_vestiaires'].sum() - df_raw_Textile_c.shape[0])
+
+  if df_raw_Textile['Textile Nb_vestiaires'].sum() == df_t.shape[0]:
+    print('✅ df_Textile_DT est bien calculé (suomme de l indicateur == au nombre de lignes des données)')
+  else:
+    print('❌ df_Textile_DT n\'est pas bien calculé (suomme de l indicateur != au nombre de lignes des données), différence :', df_Textile_DT.reset_index()['Textile Nb_vestiaires'].sum() - df_raw_Textile_c.shape[0])
 
   verifier_colonne_structure(df_raw_Textile, "n_structure", df_ref_structure)
   # verifier_colonne_structure(df_raw_ProdResTextile, "n_structure", df_ref_structure)
