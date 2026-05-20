@@ -623,9 +623,9 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
 
     result = pd.merge(result, df_nb_aptes, on = col_groupby, how = 'outer')
 
-    for code, nb, alias in [('PSE1','Secours Nb_PSE1', f'Secours Taux_recy{year+1-2000}26_PSE1'),
-                        ('PSE2', 'Secours Nb_PSE2', f'Secours Taux_recy{year+1-2000}26_PSE2'),
-                        ('CI','Secours Nb_CI', f'Secours Taux_recy{year+1-2000}26_CI')]:
+    for code, nb, alias in [('PSE1','Secours Nb_PSE1', f'Secours Taux_recy{year+1-2000}_PSE1'),
+                        ('PSE2', 'Secours Nb_PSE2', f'Secours Taux_recy{year+1-2000}_PSE2'),
+                        ('CI','Secours Nb_CI', f'Secours Taux_recy{year+1-2000}_CI')]:
         mask = result[nb] < result['nb_recy_'+code]
         print(f"nb_recy_{code} : {result['nb_recy_'+code].sum()}")
 
@@ -640,7 +640,7 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
       )
 
     result = result.reset_index()
-    return result[[col_groupby, f'Secours Taux_recy{year+1-2000}26_PSE1', f'Secours Taux_recy{year+1-2000}26_PSE2', f'Secours Taux_recy{year+1-2000}26_CI']]
+    return result[[col_groupby, f'Secours Taux_recy{year+1-2000}_PSE1', f'Secours Taux_recy{year+1-2000}_PSE2', f'Secours Taux_recy{year+1-2000}_CI']]
 
 def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
     """
