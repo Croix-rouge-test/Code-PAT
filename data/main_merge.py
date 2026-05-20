@@ -24,36 +24,32 @@ def merge_left_on_df1(df1, l, on):
 
     return reduce(safe_merge, l, df1)
 
-def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusionner_DT, df_ref_structure,df_ref_structure_DT):
+def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusionner_DT, df_ref_structure,df_ref_structure_DT,year):
   colonnes_indicateurs = ['n_structure',
-    "Financier Prod_2023",
-    "Financier ResNet_2023",
-    "Financier ResCorrProd_2023",
-    "Financier Prod_2024",
-    "Financier ResNet_2024",
-    "Financier ResCorrProd_2024",
-    "Financier Prod_2025",
-    "Financier ResNet_2025",
-    "Financier ResCorrProd_2025",
-    "Financier TresoBrute_2025",
-    "Financier Mois_AvanceTreso_2025",
-    "Financier caf_2025",
+    f"Financier Prod_{year-3}",
+    f"Financier ResNet_{year-3}",
+    f"Financier ResCorrProd_{year-3}",
+    f"Financier Prod_{year-2}",
+    f"Financier ResNet_{year-2}",
+    f"Financier ResCorrProd_{year-2}",
     "Structure Nb_Benevoles",
-    "Structure Nb_nvx_Benevoles_2025",
+    f"Structure Nb_nvx_Benevoles_{year}",
     "Structure Nb_Adherents",
-    "Structure Nb_formes_TCAS_2025",
-    "Structure Nb_formes_CRB_2025",
+    f"Structure Nb_formes_CRB_{year}",
     "Structure Taux_formation_CRB",
-    "Structure Nb_nvx_formes_CRB_2025",
-    "Structure Nb_formateurs_CRB_2025",
-    "Dispositifs_d_urgence Structures_menant_activite_TCAU",
-    "Dispositifs_d_urgence Structures_menant_activite_PSP",
-    "Dispositifs_d_urgence Structures_menant_activite_GQS",
+    f"Structure Nb_nvx_formes_CRB_{year}",
+    f"Structure Nb_formateurs_CRB_{year}",
+    f"Structure Nb_formes_TCAS_{year}",
+
     "Dispositifs_d_urgence Nb_conventions_prefecture",
     "Dispositifs_d_urgence Nb_conventions_operateurs",
-    "Dispositifs_d_urgence Nb_agrements",
+    "Dispositifs_d_urgence Nb_conventions_operateurs_publics",
+    "Dispositifs_d_urgence Nb_conventions_operateurs_prives",
     "Dispositifs_d_urgence Nb_declenchements",
     "Dispositifs_d_urgence Nb_operations",
+    "Dispositifs_d_urgence Nb_jours_operations",
+    "Dispositifs_d_urgence Ope_secours",
+    "Dispositifs_d_urgence Ope_soutien_pop",
     "Dispositifs_d_urgence Nb_personnes_prises_charge",
     "Dispositifs_d_urgence Nb_lots_CAI",
     "Dispositifs_d_urgence Nb_lots_CHU",
@@ -62,42 +58,33 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Dispositifs_d_urgence Utilisation_Minutis",
     "Dispositifs_d_urgence Nb_exercices",
     "Dispositifs_d_urgence PST",
-    "Dispositifs_d_urgence Nb_formes_TCAU_2025",
-    "Dispositifs_d_urgence Nb_formes_TCEO_2025",
-    "Dispositifs_d_urgence Nb_formes_IPSP_2025",
-    "Dispositifs_d_urgence Nb_formes_IRR_2025",
-    "Dispositifs_d_urgence Nb_formes_GQS_2025",
-    "Dispositifs_d_urgence Taux_formation_TCAU_2025",
-    "Dispositifs_d_urgence Taux_formation_IPSP_2025",
-    "Dispositifs_d_urgence Taux_formation_GQS_2025",
-    "Dispositifs_d_urgence Taux_formation_TCEO_2025",
-    "Dispositifs_d_urgence Taux_formation_IRR_2025",
-    "Formation_grand_public Nb_FPSC",
+    f"Dispositifs_d_urgence Taux_formation_TCAU_{year}",
+    f"Dispositifs_d_urgence Taux_formation_PSP_{year}",
+    f"Dispositifs_d_urgence Taux_formation_GQS_{year}",
+    f"Dispositifs_d_urgence Taux_formation_TCEO_{year}",
+    f"Dispositifs_d_urgence Taux_formation_IRR_{year}",
+
     "Formation_grand_public Structures_menant_activite",
-    "Formation_grand_public Produits_2025",
-    "Dispositifs_d_urgence Nb_formes_PSP_2025",
-    "Secours Nb_sessions_PSE",
-    "Secours Nb_sessions_CI",
-    "Secours Nb_sessions_FPSE",
-    "Formation_grand_public Nb_formes_PSC_2025",
-    "Formation_grand_public Nb_sessions_PSC_2025",
-    "Formation_grand_public Nb_FPSC",
-    "Formation_grand_public Nb_formes_GQS_2025",
-    "Formation_grand_public Nb_sessions_GQS_2025",
-    "Formation_grand_public Nb_AGQS",
-    "Formation_grand_public Nb_formes_IPSEN_2025",
-    "Formation_grand_public Nb_sessions_IPSEN_2025",
-    "Formation_grand_public Nb_FIPSEN",
-    "Formation_grand_public Nb_formes_IPS_2025",
-    "Formation_grand_public Nb_sessions_IPS_2025",
-    "Formation_grand_public Nb_formes_PREVIC_2025",
-    "Formation_grand_public Nb_sessions_PREVIC_2025",
     "Formation_grand_public Activite_Conso_Etat",
     "Formation_grand_public Activite_Conso_Non_Etat",
-    "OCR Structures_menant_activite",
+    "Formation_grand_public Produits_2025",
+    f"Formation_grand_public Nb_formes_PSC_{year}",
+    f"Formation_grand_public Nb_formes_GQS_{year}",
+    f"Formation_grand_public Nb_formes_IPSEN_{year}",
+    f"Formation_grand_public Nb_formes_IPS_{year}",
+    "Formation_grand_public Nb_FPSC",
+    "Formation_grand_public Nb_AGQS",
+    "Formation_grand_public Nb_FIPSEN",
+    f"Formation_grand_public Nb_sessions_PSC_{year}",
+    f"Formation_grand_public Nb_sessions_GQS_{year}",
+    f"Formation_grand_public Nb_sessions_IPSEN_{year}",
+    f"Formation_grand_public Nb_sessions_IPS_{year}",
+
     "OCR Nb_deployees",
+    "OCR Structures_menant_activite",
     "OCR Nb_referents",
-    "nb_Maraude_Pegass",
+
+    "Maraude Nb_maraudes_PEGASS",
     "Maraude Nb_maraudes_SIGMA",
     "Maraudes Structures_menant_activite",
     "Maraude Nb_benevoles_actifs",
@@ -106,57 +93,113 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Maraude Nb_SOLIDAR2020",
     "Maraude Nb_contacts",
     "Maraude Nb_personnes_rencontrees",
-    "Secours Produits_DPS_2025",
-    "Secours Structures_menant_activite",
-    "Secours Nb_DPS_2025",
-    "Secours Nb_agrements_DPS_2025",
-    "Secours Taux_IS_actifs",
-    "Secours Nb_PAPS_2025",
-    "Secours Nb_DPS_PE_2025",
-    "Secours Nb_DPS_ME_2025",
-    "Secours Nb_DPS_GE_2025",
+
+    "Secours Nb_IS",
     "Secours Nb_PSE1",
     "Secours Nb_PSE2",
     "Secours Nb_CI",
-    "Secours Taux_recy26_PSE1",
-    "Secours Taux_recy26_PSE2",
-    "Secours Taux_recy26_CI",
-    "Secours Taux_ren25_PSE1",
-    "Secours Taux_ren25_PSE2",
-    "Secours Taux_ren25_CI",
+    "Secours Nb_FPSE",
+    "Secours Taux_recy27_PSE1",
+    "Secours Taux_recy27_PSE2",
+    "Secours Taux_recy27_CI",
+    "Secours Taux_recy27_FPSE",
+    "Secours Taux_ren26_PSE1",
+    "Secours Taux_ren26_PSE2",
+    "Secours Taux_ren26_CI",
+    "Secours Taux_ren26_FPSE",
+    "Secours Taux_IS_actifs",
     "Secours Nb_sessions_PSE",
     "Secours Nb_sessions_CI",
     "Secours Nb_sessions_FPSE",
+    "Secours Nb_DPS_ps_2025",
+    "Secours Nb_PAPS_ps_2025",
+    "Secours Nb_DPS_PE_ps_2025",
+    "Secours Nb_DPS_ME_ps_2025",
+    "Secours Nb_DPS_GE_ps_2025",
+    "Secours Nb_agrements_DPS_2025",
+    "Secours Nb_PAPS_2025",
+    "Secours Nb_DPS_PE_2025",
+    "Secours Nb_DPS_ME_2025",
+    "Secours Nb_DPS_GE_2026",
+    "Secours Produits_DPS_2025",
+    "Secours Structures_menant_activite",
+
     "AEO Structures_menant_activite",
     "AEO Structure_activite_fixe",
     "AEO Structure_activite_mobile",
+    "AEO Nb_activites_fixes",
+    "AEO Nb_activites_mobiles",
+    "AEO Structure_ecrivain_public_fixe",
+    "AEO Structure_domiciliation_fixe",
     "AEO Nb_benevoles_actifs",
     "AEO Nb_responsables",
     "AEO Nb_AAD",
     "AEO Nb_FAAD",
-    "AEO Nb_PA_AEO_AAD",
-    "AEO Nb_personnes_domiciliees_crf",
     "AEO Nb_PA_dispos_mobiles",
-    "AEO Structure_domiciliation_fixe",
-    "AEO Structure_ecrivain_public_fixe",
-    'Activités AAD facultatives',
+    "AEO Nb_personnes_domiciliees_crf",
+
     "Aide_alimentaire Nb_U2A",
     "Aide_alimentaire Nb_Centre_distribution_alimentaire",
     "Aide_alimentaire Nb_epiceries_sociales",
     "Aide_alimentaire Nb_crsr",
-    "Textile Nb_dispositifs",
+    "Aide_alimentaire nb_EBP",
+    "Aide_alimentaire nb_PA",
+    "Aide_alimentaire nb_tonnes",
+    "Aide_alimentaire nb_distributions",
+    "Aide_alimentaire nb_SAH",
+
+    "Textile Structures_menant_activite",
+    "Textile Nb_boutiques",
+    "Textile Nb_vestiaires",
     "Textile Produit_2025",
-    "Textile Resultat_2025",
-    "IS Nb_benevoles_actifs",
-    "Dispositifs_d_urgence Nb_agrements2",
-    "Dispositifs_d_urgence Nb_operations2",
-    "Dispositifs_d_urgence Nb_personnes_prises_charge2",
-    "Dispositifs_d_urgence Nb_exercices2",
-    "Dispositifs_d_urgence Nb_personnes_prises_charge2",
-    "Secours Nb_agrements_DPS_2025_2",
-    'Dispositifs_d_urgence Structures_menant_activite_TCAU',
-    'Dispositifs_d_urgence Structures_menant_activite_PSP',
-    'Dispositifs_d_urgence Structures_menant_activite_GQS'
+    "Textile tracabilite_flux",
+    "Textile Vente_solidaire",
+    "Textile Animateurs_textile",
+
+    f"Financier Prod_{year-1}",
+    f"Financier ResNet_{year-1}",
+    f"Financier Proportion_prodex_{year-1}",
+    f"Financier TresoBrute_{year-1}",
+    f"Financier Mois_AvanceTreso_{year-1}",
+    f"Financier caf_{year-1}",
+
+    "PAT Taux_nvx_formes_CRB",
+    "PAT conv_pref",
+    "PAT conv_total",
+    "PAT conv_public",
+    "PAT conv_prive",
+    "PAT astreinte",
+    "PAT CAI_CHU",
+    "PAT CAI",
+    "PAT CHU",
+    "PAT coup_coeur",
+    "PAT Dispos_urgence_nb_exercices",
+    "PAT Dispos_urgence_PST",
+    "PAT %_TCAU_PSP",
+    "PAT Dispos_urgence_tauxformation_TCAU",
+    "PAT Dispos_urgence_tauxformation_PSP",
+    "PAT Dispos_urgence_tauxformation_GQS",
+
+    "PAT FGP_Nb_formes_PSC",
+    "PAT FGP_Nb_FPSC",
+    "PAT FGP_Nb_AGQS",
+    "PAT FGP_Nb_sessions_PSC",
+    "PAT FGP_Nb_sessions_GQS",
+    "PAT FGP_Nb_sessions_IPS",
+    "PAT FGP_Nb_sessions_IPSEN",
+
+    "PAT OCR_Nb_OCR",
+
+    "PAT Maraudes_Nb_maraudes",
+    "PAT Maraudes_Formes_SOLIDAR2020",
+
+    "PAT DPS_Nb_IS",
+    "PAT DPS_Nb_DPS",
+    "PAT DPS_CA",
+
+    "PAT AEO_Structure_menant_activite",
+    "PAT AEO_Nb_aeo_fixe",
+    "PAT AEO_Nb_aeo_mobile"
   ]
 
   mask = df_ref_structure['n_structure'].to_list()
@@ -242,23 +285,23 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
   return all_data, all_data_DT, liste_df_a_fusionner_toutes_structures, liste_df_a_fusionner_DT
 
 
-def ajouter_colonnes_taux(df: pd.DataFrame, denominateur: str) -> pd.DataFrame:
+def ajouter_colonnes_taux(df: pd.DataFrame, denominateur: str, year: int) -> pd.DataFrame:
     """
     Ajoute des colonnes calculées comme (colonne / denominateur).
 
     Les noms des nouvelles colonnes sont définis en dur dans la fonction.
     """
-    colonnes = ["Dispositifs_d_urgence Nb_formes_TCAU_2025","Dispositifs_d_urgence Nb_formes_TCEO_2025",
-    "Dispositifs_d_urgence Nb_formes_PSP_2025", "Dispositifs_d_urgence Nb_formes_IRR_2025", "Dispositifs_d_urgence Nb_formes_GQS_2025",
-    "Structure Nb_formes_CRB_2025"]
+    colonnes = [f"Dispositifs_d_urgence Nb_formes_TCAU_{year}","Dispositifs_d_urgence Nb_formes_TCEO_{year}",
+    f"Dispositifs_d_urgence Nb_formes_PSP_{year}", f"Dispositifs_d_urgence Nb_formes_IRR_{year}", f"Dispositifs_d_urgence Nb_formes_GQS_{year}",
+    f"Structure Nb_formes_CRB_{year}"]
     # ⚠️ noms hardcodés (modifie-les ici selon ton besoin)
     mapping_noms = {
-        "Dispositifs_d_urgence Nb_formes_TCAU_2025": "Dispositifs_d_urgence Taux_formation_TCAU_2025",
-        "Dispositifs_d_urgence Nb_formes_TCEO_2025": "Dispositifs_d_urgence Taux_formation_TCEO_2025",
-        "Dispositifs_d_urgence Nb_formes_PSP_2025": "Dispositifs_d_urgence Taux_formation_PSP_2025",
-        "Dispositifs_d_urgence Nb_formes_IRR_2025" : "Dispositifs_d_urgence Taux_formation_IRR_2025",
-        "Dispositifs_d_urgence Nb_formes_GQS_2025" : "Dispositifs_d_urgence Taux_formation_GQS_2025",
-        "Structure Nb_formes_CRB_2025" : "Structure Taux_formation_CRB"
+        f"Dispositifs_d_urgence Nb_formes_TCAU_{year}": f"Dispositifs_d_urgence Taux_formation_TCAU_{year}",
+        f"Dispositifs_d_urgence Nb_formes_TCEO_{year}": f"Dispositifs_d_urgence Taux_formation_TCEO_{year}",
+        f"Dispositifs_d_urgence Nb_formes_PSP_{year}": f"Dispositifs_d_urgence Taux_formation_PSP_{year}",
+        f"Dispositifs_d_urgence Nb_formes_IRR_{year}" : f"Dispositifs_d_urgence Taux_formation_IRR_{year}",
+        f"Dispositifs_d_urgence Nb_formes_GQS_{year}" : f"Dispositifs_d_urgence Taux_formation_GQS_{year}",
+        f"Structure Nb_formes_CRB_{year}" : f"Structure Taux_formation_CRB_{year}"
     }
 
     for col in colonnes:
@@ -283,14 +326,14 @@ def ajouter_colonne_somme(df: pd.DataFrame, col1: str, col2: str) -> pd.DataFram
     df[nom_nouvelle_colonne] = df[col1] + df[col2]
     return df
 
-def vision_conso(df_alldata, df_alldata_DT):
+def vision_conso(df_alldata, df_alldata_DT, year):
   # sélection des colonnes pour vision consolidée FPG
 
   formations_certifiantes = [
-      'Formation_grand_public Nb_formes_PSC_2025',
-      'Formation_grand_public Nb_formes_GQS_2025',
-      'Formation_grand_public Nb_sessions_PSC_2025',
-      'Formation_grand_public Nb_sessions_GQS_2025'
+      f'Formation_grand_public Nb_formes_PSC_{year}',
+      f'Formation_grand_public Nb_formes_GQS_{year}',
+      f'Formation_grand_public Nb_sessions_PSC_{year}',
+      f'Formation_grand_public Nb_sessions_GQS_{year}'
   ]
 
   df_alldata['Formation_grand_public Activite_Conso_Etat'] = (
@@ -304,12 +347,12 @@ def vision_conso(df_alldata, df_alldata_DT):
 
 
   formations_non_certifiantes = [
-      'Formation_grand_public Nb_formes_IPSEN_2025',
-      'Formation_grand_public Nb_formes_IPS_2025',
-      'Formation_grand_public Nb_formes_PREVIC_2025',
-      'Formation_grand_public Nb_sessions_IPSEN_2025',
-      'Formation_grand_public Nb_sessions_IPS_2025',
-      'Formation_grand_public Nb_sessions_PREVIC_2025'
+      f'Formation_grand_public Nb_formes_IPSEN_{year}',
+      f'Formation_grand_public Nb_formes_IPS_{year}',
+      f'Formation_grand_public Nb_formes_PREVIC_{year}',
+      f'Formation_grand_public Nb_sessions_IPSEN_{year}',
+      f'Formation_grand_public Nb_sessions_IPS_{year}',
+      f'Formation_grand_public Nb_sessions_PREVIC_{year}'
   ]
 
   df_alldata['Formation_grand_public Activite_Conso_Non_Etat'] = (

@@ -126,7 +126,7 @@ def nb_bene_suivi_form(df_filtered, filtres_bc, col_groupby,target_date):
     """
     target = pd.Timestamp(target_date)
     year = target.year
-    df_res = df_filtered[df_filtered['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui' & pd.to_datetime(df_filtered['FORMATION_DATE_OBTENTION']) <= target].copy()
+    df_res = df_filtered[(df_filtered['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui') & (df_filtered['FORMATION_DATE_OBTENTION'] <= target)].copy()
 
     # Filtre spécial GQS
     filtres_bc['taux_GQS'] = filtres_bc['GQS'] + filtres_bc['PSC'] + filtres_bc['PSE1'] + filtres_bc['PSE2']
@@ -183,7 +183,7 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby, target_date):
     """
     target = pd.Timestamp(target_date)
     year = target.year
-    df_res = df_filtered[df_filtered['FORMATION_RESULTAT'] == 'Apte' & df_filtered['FORMATION_DATE_OBTENTION'] <= target].copy()
+    df_res = df_filtered[(df_filtered['FORMATION_RESULTAT'] == 'Apte') & (df_filtered['FORMATION_DATE_OBTENTION'] <= target)].copy()
 
     indic_filtres = [('Maraude Nb_SOLIDAR', 'all_solidar'),
                        ('Maraude Nb_SOLIDAR2020', 'solidar20'),
@@ -260,13 +260,13 @@ def nb_suivi_form_tous(df, filtres_bc, col_groupby, target_date):
 
         df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
 
-    mask_gqs = df_res['Formation_grand_public Nb_formes_GQS_2025']
-    mask_psc = df_res['Formation_grand_public Nb_formes_PSC_2025']
+    mask_gqs = df_res[f'Formation_grand_public Nb_formes_GQS_{year}']
+    mask_psc = df_res[f'Formation_grand_public Nb_formes_PSC_{year}']
 
     sessions_psc = df_res.loc[mask_psc, 'NIVOL_ID_FK']
 
     df_res.loc[mask_gqs & df_res['NIVOL_ID_FK'].isin(sessions_psc),
-              'Formation_grand_public Nb_formes_GQS_2025'] = False
+              f'Formation_grand_public Nb_formes_GQS_{year}'] = False
 
     def count_unique(group, col_name):
         return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
@@ -325,13 +325,13 @@ def nb_session_form(df_year, filtres_bc, col_groupby, target_date):
 
         df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
 
-    mask_gqs = df_res['Formation_grand_public Nb_sessions_GQS_2025']
-    mask_psc = df_res['Formation_grand_public Nb_sessions_PSC_2025']
+    mask_gqs = df_res[f'Formation_grand_public Nb_sessions_GQS_{year}']
+    mask_psc = df_res[f'Formation_grand_public Nb_sessions_PSC_{year}']
 
     sessions_psc = df_res.loc[mask_psc, 'SESSION_ID_FK']
 
     df_res.loc[mask_gqs & df_res['SESSION_ID_FK'].isin(sessions_psc),
-              'Formation_grand_public Nb_sessions_GQS_2025'] = False
+              f'Formation_grand_public Nb_sessions_GQS_{year}'] = False
 
     def count_unique(group, col_name):
         return group.loc[group[col_name], 'SESSION_ID_FK'].nunique()
@@ -1200,7 +1200,7 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     return indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd
 
 
-def correction_indic_BC_DT(df_ref_structure, indicateurs_base_contact, indicateurs_base_contact_DT):
+def correction_indic_BC_DT(df_ref_structure, indicateurs_base_contact, indicateurs_base_contact_DT, year):
 
     #On définit df_rattachement_structure2
     df_rattachement_structure2 = df_ref_structure[["n_structure","DT_de_rattachement"]]
@@ -1212,10 +1212,10 @@ def correction_indic_BC_DT(df_ref_structure, indicateurs_base_contact, indicateu
     indicateurs_base_contact_2 = indicateurs_base_contact_2[~indicateurs_base_contact_2["DT_de_rattachement"].isna()]
 
     #On ne conserve que les indicateurs qui nous intéressent
-    indicateurs_base_contact_2 = indicateurs_base_contact_2[['DT_de_rattachement',"Formation_grand_public Nb_formes_PSC_2025",
-    "Formation_grand_public Nb_formes_GQS_2025",
-    "Formation_grand_public Nb_formes_IPS_2025",
-    "Formation_grand_public Nb_formes_IPSEN_2025"]]
+    indicateurs_base_contact_2 = indicateurs_base_contact_2[['DT_de_rattachement',f"Formation_grand_public Nb_formes_PSC_{year}",
+    f"Formation_grand_public Nb_formes_GQS_{year}",
+    f"Formation_grand_public Nb_formes_IPS_{year}",
+    f"Formation_grand_public Nb_formes_IPSEN_{year}"]]
 
 
 
@@ -1229,10 +1229,10 @@ def correction_indic_BC_DT(df_ref_structure, indicateurs_base_contact, indicateu
 
     #Passage en Int pour les 4 indicateurs
     cols_to_int = [
-        "Formation_grand_public Nb_formes_PSC_2025",
-        "Formation_grand_public Nb_formes_GQS_2025",
-        "Formation_grand_public Nb_formes_IPS_2025",
-        "Formation_grand_public Nb_formes_IPSEN_2025"
+        f"Formation_grand_public Nb_formes_PSC_{year}",
+        f"Formation_grand_public Nb_formes_GQS_{year}",
+        f"Formation_grand_public Nb_formes_IPS_{year}",
+        f"Formation_grand_public Nb_formes_IPSEN_{year}"
     ]
 
     indicateurs_base_contact_2[cols_to_int] = (
@@ -1244,24 +1244,24 @@ def correction_indic_BC_DT(df_ref_structure, indicateurs_base_contact, indicateu
 
     #On comment les 4 indicateurs différents
     indicateurs_base_contact_DT= indicateurs_base_contact_DT[['n_structure', 'AEO Nb_AAD',
-          'Dispositifs_d_urgence Nb_formes_TCAU_2025',
-          'Dispositifs_d_urgence Nb_formes_TCEO_2025',
-          'Dispositifs_d_urgence Nb_formes_PSP_2025',
-          'Dispositifs_d_urgence Nb_formes_IRR_2025',
-          'Dispositifs_d_urgence Nb_formes_GQS_2025',
-          'Structure Nb_formes_CRB_2025', 'Maraude Nb_SOLIDAR',
+          f'Dispositifs_d_urgence Nb_formes_TCAU_{year}',
+          f'Dispositifs_d_urgence Nb_formes_TCEO_{year}',
+          f'Dispositifs_d_urgence Nb_formes_PSP_{year}',
+          f'Dispositifs_d_urgence Nb_formes_IRR_{year}',
+          f'Dispositifs_d_urgence Nb_formes_GQS_{year}',
+          f'Structure Nb_formes_CRB_{year}', 'Maraude Nb_SOLIDAR',
           'Maraude Nb_SOLIDAR2020', 'AEO Nb_FAAD',
-          'Structure Nb_formateurs_CRB_2025', 'Structure Nb_formes_TCAS_2025',
-          #'Formation_grand_public Nb_formes_PSC_2025',
-          #'Formation_grand_public Nb_formes_GQS_2025',
-          #'Formation_grand_public Nb_formes_IPS_2025',
-          #'Formation_grand_public Nb_formes_IPSEN_2025',
-          'Formation_grand_public Nb_formes_PREVIC_2025',
-          'Formation_grand_public Nb_sessions_PSC_2025',
-          'Formation_grand_public Nb_sessions_GQS_2025',
-          'Formation_grand_public Nb_sessions_IPS_2025',
-          'Formation_grand_public Nb_sessions_IPSEN_2025',
-          'Formation_grand_public Nb_sessions_PREVIC_2025',
+          f'Structure Nb_formateurs_CRB_{year}', f'Structure Nb_formes_TCAS_{year}',
+          #f'Formation_grand_public Nb_formes_PSC_{year}',
+          #f'Formation_grand_public Nb_formes_GQS_{year}',
+          #f'Formation_grand_public Nb_formes_IPS_{year}',
+          #f'Formation_grand_public Nb_formes_IPSEN_{year}',
+          f'Formation_grand_public Nb_formes_PREVIC_{year}',
+          f'Formation_grand_public Nb_sessions_PSC_{year}',
+          f'Formation_grand_public Nb_sessions_GQS_{year}',
+          f'Formation_grand_public Nb_sessions_IPS_{year}',
+          f'Formation_grand_public Nb_sessions_IPSEN_{year}',
+          f'Formation_grand_public Nb_sessions_PREVIC_{year}',
           'Secours Nb_sessions_PSE', 'Secours Nb_sessions_CI',
           'Secours Nb_sessions_FPSE', 'Secours Nb_PSE1', 'Secours Nb_PSE2',
           'Secours Nb_CI', 'Formation_grand_public Nb_FPSC',
