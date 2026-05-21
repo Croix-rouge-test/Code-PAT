@@ -730,7 +730,7 @@ def calcul_PEGASS_indicateurs(
     # Calcul DT
     Indics_pegass_DT = Indics_pegass_struct[[
         "n_structure",
-        "nb_Maraude_Pegass",
+        "Maraude Nb_maraudes_PEGASS",
         "Dispositifs_d_urgence Nb_operations",
         "Dispositifs_d_urgence Nb_exercices",
         "nb_activite_AEO",
@@ -764,7 +764,7 @@ def calcul_PEGASS_indicateurs(
     # netoyage DF structure => j'ai dupliqué et CALER APRES LES VERIFS
     Indics_pegass_struct = Indics_pegass_struct[[
         "n_structure",
-        "nb_Maraude_Pegass",
+        "Maraude Nb_maraudes_PEGASS",
         "Dispositifs_d_urgence Nb_operations",
         "Dispositifs_d_urgence Nb_exercices",
         "AEO Structure_activite_fixe",
