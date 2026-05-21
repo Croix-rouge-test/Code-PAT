@@ -258,9 +258,12 @@ def taux_nvx_benevoles(nb_benevoles, nb_nvx_benevoles, nb_benevoles_DT, nb_nvx_b
 
     return df_merge, df_merge_DT
 
-def calcul_indicateurs_gaia(df_gaia_rattachement_benevole,rattachement_court,year):
-    nb_benevoles = indicateurs_gaia(df_gaia_rattachement_benevole, year)
-    nb_nvx_benevoles = indicateurs_gaia_nvx(df_gaia_rattachement_benevole, year)
+def calcul_indicateurs_gaia(df_gaia_rattachement_benevole,rattachement_court,target_date="2025-12-31"):
+    target = pd.Timestamp(target_date)
+    year = target.year
+    
+    nb_benevoles = indicateurs_gaia(df_gaia_rattachement_benevole, target_date)
+    nb_nvx_benevoles = indicateurs_gaia_nvx(df_gaia_rattachement_benevole, target_date)
     nb_benevoles_DT = indicateurs_gaia_DT(nb_benevoles,rattachement_court)
     nb_nvx_benevoles_DT = indicateurs_gaia_nvx_DT(nb_nvx_benevoles, rattachement_court, year)
     df_indicateurs_gaia,df_indicateurs_gaia_DT = taux_nvx_benevoles(nb_benevoles, nb_nvx_benevoles, nb_benevoles_DT, nb_nvx_benevoles_DT, year)
