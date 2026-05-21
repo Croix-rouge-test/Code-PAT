@@ -911,6 +911,7 @@ def Textile_DT(df_raw_Textile, rattachement_court):
 
     # Groupby sur DT_de_rattachement
     Textile_DT = (textile.groupby('DT_de_rattachement')[["Textile Nb_boutiques","Textile Nb_vestiaires"]].sum())
+    Textile_DT = Textile_DT.reset_index()
     return Textile_DT
 
 

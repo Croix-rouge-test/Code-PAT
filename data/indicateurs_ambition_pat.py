@@ -160,14 +160,13 @@ def charger_indicateurs_ambition_pat(df_indic_ambition, df_ref_structure):
 
     df_ref_structure['n_structure'] = df_ref_structure['n_structure'].astype(int)
     df_DT_ref_structure = df_ref_structure[df_ref_structure["type_structure"].isin(["DELEGATION TERRITORIALE - DT"])]
-    df_DT_ref_structure.head()
     df_DT_ref_structure = df_DT_ref_structure[
-        ["n_structure", "N_dept"]
+        ["n_structure", "n_dept"]
     ].copy()
     df_indic_ambition["DT"] = df_indic_ambition["DT"].replace({
         "986-1": "986",
         "986-2": "986"
     })
-    df_indic_ambition = pd.merge(df_DT_ref_structure, df_indic_ambition, left_on="N_dept", right_on="DT", how="right")
+    df_indic_ambition = pd.merge(df_DT_ref_structure, df_indic_ambition, left_on="n_dept", right_on="DT", how="right")
 
     return df_indic_ambition

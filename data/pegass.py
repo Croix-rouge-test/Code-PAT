@@ -511,7 +511,7 @@ def import_tables_PEGASS(client,target_date = '2025-12-31',  project_id="crf-pat
         df_pegass_activite,
         df_pegass_activite_seance,
         df_pegass_activite_seance_inscription,
-        ref_structure1,
+        # ref_structure1,
         df_rattachement_court,
         df_ref_action_groupe_action
     )
@@ -522,7 +522,7 @@ def import_tables_PEGASS(client,target_date = '2025-12-31',  project_id="crf-pat
 
 def calcul_PEGASS_indicateurs(
     df_ref_structure,
-    ref_structure1,
+    # ref_structure1,
     df_ref_action_groupe_action,
     df_ref_activite_benevole,
     df_pegass_activite,
@@ -655,7 +655,7 @@ def calcul_PEGASS_indicateurs(
 
     nb_Maraude_Pegass_verif = nb_Maraude_Pegass1
 
-    ref_structure1 = filter_ul_dt(ref_structure1)
+    ref_structure1 = filter_ul_dt(df_ref_structure)
     ref_structure2 = ref_structure1[["n_structure", "DT_de_rattachement"]]
 
     # 1) merge avec ref struct et structure de ratachement
@@ -724,7 +724,7 @@ def calcul_PEGASS_indicateurs(
     )
 
 
-    ref_structure2 = filter_ul_dt(ref_structure1)
+    ref_structure2 = filter_ul_dt(df_ref_structure)
     Indics_pegass_struct = pd.merge(Indics_pegass_struct, ref_structure2, on="n_structure", how="inner")
 
     # Calcul DT

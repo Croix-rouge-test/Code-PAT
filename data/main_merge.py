@@ -349,10 +349,10 @@ def vision_conso(df_alldata, df_alldata_DT, year):
   formations_non_certifiantes = [
       f'Formation_grand_public Nb_formes_IPSEN_{year}',
       f'Formation_grand_public Nb_formes_IPS_{year}',
-      f'Formation_grand_public Nb_formes_PREVIC_{year}',
+      #f'Formation_grand_public Nb_formes_PREVIC_{year}',
       f'Formation_grand_public Nb_sessions_IPSEN_{year}',
       f'Formation_grand_public Nb_sessions_IPS_{year}',
-      f'Formation_grand_public Nb_sessions_PREVIC_{year}'
+      #f'Formation_grand_public Nb_sessions_PREVIC_{year}'
   ]
 
   df_alldata['Formation_grand_public Activite_Conso_Non_Etat'] = (
