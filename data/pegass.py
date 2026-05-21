@@ -614,7 +614,7 @@ def calcul_PEGASS_indicateurs(
     nb_Maraude_Pegass1 = indicator_nb_activites(
         nb_activite_Pegass,
         Activite_maraude,
-        "nb_Maraude_Pegass"
+        "Maraude Nb_maraudes_PEGASS"
     )
 
     # Opérations
