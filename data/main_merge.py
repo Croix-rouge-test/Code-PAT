@@ -132,7 +132,7 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Secours Nb_DPS_PE_ps_2025",
     "Secours Nb_DPS_ME_ps_2025",
     "Secours Nb_DPS_GE_ps_2025",
-    "Secours Nb_agrements_DPS_2025",
+    f"Secours Nb_agrements_DPS_{year}",
     "Secours Nb_PAPS_2025",
     "Secours Nb_DPS_PE_2025",
     "Secours Nb_DPS_ME_2025",
@@ -300,7 +300,7 @@ def ajouter_colonnes_taux(df: pd.DataFrame, denominateur: str, year: int) -> pd.
 
     Les noms des nouvelles colonnes sont définis en dur dans la fonction.
     """
-    colonnes = [f"Dispositifs_d_urgence Nb_formes_TCAU_{year}","Dispositifs_d_urgence Nb_formes_TCEO_{year}",
+    colonnes = [f"Dispositifs_d_urgence Nb_formes_TCAU_{year}",f"Dispositifs_d_urgence Nb_formes_TCEO_{year}",
     f"Dispositifs_d_urgence Nb_formes_PSP_{year}", f"Dispositifs_d_urgence Nb_formes_IRR_{year}", f"Dispositifs_d_urgence Nb_formes_GQS_{year}",
     f"Structure Nb_formes_CRB_{year}"]
     # ⚠️ noms hardcodés (modifie-les ici selon ton besoin)
@@ -425,7 +425,7 @@ def vision_conso(df_alldata, df_alldata_DT, year):
     (('Secours Nb_DPS_2025','Secours Nb_PAPS_2025','Secours Nb_DPS_PE_2025','Secours Nb_DPS_ME_2025','Secours Nb_DPS_GE_2025'), 'Secours Structures_menant_activite'),
     (('Secours Nb_PSE1','Secours Nb_PSE2','Secours Nb_CI'), 'Secours Structures_menant_activite_formes'),
     (('Secours Nb_sessions_PSE','Secours Nb_sessions_CI','Secours Nb_sessions_FPSE'), 'Secours Structures_menant_activite_sessions'),
-    (('nb_Maraude_Pegass',), 'Maraudes Structures_menant_activite'),
+    (('Maraude Nb_maraudes_PEGASS',), 'Maraudes Structures_menant_activite'),
     # (('Dispositifs_d_urgence Nb_formes_TCAU_2025',), 'Dispositifs_d_urgence Structures_menant_activite_TCAU'),
     # (('Dispositifs_d_urgence Nb_formes_PSP_2025',), 'Dispositifs_d_urgence Structures_menant_activite_PSP'),
     # (('Dispositifs_d_urgence Nb_formes_GQS_2025',), 'Dispositifs_d_urgence Structures_menant_activite_GQS'),
