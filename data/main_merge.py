@@ -40,6 +40,7 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     f"Structure Nb_nvx_formes_CRB_{year}",
     f"Structure Nb_formateurs_CRB_{year}",
     f"Structure Nb_formes_TCAS_{year}",
+    "Structure Taux_nvx_Benevoles",
 
     "Dispositifs_d_urgence Nb_conventions_prefecture",
     "Dispositifs_d_urgence Nb_conventions_operateurs",
@@ -397,7 +398,7 @@ def vision_conso(df_alldata, df_alldata_DT, year):
       'OCR Nb_deployees',
       'Maraude Nb_maraudes_SIGMA',
       # 'Secours Nb_DPS_2025',
-      'Textile Nb_dispositifs',
+      #'Textile Nb_dispositifs',
       'Aide_alimentaire Nb_U2A'
   ]
 

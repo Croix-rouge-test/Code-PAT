@@ -227,8 +227,41 @@ def indicateurs_gaia_nvx_DT(nb_nvx_benevoles, rattachement_court):
     return nb_nvx_benevoles_DT
 
 
+def taux_nvx_benevoles(nb_benevoles, nb_nvx_benevoles, nb_benevoles_DT, nb_nvx_benevoles_DT, year):
 
+    """Calcul du taux de nouveaux bénévoles par DT et au niveau national et merge les autres indicateurs dans un unique dataframe"""
 
+    # Merge des deux DataFrames sur DT_de_rattachement
+    df_merge = pd.merge(
+        nb_benevoles_DT,
+        nb_nvx_benevoles_DT,
+        on="n_structure",
+        how="outer"
+    )
+
+    # Calcul du taux de nouveaux bénévoles
+    df_merge["Structure Taux_nvx_Benevoles"] = (df_merge[f"Structure Nb_nvx_Benevoles_{year}"] / df_merge["Structure Nb_Benevoles"]) * 100
+
+    # Merge des deux DataFrames sur DT_de_rattachement
+    df_merge_DT = pd.merge(
+        nb_benevoles_DT,
+        nb_nvx_benevoles_DT,
+        on="DT_de_rattachement",
+        how="outer"
+    )
+
+    # Calcul du taux de nouveaux bénévoles
+    df_merge_DT["Structure Taux_nvx_Benevoles"] = (df_merge_DT[f"Structure Nb_nvx_Benevoles_{year}"] / df_merge_DT["Structure Nb_Benevoles"]) * 100
+
+    return df_merge, df_merge_DT
+
+def calcul_indicateurs_gaia(df_gaia_rattachement_benevole,rattachement_court,year):
+    nb_benevoles = indicateurs_gaia(df_gaia_rattachement_benevole)
+    nb_nvx_benevoles = indicateurs_gaia_nvx(df_gaia_rattachement_benevole)
+    nb_benevoles_DT = indicateurs_gaia_DT(nb_benevoles,rattachement_court)
+    nb_nvx_benevoles_DT = indicateurs_gaia_nvx_DT(nb_nvx_benevoles, rattachement_court)
+    df_indicateurs_gaia,df_indicateurs_gaia_DT = taux_nvx_benevoles(nb_benevoles, nb_nvx_benevoles, nb_benevoles_DT, nb_nvx_benevoles_DT, year)
+    return df_indicateurs_gaia, df_indicateurs_gaia_DT
 
 
 
