@@ -153,6 +153,7 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "AEO Nb_FAAD",
     "AEO Nb_PA_dispos_mobiles",
     "AEO Nb_personnes_domiciliees_crf",
+    "Activités AAD facultatives",
 
     "Aide_alimentaire Nb_U2A",
     "Aide_alimentaire Nb_Centre_distribution_alimentaire",
@@ -426,6 +427,7 @@ def vision_conso(df_alldata, df_alldata_DT, year):
     (('Secours Nb_PSE1','Secours Nb_PSE2','Secours Nb_CI'), 'Secours Structures_menant_activite_formes'),
     (('Secours Nb_sessions_PSE','Secours Nb_sessions_CI','Secours Nb_sessions_FPSE'), 'Secours Structures_menant_activite_sessions'),
     (('Maraude Nb_maraudes_PEGASS',), 'Maraudes Structures_menant_activite'),
+    (('Textile Nb_boutiques', 'Textile Nb_vestiaires'), 'Textile Structures_menant_activite'),
     # (('Dispositifs_d_urgence Nb_formes_TCAU_2025',), 'Dispositifs_d_urgence Structures_menant_activite_TCAU'),
     # (('Dispositifs_d_urgence Nb_formes_PSP_2025',), 'Dispositifs_d_urgence Structures_menant_activite_PSP'),
     # (('Dispositifs_d_urgence Nb_formes_GQS_2025',), 'Dispositifs_d_urgence Structures_menant_activite_GQS'),
