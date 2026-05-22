@@ -423,7 +423,7 @@ def vision_conso(df_alldata, df_alldata_DT, year):
 
   colonnes_nb_structure = [
     (('OCR Nb_deployees',), 'OCR Structures_menant_activite'),
-    (('Secours Nb_DPS_2025','Secours Nb_PAPS_2025','Secours Nb_DPS_PE_2025','Secours Nb_DPS_ME_2025','Secours Nb_DPS_GE_2025'), 'Secours Structures_menant_activite'),
+    # (('Secours Nb_DPS_2025','Secours Nb_PAPS_2025','Secours Nb_DPS_PE_2025','Secours Nb_DPS_ME_2025','Secours Nb_DPS_GE_2025'), 'Secours Structures_menant_activite'),
     (('Secours Nb_PSE1','Secours Nb_PSE2','Secours Nb_CI'), 'Secours Structures_menant_activite_formes'),
     (('Secours Nb_sessions_PSE','Secours Nb_sessions_CI','Secours Nb_sessions_FPSE'), 'Secours Structures_menant_activite_sessions'),
     (('Maraude Nb_maraudes_PEGASS',), 'Maraudes Structures_menant_activite'),
