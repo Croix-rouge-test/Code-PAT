@@ -361,8 +361,6 @@ def clean_CR_operations(df):
 def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR,
     df_PST,
-    df_declenchement,
-    df_redcall,
     df_CAICHUCMCC_conventions,
     df_raw_Textile,
     df_CRope,

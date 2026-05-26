@@ -408,7 +408,7 @@ def vision_conso(df_alldata, df_alldata_DT, year):
       'Maraude Nb_maraudes_SIGMA',
       # 'Secours Nb_DPS_2025',
       #'Textile Nb_dispositifs',
-      'Aide_alimentaire Nb_U2A'
+      #'Aide_alimentaire Nb_U2A'
   ]
 
   df_alldata[colonnes_non_menee] = df_alldata[colonnes_non_menee].astype(str)

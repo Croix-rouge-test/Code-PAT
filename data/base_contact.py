@@ -30,6 +30,9 @@ filtres_bc = {
         'RECPSE2' : ['RECPSE2', 'FCPSE2'],
         'CI' : ['CI P1 P2', 'CI','CIP2' ,'RECCI', 'REC PSECI' ,'RECPSECI', 'FCCI'], #'RATCI', 'CIP1','CI EXT' 
         'CI_i' : ['CI', 'CI P1 P2', 'CI P1', 'CI P2', 'CI EXT', 'RATCI'],
+        'FPSE': ['FPSE'],
+        'FPSE_i': ['FPSE'],
+        'RECFPSE': ['RECFPSE'],
         'RECCI' : ['RECCI', 'REC PSECI', 'RECPSECI'],
         'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'], #ajout de 'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'
         'GQS' : ['GQS', 'GQS AC', 'FIPS', 'FIPS2'],
@@ -37,7 +40,9 @@ filtres_bc = {
         'IPS' : ['IPS', 'IPS SR', 'IPSE', 'IPSEF', 'IPSJ', 'IPSJP', 'IPSM', 'IPSP', 'IPS AC'],
         'PREVIC' : ['PREVIC'],
         'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE'], #ajout de 'PICF FPS', 'PICF FPSE'
-        'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2']
+        'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2'],
+        'FTEX' : ['FTEX']
+
         }
 
 
@@ -189,7 +194,8 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby, target_date):
                        ('Maraude Nb_SOLIDAR2020', 'solidar20'),
                        ('AEO Nb_FAAD', 'FAAD'),
                        (f'Structure Nb_formateurs_CRB_{year}', 'ACRB'),
-                       (f'Structure Nb_formes_TCAS_{year}', 'TCAS')]
+                       (f'Structure Nb_formes_TCAS_{year}', 'TCAS'),
+                       ('Textile Animateurs_textile', 'FTEX')]
     indic_liste = [col for col, _ in indic_filtres]
     # Ajouter colonnes booléennes par filtre
     for name, code in indic_filtres:
@@ -429,7 +435,7 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby, target_date):
 
     df_res = df_res[
         df_res['FORMATION_CODE'].isin(
-            filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
+            filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI'] + filtres_bc['FPSE']
         )
     ]
 
@@ -441,7 +447,6 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby, target_date):
     set_pse1 = set(nivols['LISTE_PSE1'])
     set_pse2 = set(nivols['LISTE_PSE2'])
     set_ci = set(nivols['LISTE_CI'])
-
     # ======================
     # Colonnes indicateurs
     # ======================
@@ -460,6 +465,10 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby, target_date):
         df_res['NIVOL_ID_FK'].isin(set_ci)
     )
 
+    df_res['Secours Nb_FPSE'] = (
+        df_res['FORMATION_CODE'].isin(filtres_bc['FPSE'])
+    )
+
     # ======================
     # Vérification des codes
     # ======================
@@ -470,7 +479,8 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby, target_date):
     for name, code in [
         ('Secours Nb_PSE1', 'PSE1'),
         ('Secours Nb_PSE2', 'PSE2'),
-        ('Secours Nb_CI', 'CI')
+        ('Secours Nb_CI', 'CI'),
+        ('Secours Nb_FPSE', 'FPSE')
     ]:
 
         codes_attendus = set(filtres_bc.get(code, []))
@@ -494,7 +504,8 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby, target_date):
         .apply(lambda g: pd.Series({
             'Secours Nb_PSE1': count_unique(g, g['Secours Nb_PSE1']),
             'Secours Nb_PSE2': count_unique(g, g['Secours Nb_PSE2']),
-            'Secours Nb_CI': count_unique(g, g['Secours Nb_CI'])
+            'Secours Nb_CI': count_unique(g, g['Secours Nb_CI']),
+            'Secours Nb_FPSE': count_unique(g, g['Secours Nb_FPSE'])
         }))
         .reset_index()
     )
@@ -505,11 +516,13 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby, target_date):
     print("\n===== Somme globale par indicateur =====")
 
     totaux = result[
-        ['Secours Nb_PSE1', 'Secours Nb_PSE2', 'Secours Nb_CI']
+        ['Secours Nb_PSE1', 'Secours Nb_PSE2', 'Secours Nb_CI', 'Secours Nb_FPSE']
     ].sum()
 
     for col in totaux.index:
         print(f"{col} : {totaux[col]}")
+
+    result['Secours Nb_IS'] = result['Secours Nb_PSE1'] + result['Secours Nb_PSE2'] + result['Secours Nb_CI']
 
     return result
 
@@ -603,16 +616,18 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
     set_ci = set(nivols['LISTE_CI'])
 
     mask = (
-        (df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) & df_res['NIVOL_ID_FK'].isin(set_pse1)) |
-        (df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) & df_res['NIVOL_ID_FK'].isin(set_pse2)) |
-        (df_res['FORMATION_CODE'].isin(filtres_bc['CI']) & df_res['NIVOL_ID_FK'].isin(set_ci))
+        ((df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) & df_res['NIVOL_ID_FK'].isin(set_pse1))) |
+        ((df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) & df_res['NIVOL_ID_FK'].isin(set_pse2))) |
+        ((df_res['FORMATION_CODE'].isin(filtres_bc['CI']) & df_res['NIVOL_ID_FK'].isin(set_ci))) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['FPSE'])
     )
 
     df_res = df_res.loc[mask]
 
     for code, alias in [('RECPSE1', 'nb_recy_PSE1'),
                         ('RECPSE2', 'nb_recy_PSE2'),
-                        ('RECCI', 'nb_recy_CI')]:
+                        ('RECCI', 'nb_recy_CI'),
+                        ('FPSE', 'nb_recy_FPSE')]:
         taux = df_res.groupby(col_groupby).apply(
             lambda g: g[
                 g['FORMATION_CODE'].isin(filtres_bc[code]) &
@@ -625,7 +640,8 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
 
     for code, nb, alias in [('PSE1','Secours Nb_PSE1', f'Secours Taux_recy{year+1-2000}_PSE1'),
                         ('PSE2', 'Secours Nb_PSE2', f'Secours Taux_recy{year+1-2000}_PSE2'),
-                        ('CI','Secours Nb_CI', f'Secours Taux_recy{year+1-2000}_CI')]:
+                        ('CI','Secours Nb_CI', f'Secours Taux_recy{year+1-2000}_CI'),
+                        ('FPSE','Secours Nb_FPSE', f'Secours Taux_recy{year+1-2000}_FPSE')]:
         mask = result[nb] < result['nb_recy_'+code]
         print(f"nb_recy_{code} : {result['nb_recy_'+code].sum()}")
 
@@ -640,7 +656,7 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
       )
 
     result = result.reset_index()
-    return result[[col_groupby, f'Secours Taux_recy{year+1-2000}_PSE1', f'Secours Taux_recy{year+1-2000}_PSE2', f'Secours Taux_recy{year+1-2000}_CI']]
+    return result[[col_groupby, f'Secours Taux_recy{year+1-2000}_PSE1', f'Secours Taux_recy{year+1-2000}_PSE2', f'Secours Taux_recy{year+1-2000}_CI', f'Secours Taux_recy{year+1-2000}_FPSE']]
 
 def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
     """
@@ -659,16 +675,18 @@ def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
     set_ci = set(nivols['LISTE_CI'])
 
     mask = (
-        (df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) & df_res['NIVOL_ID_FK'].isin(set_pse1)) |
-        (df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) & df_res['NIVOL_ID_FK'].isin(set_pse2)) |
-        (df_res['FORMATION_CODE'].isin(filtres_bc['CI']) & df_res['NIVOL_ID_FK'].isin(set_ci))
+        ((df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) & df_res['NIVOL_ID_FK'].isin(set_pse1))) |
+        ((df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) & df_res['NIVOL_ID_FK'].isin(set_pse2))) |
+        ((df_res['FORMATION_CODE'].isin(filtres_bc['CI']) & df_res['NIVOL_ID_FK'].isin(set_ci))) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['FPSE']) |
     )
 
     df_res = df_res.loc[mask]
 
     for code, alias in [('PSE1_i', 'nb_ren_PSE1'),
                         ('PSE2_i', 'nb_ren_PSE2'),
-                        ('CI_i', 'nb_ren_CI')]:
+                        ('CI_i', 'nb_ren_CI'),
+                        ('FPSE_i', 'nb_ren_FPSE')]:
         taux = df_res.groupby(col_groupby).apply(
             lambda g: g[
                 g['FORMATION_CODE'].isin(filtres_bc[code]) &
@@ -681,7 +699,8 @@ def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
 
     for code, nb, alias in [('PSE1','Secours Nb_PSE1', f'Secours Taux_ren{year-2000}_PSE1'),
                         ('PSE2', 'Secours Nb_PSE2', f'Secours Taux_ren{year-2000}_PSE2'),
-                        ('CI','Secours Nb_CI', f'Secours Taux_ren{year-2000}_CI')]:
+                        ('CI','Secours Nb_CI', f'Secours Taux_ren{year-2000}_CI'),
+                        ('FPSE','Secours Nb_FPSE', f'Secours Taux_ren{year-2000}_FPSE')]:
         mask = result[nb] < result['nb_ren_'+code]
         print(f"nb_ren_{code} : {result['nb_ren_'+code].sum()}")
 
@@ -695,7 +714,7 @@ def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
       )
 
     result = result.reset_index()
-    return result[[col_groupby, f'Secours Taux_ren{year-2000}_PSE1', f'Secours Taux_ren{year-2000}_PSE2', f'Secours Taux_ren{year-2000}_CI']]
+    return result[[col_groupby, f'Secours Taux_ren{year-2000}_PSE1', f'Secours Taux_ren{year-2000}_PSE2', f'Secours Taux_ren{year-2000}_CI', f'Secours Taux_ren{year-2000}_FPSE']]
 
 
 # ------------------------------
@@ -1264,7 +1283,7 @@ def correction_indic_BC_DT(df_ref_structure, indicateurs_base_contact, indicateu
           f'Formation_grand_public Nb_sessions_PREVIC_{year}',
           'Secours Nb_sessions_PSE', 'Secours Nb_sessions_CI',
           'Secours Nb_sessions_FPSE', 'Secours Nb_PSE1', 'Secours Nb_PSE2',
-          'Secours Nb_CI', 'Formation_grand_public Nb_FPSC',
+          'Secours Nb_CI', 'Secours Nb_IS', 'Formation_grand_public Nb_FPSC',
           'Formation_grand_public Nb_AGQS', 'Formation_grand_public Nb_FIPSEN',
           f'Secours Taux_recy{year+1-2000}_PSE1', f'Secours Taux_recy{year+1-2000}_PSE2',
           f'Secours Taux_recy{year+1-2000}_CI', f'Secours Taux_ren{year-2000}_PSE1',

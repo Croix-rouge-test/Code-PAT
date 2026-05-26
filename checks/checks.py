@@ -13,7 +13,7 @@ def main():
 
     # Initialisation du client gspread et import des dataframes all_data contenant l'output de la pipeline
     client = client_gspread()
-    df_UL, df_DT = import_dataframes('https://docs.google.com/spreadsheets/d/1maXN8FgvkzZEjivAfj5uRdCSnWOa_OQdekEXVAVGrgg/', client)
+    df_UL, df_DT = import_dataframes('https://docs.google.com/spreadsheets/d/1pmEUcLvVOK3t7TWmXL6cN0uTWJ9kPgIwd2x3hy14Alk/', client)
     df_UL_sans_IN = df_UL[df_UL['n_structure'] != 1]
 
     df_IN = df_UL[df_UL['n_structure'] == 1]
@@ -40,8 +40,8 @@ def main():
     )
 
     # Les colonnes à ignorer
-    skip_columns = ['n_structure', 'type_structure', 'nom_structure', 'adresse_physique_cp', 'code_insee', 'adresse_physique_commune', 
-                    'adresse_complete', 'n_dept', 'date_demarrage_activite_ben_struct', 'date_arret_activite_struct', 'Structure_de_rattachement', 'Structure_de_rattachement.1', 
+    skip_columns = ['n_structure','n_structure-ratt', 'type_structure', 'nom_structure', 'adresse_physique_cp', 'code_insee', 'adresse_physique_commune', 
+                    'adresse_complete', 'n_dept', 'date_demarrage_activite_ben_struct', 'date_arret_activite_struct', 'Structure_de_rattachement','Rattachements_successifs', 'Structure_de_rattachement.1', 
                     'DT_de_rattachement', 'lon', 'lat', 'Formation_grand_public Activite_Conso_Etat', 'Formation_grand_public Activite_Conso_Non_Etat', 
                     'OCR Structures_menant_activite', 'Secours Structures_menant_activite', 'Secours Structures_menant_activite_formes', 'Secours Structures_menant_activite_sessions', 
                     'Maraudes Structures_menant_activite', 'AEO Structures_menant_activite', 'Formation_grand_public Structures_menant_activite' , 'AEO Structure_activite_mobile', 

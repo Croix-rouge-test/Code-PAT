@@ -42,7 +42,7 @@ def charger_indicateurs_ambition_pat(df_indic_ambition, df_ref_structure):
         "Nb d'AEO fixe*",
         "Nb d'AEO mobile*"
     ]
-   
+
     df_indic_ambition = df_indic_ambition[colonnes_a_conserver].copy()
     df_indic_ambition
 
@@ -156,17 +156,21 @@ def charger_indicateurs_ambition_pat(df_indic_ambition, df_ref_structure):
     df_indic_ambition["PAT conv_total"] = df_indic_ambition[["PAT conv_prive", "PAT conv_public"]].sum(axis=1, skipna=True)
 
     # ajout de N structure
-   
+
 
     df_ref_structure['n_structure'] = df_ref_structure['n_structure'].astype(int)
     df_DT_ref_structure = df_ref_structure[df_ref_structure["type_structure"].isin(["DELEGATION TERRITORIALE - DT"])]
     df_DT_ref_structure = df_DT_ref_structure[
         ["n_structure", "n_dept"]
     ].copy()
-    df_indic_ambition["DT"] = df_indic_ambition["DT"].replace({
-        "986-1": "986",
-        "986-2": "986"
-    })
-    df_indic_ambition = pd.merge(df_DT_ref_structure, df_indic_ambition, left_on="n_dept", right_on="DT", how="right")
+    # df_indic_ambition["DT"] = df_indic_ambition["DT"].replace({
+    #     "986-1": "986",
+    #     "986-2": "986"
+    # })
+    df_DT_ref_structure.loc[df_DT_ref_structure['n_structure'] == 4303, 'n_dept'] = '986-1'
+    df_DT_ref_structure.loc[df_DT_ref_structure['n_structure'] == 3884, 'n_dept'] = '986-2'
+    df_indic_ambition = pd.merge(df_DT_ref_structure, df_indic_ambition, left_on="n_dept", right_on="DT", how="outer")
 
+    df_indic_ambition.loc[df_indic_ambition['n_structure'] == 4303, 'n_dept'] = '986'
+    df_indic_ambition.loc[df_indic_ambition['n_structure'] == 3884, 'n_dept'] = '986'
     return df_indic_ambition

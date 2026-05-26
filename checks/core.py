@@ -402,6 +402,28 @@ def group_ul_by_dt(
     df_grouped = df_grouped.set_index('__dt_key__')
     return df_grouped
  
+
+def _ensure_scalar_value(value, df_name: str, key, column: str):
+    """Convertit une valeur extraite en scalaire et fournit un message détaillé en cas d'erreur."""
+    if isinstance(value, pd.Series):
+        raise ValueError(
+            f"Valeur non scalaire détectée dans {df_name} pour la clé={key!r}, colonne={column!r}. "
+            f"{len(value)} lignes correspondent à cette clé. Indexs concernés: {list(value.index)}. "
+            "Vérifier les doublons dans la clé de jointure ou les valeurs de la colonne."
+        )
+    if isinstance(value, pd.DataFrame):
+        raise ValueError(
+            f"Valeur non scalaire (DataFrame) détectée dans {df_name} pour la clé={key!r}, colonne={column!r}."
+        )
+    if pd.isna(value):
+        return 0.0
+    try:
+        return float(value)
+    except Exception as exc:
+        raise ValueError(
+            f"Impossible de convertir en float la valeur de {df_name} pour la clé={key!r}, colonne={column!r}: {value!r}"
+        ) from exc
+ 
  
 # ---------------------------------------------------------------------------
 # 3. Comparaison ligne par ligne
@@ -445,7 +467,12 @@ def compare_dt_row_by_row(
     df_dt = df_DT.copy()
 
     df_dt['__dt_key__'] = df_dt[dt_key_dt].astype(int).astype(str)
-    print(set(df_dt['__dt_key__']))
+    if df_dt['__dt_key__'].duplicated().any():
+        duplicated_keys = sorted(df_dt['__dt_key__'][df_dt['__dt_key__'].duplicated()].unique())
+        raise ValueError(
+            f"Clés DT dupliquées détectées dans df_DT après normalisation : {duplicated_keys}. "
+            "Vérifier la colonne de jointure n_structure et les valeurs de la table DT."
+        )
     df_dt = df_dt.set_index('__dt_key__')
  
     # --- Grouper df_UL ---
@@ -475,13 +502,11 @@ def compare_dt_row_by_row(
     rows = []
     for key in common_keys:
         for col in columns:
-            print(col)
             v_dt = df_dt.loc[key, col] if col in df_dt.columns else float('nan')
             v_ul = df_ul_grouped.loc[key, col] if col in df_ul_grouped.columns else float('nan')
  
-            # NaN -> 0
-            v_dt = 0.0 if pd.isna(v_dt) else float(v_dt)
-            v_ul = 0.0 if pd.isna(v_ul) else float(v_ul)
+            v_dt = _ensure_scalar_value(v_dt, 'df_DT', key, col)
+            v_ul = _ensure_scalar_value(v_ul, 'df_UL groupé', key, col)
  
             diff = _calculate_difference(v_dt, v_ul)
             rows.append({
