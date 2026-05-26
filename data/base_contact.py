@@ -618,10 +618,10 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
     set_ci = set(nivols['LISTE_CI'])
 
     mask = (
-        ((df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) & df_res['NIVOL_ID_FK'].isin(set_pse1))) |
-        ((df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) & df_res['NIVOL_ID_FK'].isin(set_pse2))) |
-        ((df_res['FORMATION_CODE'].isin(filtres_bc['CI']) & df_res['NIVOL_ID_FK'].isin(set_ci))) |
-        (df_res['FORMATION_CODE'].isin(filtres_bc['FPSE'])
+        (df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) & df_res['NIVOL_ID_FK'].isin(set_pse1)) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) & df_res['NIVOL_ID_FK'].isin(set_pse2)) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['CI']) & df_res['NIVOL_ID_FK'].isin(set_ci)) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['FPSE']))
     )
 
     df_res = df_res.loc[mask]
@@ -677,10 +677,10 @@ def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
     set_ci = set(nivols['LISTE_CI'])
 
     mask = (
-        ((df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) & df_res['NIVOL_ID_FK'].isin(set_pse1))) |
-        ((df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) & df_res['NIVOL_ID_FK'].isin(set_pse2))) |
-        ((df_res['FORMATION_CODE'].isin(filtres_bc['CI']) & df_res['NIVOL_ID_FK'].isin(set_ci))) |
-        (df_res['FORMATION_CODE'].isin(filtres_bc['FPSE']) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) & df_res['NIVOL_ID_FK'].isin(set_pse1)) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) & df_res['NIVOL_ID_FK'].isin(set_pse2)) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['CI']) & df_res['NIVOL_ID_FK'].isin(set_ci)) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['FPSE'])) |
     )
 
     df_res = df_res.loc[mask]
