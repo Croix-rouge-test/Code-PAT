@@ -41,7 +41,8 @@ filtres_bc = {
         'PREVIC' : ['PREVIC'],
         'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE'], #ajout de 'PICF FPS', 'PICF FPSE'
         'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2'],
-        'FTEX' : ['FTEX']
+        'FTEX' : ['FTEX'],
+        'SAH' : ['SAH', 'TASA']
 
         }
 
@@ -195,7 +196,8 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby, target_date):
                        ('AEO Nb_FAAD', 'FAAD'),
                        (f'Structure Nb_formateurs_CRB_{year}', 'ACRB'),
                        (f'Structure Nb_formes_TCAS_{year}', 'TCAS'),
-                       ('Textile Animateurs_textile', 'FTEX')]
+                       ('Textile Animateurs_textile', 'FTEX'),
+                       ('Aide_alimentaire nb_SAH' , 'SAH')]
     indic_liste = [col for col, _ in indic_filtres]
     # Ajouter colonnes booléennes par filtre
     for name, code in indic_filtres:
