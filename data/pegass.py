@@ -459,19 +459,19 @@ def import_tables_PEGASS(client,target_date = '2025-12-31',  project_id="crf-pat
 
     query = f"""
     SELECT *
-    FROM `{project_id}.{dataset_id}.crf_pat_2026_pegass_activite`
+    FROM `{project_id}.{dataset_id}.crf_pat_{year}_pegass_activite`
     """
     df_pegass_activite = client.query(query).to_dataframe()
 
     query = f"""
     SELECT *
-    FROM `{project_id}.{dataset_id}.crf_pat_2026_pegass_activite_seance`
+    FROM `{project_id}.{dataset_id}.crf_pat_{year}_pegass_activite_seance`
     """
     df_pegass_activite_seance = client.query(query).to_dataframe()
 
     query = f"""
     SELECT *
-    FROM `{project_id}.{dataset_id}.crf_pat_2026_pegass_activite_seance_inscription`
+    FROM `{project_id}.{dataset_id}.crf_pat_{year}_pegass_activite_seance_inscription`
     """
     df_pegass_activite_seance_inscription = client.query(query).to_dataframe()
 

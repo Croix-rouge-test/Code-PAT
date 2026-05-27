@@ -309,21 +309,21 @@ def clean_CR_operations(df):
     columns_to_keep = [
         "Horodateur",
         "Typologie",
-        "Département concerné par l'opération ou l'exercice :",
+        "Département concerné par l'opération ou l'exercice : ",
         "DT",
-        "Date et heure du début de l'opération :",
-        "Date et heure de la fin de l'opération :",
-        "Origine du déclenchement :",
+        "Date et heure du début de l'opération : ",
+        "Date et heure de la fin de l'opération : ",
+        "Origine du déclenchement : ",
         "Description de l'événement :",
         "Agrément concerné :",
-        "Nombre de personnes accompagnées ou prises en charge :",
+        "Nombre de personnes accompagnées ou prises en charge : ",
     ]
 
     # Sélection des colonnes
     df_clean = df[columns_to_keep].copy()
 
     # Conversion en datetime
-    start_col = "Date et heure du début de l'opération :"
+    start_col = "Date et heure du début de l'opération : "
 
     df_clean[start_col] = pd.to_datetime(
         df_clean[start_col],
@@ -335,7 +335,7 @@ def clean_CR_operations(df):
     df_clean = df_clean[df_clean[start_col].dt.year == 2026]
 
     # Extraction du nom du département
-    dep_col = "Département concerné par l'opération ou l'exercice :"
+    dep_col = "Département concerné par l'opération ou l'exercice : "
 
     df_clean["Département"] = (
         df_clean[dep_col]
@@ -684,8 +684,8 @@ def indicateurs_CRope(df, df_ref_structure):
 
     # PREPARATION DES DONNEES
 
-    start_col = "Date et heure du début de l'opération :"
-    end_col = "Date et heure de la fin de l'opération :"
+    start_col = "Date et heure du début de l'opération : "
+    end_col = "Date et heure de la fin de l'opération : "
 
     # Conversion datetime
     df[start_col] = pd.to_datetime(df[start_col], errors="coerce", dayfirst=True)
@@ -704,7 +704,7 @@ def indicateurs_CRope(df, df_ref_structure):
     )
 
     # Conversion nombre personnes
-    people_col = "Nombre de personnes accompagnées ou prises en charge :"
+    people_col = "Nombre de personnes accompagnées ou prises en charge : "
 
     df[people_col] = pd.to_numeric(
         df[people_col],
