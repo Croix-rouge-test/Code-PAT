@@ -289,7 +289,7 @@ def clean_raw_Textile(df_raw_Textile, df_ref_structure):
         columns={"Code structure": "n_structure"}
     )
 
-    _, _, _, df = apply_rattachement_successif(
+    df = apply_rattachement_successif(
         df_ref_structure,
         df,
         col="n_structure"
@@ -527,7 +527,7 @@ def indicateurs_redcall(df_RC_grouped, df_ref_structure):
     df["Utilisation_Redcall"] = df["Utilisation_Redcall"].astype(str)
     df = rapprochement_libelles(df_ref_structure, df, "Nom de la structure")
 
-    _ , _ , _, df = apply_rattachement_successif(df_ref_structure, df, col = 'n_structure')
+    df = apply_rattachement_successif(df_ref_structure, df, col = 'n_structure')
 
     df = df.groupby("n_structure", as_index=False).agg(
         Utilisation_Redcall=("Utilisation_Redcall", lambda s: "Oui" if (s == "Oui").any() else "")

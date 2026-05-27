@@ -16,17 +16,11 @@ def import_maraude(client, target_date="2025-12-31"):
     """
     df_maraude = client.query(query).to_dataframe()
 
-    query = f"""
-    SELECT *
-    FROM `crf-pat.dataset_PAT_{year}.rattachement_court`
-    """
-    df_rattachement_court = client.query(query).to_dataframe()
-
     df_maraude["maraude_date_debut"] = pd.to_datetime(df_maraude["maraude_date_debut"], errors="coerce")
 
     df_maraude = df_maraude[df_maraude["maraude_date_debut"].dt.year == year]
 
-    return df_maraude, df_rattachement_court
+    return df_maraude
 
 
 # ---------------------------------------------------------------------

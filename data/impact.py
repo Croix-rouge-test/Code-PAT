@@ -27,7 +27,7 @@ def clean_impact(client,df_ref_structure, target_date="2025-12-31"):
   df_impact['impact_date_debut'] = pd.to_datetime(df_impact['impact_date_debut'], errors='coerce')
   # Filtrage : date nulle ou année = target_year
   df_impact = df_impact[ (df_impact['impact_date_debut'].dt.year == year) & ((df_impact['impact_date_fin'] <= target))]
-  _ , _ , _, df_impact = apply_rattachement_successif(df_ref_structure, df_impact, col = 'impact_structure_id_fk')
+  df_impact = apply_rattachement_successif(df_ref_structure, df_impact, col = 'impact_structure_id_fk')
 
 
   return df_ref_impact, df_impact

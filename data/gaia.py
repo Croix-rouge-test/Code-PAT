@@ -60,7 +60,7 @@ def clean_gaia(client, df_ref_structure, target_date="2025-12-31"):
   df_gaia_rattachement_benevole['rattachement_benevole_date_fin'] = pd.to_datetime(df_gaia_rattachement_benevole['rattachement_benevole_date_fin'], errors='coerce')
   df_gaia_rattachement_benevole['rattachement_benevole_date_debut'] = pd.to_datetime(df_gaia_rattachement_benevole['rattachement_benevole_date_debut'], errors='coerce')
 
-  _ , _ , _, df_gaia_rattachement_benevole = apply_rattachement_successif(df_ref_structure, df_gaia_rattachement_benevole, col = 'rattachement_benevole_structure_id_fk')
+  df_gaia_rattachement_benevole = apply_rattachement_successif(df_ref_structure, df_gaia_rattachement_benevole, col = 'rattachement_benevole_structure_id_fk')
 
   return df_gaia_rattachement_benevole
 

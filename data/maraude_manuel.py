@@ -41,22 +41,19 @@ def  Import_Maraude_manuel(client,df_ref_structure):
       "Nb contacts": "Maraude Nb_contacts",
   })
 
-  #rattachement_court
-  df_rattachement_court = df_ref_structure[['n_structure', 'DT_de_rattachement']]
-
   df_Maraude_donnees_manuelles.loc[
       df_Maraude_donnees_manuelles["Structure"].astype(str).str.strip() == "UL DE CONCARNEAU AVEN MOROS",
       "n_structure"
   ] = 2315
 
-  return df_Maraude_donnees_manuelles, df_rattachement_court
+  return df_Maraude_donnees_manuelles
 
 
 
 def calcul_indic_maraude_manuelles(df_ref_structure, df_Maraude_donnees_manuelles, df_rattachement_court):
 
   #rattachement successif
-  df_ref_structure, c, rattachement_successif, df_Maraude_donnees_manuelles_2 = apply_rattachement_successif(df_ref_structure, df_Maraude_donnees_manuelles, col="n_structure")
+  df_Maraude_donnees_manuelles_2 = apply_rattachement_successif(df_ref_structure, df_Maraude_donnees_manuelles, col="n_structure")
 
   #Rajout structure de ratachement
   df_Maraude_donnees_manuelles_2 = pd.merge(df_Maraude_donnees_manuelles_2, df_rattachement_court, on='n_structure', how="left")

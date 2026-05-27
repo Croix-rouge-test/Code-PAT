@@ -422,105 +422,125 @@ def rattache_structure(df1, df_ratt,col):
     return df1
 
     
-def apply_rattachement_successif(df_ref_structure, df, col="maraude_structure_id_fk"):
+# def apply_rattachement_successif(df_ref_structure, df, col="maraude_structure_id_fk"):
+#     """
+#     OBJECTIF MÉTIER
+#     ----------------
+#     Cette fonction permet de rattacher certaines structures opérationnelles de type Implantations locales (IL) à leur structure de référence (UL / DT), afin de garantir
+#     la cohérence des indicateurs.
+
+#     CONTEXTE
+#     --------
+#     Dans les données d’activité, certaines structures
+
+#     Exemple :
+#         Une "IMPLANTATION LOCALE HORS AL - IL" peut être rattachée à une "UNITE LOCALE - UL".
+
+#     Sans ce rattachement :
+#     - certaines structures ne seraient pas dans le fichier final
+#     - Il manquerait des informations au niveau UL/DT
+
+#     LOGIQUE DE TRAITEMENT
+#     ---------------------
+#     1. Normalisation du référentiel de structures :
+#        - Extraction du code de structure à partir du champ texte "Structure_de_rattachement"
+#        - Exemple : "10 - DT DES ALPES MARITIMES" → 10
+
+#     2. Construction d’un référentiel de rattachement :
+#        - Sélection des structures de type :
+#          "IMPLANTATION LOCALE HORS AL - IL"
+#        - Création d’un mapping :
+#          n_structure → structure de rattachement
+
+#     3. Application du rattachement :
+#        - Pour chaque ligne du DataFrame métier (df_maraude) :
+#            - si la structure existe dans le mapping :
+#                → elle est remplacée par sa structure de rattachement
+#            - sinon :
+#                → elle est conservée
+
+#     4. Contrôle qualité :
+#        - Comptage du nombre de structures sans rattachement
+
+#     NOTION DE "RATTACHEMENT SUCCESSIF"
+#     ----------------------------------
+#     Le terme "successif" signifie que ce mécanisme peut être appliqué en plusieurs étapes
+#     pour remonter une structure vers un niveau de référence.
+
+#     Exemple :
+#         IL → UL → DT
+
+#     Dans cette implémentation :
+#         une seule étape de rattachement est réalisée.
+
+#     ENTREES
+#     -------
+#     df_ref_structure : DataFrame
+#         Référentiel des structures (incluant type et rattachement)
+
+#     df : DataFrame
+#         Table métier contenant les structures à rattacher
+
+#     col : str
+#         Nom de la colonne contenant l’identifiant de structure dans df_maraude
+
+#     SORTIES
+#     -------
+#     df_ref_structure : DataFrame
+#         Référentiel enrichi avec la colonne "N structure de rattachement"
+
+#     c : int
+#         Nombre de structures sans rattachement (indicateur de qualité)
+
+#     rattachement_successif : DataFrame
+#         Table de correspondance (structure → structure de rattachement)
+
+#     df : DataFrame
+#         Table métier avec les structures remplacées par leur structure de rattachement
+
+#     RESUME
+#     ------
+#     Cette fonction garantit que les données d’activité sont rattachées à des structures
+#     valides du référentiel, afin de produire des indicateurs fiables et cohérents.
+#     """
+#     # 1) Ajout "N structure de rattachement" dans le ref structure
+#     df_ref_structure = add_num_structure_rattachement(
+#         df=df_ref_structure,
+#         col_source="Structure_de_rattachement",
+#         col_out="N structure de rattachement"
+#     )
+
+#     # 2) Création du référentiel "rattachement successif"
+#     rattachement_successif = def_Structure_de_rattachement(df_ref_structure)
+
+#     # Vérif : nb de rattachements manquants
+#     c = rattachement_successif["N structure de rattachement"].isna().sum()
+
+#     # 3) Application du rattachement sur le df de travail
+#     df = rattache_structure(df, rattachement_successif, col=col)
+
+#     return df_ref_structure , c , rattachement_successif, df
+
+
+def apply_rattachement_successif(df_ref_structure: pd.DataFrame, df: pd.DataFrame, col = 'n_structure') -> pd.DataFrame:
     """
-    OBJECTIF MÉTIER
-    ----------------
-    Cette fonction permet de rattacher certaines structures opérationnelles de type Implantations locales (IL) à leur structure de référence (UL / DT), afin de garantir
-    la cohérence des indicateurs.
+    Remplace les IL d'un dataframe par leur structure de rattachement
 
-    CONTEXTE
-    --------
-    Dans les données d’activité, certaines structures
+    df_ref_structure doit contenir :
+    - une colonne 'n_structure' (clé de correspondance)
+    - une colonne 'n_structure-ratt' (nouvelle valeur)
 
-    Exemple :
-        Une "IMPLANTATION LOCALE HORS AL - IL" peut être rattachée à une "UNITE LOCALE - UL".
-
-    Sans ce rattachement :
-    - certaines structures ne seraient pas dans le fichier final
-    - Il manquerait des informations au niveau UL/DT
-
-    LOGIQUE DE TRAITEMENT
-    ---------------------
-    1. Normalisation du référentiel de structures :
-       - Extraction du code de structure à partir du champ texte "Structure_de_rattachement"
-       - Exemple : "10 - DT DES ALPES MARITIMES" → 10
-
-    2. Construction d’un référentiel de rattachement :
-       - Sélection des structures de type :
-         "IMPLANTATION LOCALE HORS AL - IL"
-       - Création d’un mapping :
-         n_structure → structure de rattachement
-
-    3. Application du rattachement :
-       - Pour chaque ligne du DataFrame métier (df_maraude) :
-           - si la structure existe dans le mapping :
-               → elle est remplacée par sa structure de rattachement
-           - sinon :
-               → elle est conservée
-
-    4. Contrôle qualité :
-       - Comptage du nombre de structures sans rattachement
-
-    NOTION DE "RATTACHEMENT SUCCESSIF"
-    ----------------------------------
-    Le terme "successif" signifie que ce mécanisme peut être appliqué en plusieurs étapes
-    pour remonter une structure vers un niveau de référence.
-
-    Exemple :
-        IL → UL → DT
-
-    Dans cette implémentation :
-        une seule étape de rattachement est réalisée.
-
-    ENTREES
-    -------
-    df_ref_structure : DataFrame
-        Référentiel des structures (incluant type et rattachement)
-
-    df : DataFrame
-        Table métier contenant les structures à rattacher
-
-    col : str
-        Nom de la colonne contenant l’identifiant de structure dans df_maraude
-
-    SORTIES
-    -------
-    df_ref_structure : DataFrame
-        Référentiel enrichi avec la colonne "N structure de rattachement"
-
-    c : int
-        Nombre de structures sans rattachement (indicateur de qualité)
-
-    rattachement_successif : DataFrame
-        Table de correspondance (structure → structure de rattachement)
-
-    df : DataFrame
-        Table métier avec les structures remplacées par leur structure de rattachement
-
-    RESUME
-    ------
-    Cette fonction garantit que les données d’activité sont rattachées à des structures
-    valides du référentiel, afin de produire des indicateurs fiables et cohérents.
+    Retourne un nouveau dataframe.
     """
-    # 1) Ajout "N structure de rattachement" dans le ref structure
-    df_ref_structure = add_num_structure_rattachement(
-        df=df_ref_structure,
-        col_source="Structure_de_rattachement",
-        col_out="N structure de rattachement"
-    )
 
-    # 2) Création du référentiel "rattachement successif"
-    rattachement_successif = def_Structure_de_rattachement(df_ref_structure)
+    resultat = df.copy()
 
-    # Vérif : nb de rattachements manquants
-    c = rattachement_successif["N structure de rattachement"].isna().sum()
+    mapping = df_ref_structure.set_index("n_structure")["n_structure-ratt"]
 
-    # 3) Application du rattachement sur le df de travail
-    df = rattache_structure(df, rattachement_successif, col=col)
+    # Remplacement en conservant les valeurs originales si pas de correspondance
+    resultat[col] = resultat[col].map(mapping).fillna(resultat[col])
 
-    return df_ref_structure , c , rattachement_successif, df
-
+    return resultat
 
 def keep_integer(x):
   """

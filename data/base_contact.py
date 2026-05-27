@@ -680,7 +680,7 @@ def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
         (df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) & df_res['NIVOL_ID_FK'].isin(set_pse1)) |
         (df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) & df_res['NIVOL_ID_FK'].isin(set_pse2)) |
         (df_res['FORMATION_CODE'].isin(filtres_bc['CI']) & df_res['NIVOL_ID_FK'].isin(set_ci)) |
-        (df_res['FORMATION_CODE'].isin(filtres_bc['FPSE'])) |
+        (df_res['FORMATION_CODE'].isin(filtres_bc['FPSE']))
     )
 
     df_res = df_res.loc[mask]
@@ -895,15 +895,6 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby, target_date =
 
     df_is = pd.merge(df_res, df_is, on = 'NIVOL_ID_FK', how = 'inner')
 
-    # df_is["n_structure"] = (
-    #     df_is["n_structure"]
-    #     .fillna(df_is["PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK"])
-    # )
-
-
-
-    # _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
-    #_ , _ , _, df_is = apply_rattachement_successif(df_ref_structure, df_is, col = 'n_structure')
 
     df_res = dt_rattachement(df_res, df_ref_structure)
     df_is = dt_rattachement(df_is, df_ref_structure)
@@ -980,7 +971,7 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
     df = pd.merge(df.drop(['n_structure'], axis = 1), df_bene_actifs, on = 'NIVOL_ID_FK', how = 'inner')
 
     df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
-    _ , _ , _, df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
+    df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
 
     #df_res = df_res.drop('DT_de_rattachement', axis = 1)
     df_res = dt_rattachement(df_res, df_ref_structure)
@@ -1093,18 +1084,9 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     how="left"
     )
 
-    # df_formation_session_resultat_rattachement = df_formation_session_resultat_rattachement[
-    # df_formation_session_resultat_rattachement["rattachement_benevole_structure_id_fk"].isin(
-    #     df_ref_structure["n_structure"] )]
-
-    # df_formation_session_resultat = df_formation_session_resultat[
-    # df_formation_session_resultat["FORMATION_SESSION_STRUCTURE_ID_FK"].isin(
-    #     df_ref_structure["n_structure"]
-    # )]
 
     df_formation_count_session = df_formation_session_resultat.copy()
     df_formation_count_session = df_formation_count_session.rename(columns={"FORMATION_SESSION_STRUCTURE_ID_FK": "n_structure"})
-    #_ , _ , _, df_formation_count_session = apply_rattachement_successif(df_ref_structure, df_formation_count_session, col = 'n_structure')
 
     df_formation_count_session = dt_rattachement(df_formation_count_session, df_ref_structure)
     df_formation_count_session_year = df_formation_count_session[df_formation_count_session['FORMATION_DATE_OBTENTION'].dt.year == TARGET_YEAR].copy()
@@ -1114,15 +1096,7 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
 
     mask_year = df_formation_session_resultat['FORMATION_DATE_OBTENTION'].dt.year == TARGET_YEAR
 
-    # df_formation_session_resultat.loc[mask_year, "n_structure"] = (
-    #     df_formation_session_resultat.loc[mask_year, "n_structure"]
-    #     .fillna(df_formation_session_resultat.loc[mask_year, "FORMATION_SESSION_STRUCTURE_ID_FK"])
-    # )
 
-    #_ , _ , _, df_formation_session_resultat = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat, col = 'n_structure')
-
-
-    #_ , _ , _, df_formation_session_resultat_fpg = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat_fpg, col = 'n_structure')
     df_formation_session_resultat_fpg = dt_rattachement(df_formation_session_resultat_fpg, df_ref_structure)
 
 
