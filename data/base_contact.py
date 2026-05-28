@@ -30,9 +30,9 @@ filtres_bc = {
         'RECPSE2' : ['RECPSE2', 'FCPSE2'],
         'CI' : ['CI P1 P2', 'CI','CIP2' ,'RECCI', 'REC PSECI' ,'RECPSECI', 'FCCI'], #'RATCI', 'CIP1','CI EXT' 
         'CI_i' : ['CI', 'CI P1 P2', 'CI P1', 'CI P2', 'CI EXT', 'RATCI'],
-        'FPSE': ['FPSE'],
-        'FPSE_i': ['FPSE'],
-        'RECFPSE': ['RECFPSE'],
+        'FPSE': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE', 'FPSE AFGU'],
+        'FPSE_i': ['FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE', 'FPSE AFGU'],
+        'RECFPSE': ['RECFPS'],
         'RECCI' : ['RECCI', 'REC PSECI', 'RECPSECI'],
         'PSC' : ["PSC1 IRR","EPSC1","RECPSC1","PSC1","PSC1 AC",'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'], #ajout de 'PSC', 'PSC IRR', 'EPSC', 'PSC AC', 'FCPSC'
         'GQS' : ['GQS', 'GQS AC', 'FIPS', 'FIPS2'],
@@ -41,7 +41,7 @@ filtres_bc = {
         'PREVIC' : ['PREVIC'],
         'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE'], #ajout de 'PICF FPS', 'PICF FPSE'
         'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2'],
-        'FTEX' : ['FTEX'],
+        'ATEX' : ['ATEX'],
         'SAH' : ['SAH', 'TASA']
 
         }

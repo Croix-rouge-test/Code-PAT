@@ -4,7 +4,7 @@ sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 from functools import reduce
 import pandas as pd
-import math
+import numpy as np
 
 def import_clean_dps(client, df_ref_structure,target_date = '2025-12-31',  project_id="crf-pat"):
     target = pd.Timestamp(target_date)
@@ -53,7 +53,7 @@ def import_clean_dps(client, df_ref_structure,target_date = '2025-12-31',  proje
     return df_dps_dimensionnement, df_dps_manifestation, df_dps_ref_type_dispositif, df_dps_ref_type_statut_demande
 
 
-def nb_dispositifs_dps(df_dps, target_date, col_grpby):
+def nb_dps(df_dps, target_date, col_grpby):
     """" 
     Calcul les indicateurs suivantes :
     Secours Nb_PAPS_
@@ -70,7 +70,11 @@ def nb_dispositifs_dps(df_dps, target_date, col_grpby):
     indics_mask = [(f"Secours Nb_PAPS_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "PAPS"),
                     (f"Secours Nb_DPS_PE_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de petite envergure"),
                     (f"Secours Nb_DPS_ME_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de moyenne envergure"),
-                    (f"Secours Nb_DPS_GE_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de grande envergure")]
+                    (f"Secours Nb_DPS_GE_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de grande envergure"),
+                    (f"Secours Nb_DPS_{year}", (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "PAPS") |
+                     (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de petite envergure") | 
+                     (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de moyenne envergure") |
+                     (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de grande envergure"))]
 
     df_res = pd.DataFrame()
 
@@ -119,7 +123,7 @@ def equivalent_poste_secours(df_dps, target_date, col_grpby):
     diff_seconds = (sec_fin - sec_deb) % (24 * 3600)
     df_dps['nb_heures'] = diff_seconds / 3600.0
     df_dps['nb_is_reel/theorique'] = df_dps['DPS_DIMENSIONNEMENT_ACTEUR_NOMBRE_INTERVENANTS_SECOURISTES'] + df_dps['DPS_DIMENSIONNEMENT_PUBLIC_NOMBRE_INTERVENANTS_SECOURISTES'] / 4
-    df_dps['equivalent_poste_secours'] = df_dps['nb_heures'] * math.ceil(df_dps['nb_is_reel/theorique'] / 4)
+    df_dps['equivalent_poste_secours'] = np.ceil(df_dps['nb_heures']/ 4) * df_dps['nb_is_reel/theorique']
 
     indics_mask = [(f"Secours Nb_PAPS_ps_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "PAPS"),
                     (f"Secours Nb_DPS_PE_ps_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de petite envergure"),
@@ -142,25 +146,6 @@ def equivalent_poste_secours(df_dps, target_date, col_grpby):
     df_res = df_res.fillna(0).astype(int).reset_index()
     return df_res
 
-def agrements_DPS(df_dps, target_date, col_grpby):
-    """
-    Calcul le nombre d'agréments DPS, correspondant à l'indicateur "Secours Nb_agrements_DPS_annee"
-    
-    """
-    target = pd.Timestamp(target_date)
-    year = target.year
-
-    df_res = pd.DataFrame()
-
-    df_res[f'Secours Nb_agrements_DPS_{year}'] = (
-        df_dps
-        .groupby(col_grpby)['DPS_DEMANDE_NUMERO_AGREMENT']
-        .nunique()
-    )
-
-    return df_res
-
-
 
 def left_merge_all(df_base, list_df, on):
     """
@@ -171,7 +156,7 @@ def left_merge_all(df_base, list_df, on):
     df_res = df_base.copy()
 
     for df in list_df:
-        df_res = df_res.merge(
+        df_res = pd.merge(df_res,
             df,
             how='left',
             on=on
@@ -205,16 +190,13 @@ def indicateurs_dps(df_dps_dimensionnement, df_dps_manifestation, df_dps_ref_typ
 
     # Calculs indicateurs
 
-    df_dispositifs = nb_dispositifs_dps(df_dps, target_date, "n_structure")
-    df_dispositifs_DT = nb_dispositifs_dps(df_dps, target_date, "DT_de_rattachement")
+    df_dispositifs = nb_dps(df_dps, target_date, "n_structure")
+    df_dispositifs_DT = nb_dps(df_dps, target_date, "DT_de_rattachement")
 
     df_equivalent_ps = equivalent_poste_secours(df_dps, target_date, "n_structure")
     df_equivalent_ps_DT = equivalent_poste_secours(df_dps, target_date, "DT_de_rattachement")
 
-    df_agrements = agrements_DPS(df_dps, target_date, "n_structure")
-    df_agrements_DT = agrements_DPS(df_dps, target_date, "DT_de_rattachement")
-
-    df_dps, df_dps_DT = fusion_finale_dps(df_ref_structure, [df_dispositifs, df_equivalent_ps, df_agrements], [df_dispositifs_DT, df_equivalent_ps_DT, df_agrements_DT])
+    df_dps, df_dps_DT = fusion_finale_dps(df_ref_structure, [df_dispositifs, df_equivalent_ps], [df_dispositifs_DT, df_equivalent_ps_DT])
 
     return df_dps, df_dps_DT
 

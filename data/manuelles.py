@@ -205,6 +205,8 @@ def clean_CAIconv(df_CAICHUCMCC_conventions):
 
     colonnes_publiques = [
         'Prefecture',
+        'Tripartite',
+        'Recherche de personnes',
         'SDIS / BMPM / BSPP',
         'SNCF',
         'SAMU',
