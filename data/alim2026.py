@@ -172,5 +172,10 @@ def calcul_u2a(df_ref_structure, df_U2A_statut, df_U2A_actions):
         'Aide_alimentaire nb_tonnes', 
         'Aide_alimentaire nb_PA']
         ]
+    
+    df_U2A_final = df_U2A_final.rename(columns={"n_structure-ratt": "n_structure"})
+    df_U2A_Structure = df_U2A_Structure.rename(columns={"n_structure-ratt": "n_structure"})
+    df_struct_DT = df_struct_DT.rename(columns={"n_structure-ratt": "n_structure"})
+    df_U2A_DT = df_U2A_DT.rename(columns={"n_structure-ratt": "n_structure"})
 
     return df_U2A_final, df_U2A_Structure, df_struct_DT, df_U2A_DT
