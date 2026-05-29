@@ -686,8 +686,8 @@ def indicateurs_CRope(df, df_ref_structure):
 
     # PREPARATION DES DONNEES
 
-    start_col = "Date et heure du début de l'opération : "
-    end_col = "Date et heure de la fin de l'opération : "
+    start_col = "Date et heure du début de l'opération :"
+    end_col = "Date et heure de la fin de l'opération :"
 
     # Conversion datetime
     df[start_col] = pd.to_datetime(df[start_col], errors="coerce", dayfirst=True)
