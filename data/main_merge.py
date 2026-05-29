@@ -132,7 +132,7 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Secours Nb_DPS_PE_ps_2025",
     "Secours Nb_DPS_ME_ps_2025",
     "Secours Nb_DPS_GE_ps_2025",
-    f"Secours Nb_agrements_DPS_{year}",
+    f"Secours Nb_DPS_{year}",
     "Secours Nb_PAPS_2025",
     "Secours Nb_DPS_PE_2025",
     "Secours Nb_DPS_ME_2025",
