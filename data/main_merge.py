@@ -164,6 +164,7 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Aide_alimentaire nb_tonnes",
     "Aide_alimentaire nb_distributions",
     "Aide_alimentaire nb_SAH",
+    "Aide_alimentaire nb_ASAH",
 
     "Textile Structures_menant_activite",
     "Textile Nb_boutiques",
