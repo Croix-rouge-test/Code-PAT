@@ -198,6 +198,8 @@ def indicateurs_dps(df_dps_dimensionnement, df_dps_manifestation, df_dps_ref_typ
 
     df_dps, df_dps_DT = fusion_finale_dps(df_ref_structure, [df_dispositifs, df_equivalent_ps], [df_dispositifs_DT, df_equivalent_ps_DT])
 
+    df_dps_DT = df_dps_DT[(df_dps_DT['DT_de_rattachement'] != 'NaN') & (df_dps_DT['DT_de_rattachement'].notnull())]
+
     return df_dps, df_dps_DT
 
 
