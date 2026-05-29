@@ -42,7 +42,8 @@ filtres_bc = {
         'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE'], #ajout de 'PICF FPS', 'PICF FPSE'
         'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2'],
         'ATEX' : ['ATEX'],
-        'SAH' : ['SAH', 'TASA']
+        'SAH' : ['SAH', 'TASA'],
+        'ASAH' : ['ASAH', 'FASAH']
 
         }
 
@@ -197,7 +198,7 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby, target_date):
                        (f'Structure Nb_formateurs_CRB_{year}', 'ACRB'),
                        (f'Structure Nb_formes_TCAS_{year}', 'TCAS'),
                        ('Textile Animateurs_textile', 'FTEX'),
-                       ('Aide_alimentaire nb_SAH' , 'SAH')]
+                       ('Aide_alimentaire nb_ASAH' , 'ASAH'), ('Aide_alimentaire nb_SAH' , 'SAH') ]
     indic_liste = [col for col, _ in indic_filtres]
     # Ajouter colonnes booléennes par filtre
     for name, code in indic_filtres:
@@ -1245,7 +1246,7 @@ def correction_indic_BC_DT(df_ref_structure, indicateurs_base_contact, indicateu
           f'Dispositifs_d_urgence Nb_formes_IRR_{year}',
           f'Dispositifs_d_urgence Nb_formes_GQS_{year}',
           f'Structure Nb_formes_CRB_{year}', 'Maraude Nb_SOLIDAR',
-          'Maraude Nb_SOLIDAR2020', 'AEO Nb_FAAD',
+          'Maraude Nb_SOLIDAR2020', 'AEO Nb_FAAD', 'Aide_alimentaire nb_ASAH', 'Aide_alimentaire nb_SAH',
           f'Structure Nb_formateurs_CRB_{year}', f'Structure Nb_formes_TCAS_{year}',
           #f'Formation_grand_public Nb_formes_PSC_{year}',
           #f'Formation_grand_public Nb_formes_GQS_{year}',
