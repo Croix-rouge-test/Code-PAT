@@ -311,14 +311,14 @@ def clean_CR_operations(df):
     columns_to_keep = [
         "Horodateur",
         "Typologie",
-        "Département concerné par l'opération ou l'exercice : ",
+        "Département concerné par l'opération ou l'exercice :",
         "DT",
-        "Date et heure du début de l'opération : ",
-        "Date et heure de la fin de l'opération : ",
-        "Origine du déclenchement : ",
+        "Date et heure du début de l'opération :",
+        "Date et heure de la fin de l'opération :",
+        "Origine du déclenchement :",
         "Description de l'événement :",
         "Agrément concerné :",
-        "Nombre de personnes accompagnées ou prises en charge : ",
+        "Nombre de personnes accompagnées ou prises en charge :",
     ]
 
     # Sélection des colonnes

@@ -46,16 +46,28 @@ def  Import_Maraude_manuel(client,df_ref_structure):
       "n_structure"
   ] = 2315
 
+  df_Maraude_donnees_manuelles.loc[
+      df_Maraude_donnees_manuelles["Structure"].astype(str).str.strip() == "UL DE COLOMIERS",
+      "n_structure"
+  ] = 419
+
+
+  
+
   return df_Maraude_donnees_manuelles
 
 
 
 def calcul_indic_maraude_manuelles(df_ref_structure, df_Maraude_donnees_manuelles, df_rattachement_court):
 
-  df_Maraude_donnees_manuelles_2['n_structure'] = df_Maraude_donnees_manuelles_2['n_structure'].astype(int)
+  # df_Maraude_donnees_manuelles_2 = df_Maraude_donnees_manuelles.copy()
+  # df_Maraude_donnees_manuelles_2['n_structure'] = pd.to_numeric(df_Maraude_donnees_manuelles_2['n_structure'], errors='coerce')
+  # df_Maraude_donnees_manuelles_2['n_structure'] = df_Maraude_donnees_manuelles_2['n_structure'].astype(int)
 
   #rattachement successif
   df_Maraude_donnees_manuelles_2 = apply_rattachement_successif(df_ref_structure, df_Maraude_donnees_manuelles, col="n_structure")
+
+  df_Maraude_donnees_manuelles_2['n_structure'] = df_Maraude_donnees_manuelles_2['n_structure'].astype(int)
 
   #Rajout structure de ratachement
   df_Maraude_donnees_manuelles_2 = pd.merge(df_Maraude_donnees_manuelles_2, df_rattachement_court, on='n_structure', how="left")
