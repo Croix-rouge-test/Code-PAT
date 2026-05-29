@@ -44,25 +44,36 @@ def clean_adherent(df_adherent):
   return df_adherent_sans_doublons
 
 def indicateurs_adherent(df_adherent_sans_doublons, df_ref_structure):
+
+  df_adherent_sans_doublons["n_structure"] = (
+    df_adherent_sans_doublons["n_structure"]
+    .astype("string")
+    .str.replace(r"\s+", "", regex=True)
+  )
+
+  df_adherent_sans_doublons["n_structure"] = pd.to_numeric(
+  df_adherent_sans_doublons["n_structure"],
+  errors="coerce"
+  ).astype("Int64")
+
+  df_ref_structure["n_structure"] = pd.to_numeric(
+  df_ref_structure["n_structure"],
+  errors="coerce"
+  ).astype("Int64")
+
+  df_adherent_sans_doublons = pd.merge(df_adherent_sans_doublons, df_ref_structure[["n_structure",'n_structure-ratt']], on='n_structure', how="inner")
+
   # Nb d'adhérents
-  df_adherent_sans_doublons = df_adherent_sans_doublons.groupby("n_structure").size().reset_index(name="Structure Nb_Adherents")
+  df_adherent_sans_doublons = df_adherent_sans_doublons.groupby('n_structure-ratt').size().reset_index(name="Structure Nb_Adherents")
 
-  return df_adherent_sans_doublons
+  df_adherent_sans_doublons.rename(
+  columns={"n_structure-ratt": "n_structure"},
+  inplace=True
+  )
 
+  Nb_adherent_DT = pd.merge(df_adherent_sans_doublons, df_ref_structure[["n_structure",'DT_de_rattachement']], on='n_structure', how="inner")
 
-def indicateurs_adherent_DT(df_adherent_sans_doublons, rattachement_court):
-    df_adherent_sans_doublons['n_structure'] = df_adherent_sans_doublons['n_structure'].astype('float64')
-    # Merge données avec rattachement_court
-    adherent_sans_doublons = pd.merge(
-    df_adherent_sans_doublons,
-    rattachement_court,
-    on="n_structure",
-    how="left"
-    )
+  # Groupby sur DT_de_rattachement
+  Nb_adherent_DT = (Nb_adherent_DT.groupby('DT_de_rattachement')['Structure Nb_Adherents'].sum().reset_index())
 
-    # Groupby sur DT_de_rattachement
-    Nb_adherent_DT = (adherent_sans_doublons.groupby('DT_de_rattachement')['Structure Nb_Adherents'].sum().reset_index())
-    return Nb_adherent_DT
-
-
-
+  return df_adherent_sans_doublons, Nb_adherent_DT

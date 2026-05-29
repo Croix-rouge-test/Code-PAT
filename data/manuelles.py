@@ -803,7 +803,7 @@ def indicateurs_tracabilite_textile(df_tracabilite_textile, df_ref_structure):
 
     df = df_tracabilite_textile[["Code structure","Remonte des données chaque trimestre" ]].copy()
 
-    df = df.rename(columns={"Remontee des données chaque trimestre": "Textile tracabilite_flux" })
+    df = df.rename(columns={"Remonte des données chaque trimestre": "Textile tracabilite_flux" })
 
     # 3. MERGE AVEC REF STRUCTURE
     df = df_ref_structure.merge(
@@ -812,6 +812,7 @@ def indicateurs_tracabilite_textile(df_tracabilite_textile, df_ref_structure):
         right_on="Code structure",
         how="left"
     )
+    df = df.drop(columns=["n_structure"]).rename(columns={"n_structure-ratt": "n_structure"})
 
     return df
 
