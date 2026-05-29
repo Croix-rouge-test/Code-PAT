@@ -198,7 +198,7 @@ def nb_suivi_form(df_filtered, filtres_bc, col_groupby, target_date):
                        (f'Structure Nb_formateurs_CRB_{year}', 'ACRB'),
                        (f'Structure Nb_formes_TCAS_{year}', 'TCAS'),
                        ('Textile Animateurs_textile', 'ATEX'),
-                       ('Aide_alimentaire nb_ASAH' , 'ASAH')
+                       ('Aide_alimentaire nb_ASAH' , 'ASAH'),
                        ('Aide_alimentaire nb_SAH' , 'SAH')]
     indic_liste = [col for col, _ in indic_filtres]
     # Ajouter colonnes booléennes par filtre
