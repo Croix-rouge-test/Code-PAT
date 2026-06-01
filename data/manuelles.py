@@ -306,6 +306,9 @@ def clean_raw_Textile(df_raw_Textile, df_ref_structure):
 
 
 def clean_CR_operations(df):
+    for i,col in enumerate(df.columns):
+        if col[len(col)-1] == " ":
+            df = df.rename(columns={col: col[:-1]})
    
     # Colonnes à conserver
     columns_to_keep = [
@@ -905,6 +908,12 @@ def Textile_DT(df_raw_Textile, rattachement_court):
     Textile_DT = (textile.groupby('DT_de_rattachement')[["Textile Nb_boutiques","Textile Nb_vestiaires"]].sum())
     Textile_DT = Textile_DT.reset_index()
     return Textile_DT
+
+def tracabilite_textile_DT(df_tracabilite_textileVF):
+    df_tracabilite_textileVF_DT = df_tracabilite_textileVF.copy()
+    df_tracabilite_textileVF_DT['nb_flux'] = df_tracabilite_textileVF_DT['Textile tracabilite_flux'].apply(lambda x: 1 if x == 'Oui' else 0)
+    df_tracabilite_textileVF_DT = df_tracabilite_textileVF_DT.groupby('DT_de_rattachement', as_index=False)['nb_flux'].sum()
+    return df_tracabilite_textileVF_DT
 
 
 def verif_textile(df_raw_Textile_c, df_raw_Textile, df_Textile_DT, df_ref_structure,rattachement_court):
