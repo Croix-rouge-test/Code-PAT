@@ -817,7 +817,21 @@ def indicateurs_tracabilite_textile(df_tracabilite_textile, df_ref_structure):
     )
     df = df.drop(columns=["n_structure"]).rename(columns={"n_structure-ratt": "n_structure"})
 
-    return df
+    df['tracabilite_bool'] = df['Textile tracabilite_flux'] == 'Oui'
+
+    # 2. On effectue le groupby
+    # Si au moins un 'Oui' (True) existe, le résultat sera True
+    resultat = df.groupby('n_structure')['tracabilite_bool'].any().reset_index()
+
+    # 3. On reconvertit en 'Oui'/'Non'
+    resultat['tracabilite'] = resultat['tracabilite_bool'].map({True: 'Oui', False: 'Non'})
+
+    # 4. Nettoyage (optionnel)
+    resultat = resultat.drop(columns=['tracabilite_bool'])
+
+    df_final = pd.merge(resultat, df_ref_structure[['n_structure', 'DT_de_rattachement']].copy().drop_duplicates(), on='n_structure')
+
+    return df_final
 
 
 

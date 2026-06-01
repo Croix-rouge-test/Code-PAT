@@ -19,7 +19,8 @@ def main():
     df_IN = df_UL[df_UL['n_structure'] == 1]
 
     liste_activite_map = ['AEO Structure_activite_mobile', 'OCR Structures_menant_activite',
-                        'Secours Structures_menant_activite', 'Maraudes Structures_menant_activite',
+                        # 'Secours Structures_menant_activite',
+                        'Maraudes Structures_menant_activite',
                         'Formation_grand_public Structures_menant_activite']
     for col in liste_activite_map:
         df_IN[col] = (
