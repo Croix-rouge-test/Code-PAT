@@ -1,8 +1,12 @@
+from gspread_dataframe import get_as_dataframe
 import pandas as pd
+import os
+import numpy as np
+import re
+import sys
+sys.path.append(os.path.abspath("/Code-PAT"))
+from utils import *
 
-# ---------------------------------------------------------------------
-# Import
-# ---------------------------------------------------------------------
 def import_maraude(client, target_date="2025-12-31"):
     """
     Charge les données Maraude + rattachement_court depuis BigQuery.
@@ -20,66 +24,25 @@ def import_maraude(client, target_date="2025-12-31"):
 
     df_maraude = df_maraude[df_maraude["maraude_date_debut"].dt.year == year]
 
-    return df_maraude
-
-
-# ---------------------------------------------------------------------
-# Enrich / Filter
-# ---------------------------------------------------------------------
-def enrich_maraude_rattachement(df_ref_structure, df_maraude, col="maraude_structure_id_fk"):
+    query = f"""
+    SELECT *
+    FROM `crf-pat.dataset_PAT_{year}.crf_pat_{year}_maraude_beneficiaire`
     """
-    Applique le rattachement successif sur df_maraude.
-    ⚠️ Si ta fonction apply_rattachement_successif retourne 4 objets, on garde uniquement df_maraude.
-    """
-    out = apply_rattachement_successif(df_ref_structure, df_maraude, col=col)
+    df_maraude_beneficiaire = client.query(query).to_dataframe()
 
-    # Cas 1: la fonction retourne directement un df
-    if isinstance(out, pd.DataFrame):
-        return out
+    df_maraude_filtre = df_maraude.copy()
+    df_maraude_filtre =df_maraude_filtre[
+    (df_maraude["maraude_date_debut"] > pd.Timestamp("2025-12-31")) &
+    (df_maraude["maraude_date_debut"] <= pd.Timestamp(target)) &
+    (df_maraude["maraude_statut"] == "FINISHED") &
+    (df_maraude["maraude_rencontre_contact_realise"] == "Oui") &
+    (df_maraude["maraude_rencontre_beneficiaire_id_fk"].notna())].copy()
 
-    # Cas 2: elle retourne (df_ref_structure, c, rattachement_successif, df_maraude)
-    if isinstance(out, (tuple, list)) and len(out) >= 4:
-        return out[3]
-
-    raise TypeError("apply_rattachement_successif() doit retourner un DataFrame ou un tuple dont le 4e élément est df_maraude.")
+    return  df_maraude, df_maraude_beneficiaire, df_maraude_filtre
 
 
-def filter_maraude_on_ref_structure(
-    df_maraude: pd.DataFrame,
-    df_ref_structure: pd.DataFrame,
-    col_maraude: str = "maraude_structure_id_fk",
-    col_ref: str = "n_structure",
-    verbose: bool = True
-) -> pd.DataFrame:
-    """
-    Conserve uniquement les lignes de df_maraude dont df_maraude[col_maraude] est présent
-    dans df_ref_structure[col_ref].
-    """
-    if col_maraude not in df_maraude.columns:
-        raise ValueError(f"df_maraude doit contenir la colonne '{col_maraude}'.")
-    if col_ref not in df_ref_structure.columns:
-        raise ValueError(f"df_ref_structure doit contenir la colonne '{col_ref}'.")
-
-    d = df_maraude.copy()
-
-    d[col_maraude] = pd.to_numeric(d[col_maraude], errors="coerce").astype("Int64")
-    ref_ids = pd.to_numeric(df_ref_structure[col_ref], errors="coerce").astype("Int64")
-
-    ref_set = set(ref_ids.dropna().tolist())
-
-    n0 = len(d)
-    d = d[d[col_maraude].isin(ref_set)].copy()
-    n1 = len(d)
-
-    if verbose:
-        print(f"📌 Filtre structures ref: {n1:,}/{n0:,} lignes conservées (supprimées: {n0-n1:,}).")
-
-    return d
 
 
-# ---------------------------------------------------------------------
-# Prep (tables "propres" pour calcul)
-# ---------------------------------------------------------------------
 def prep_nb_maraudes_sigma(df, filtre_annee_fn=None):
     cols_keep = [
         "maraude_id_fk",
@@ -171,96 +134,146 @@ def add_nb_personnes(df,
 
     return d
 
+# -------------------------------------------------------------------
+# 0) Copie de travail pour ne pas modifier les DataFrames source
+# -------------------------------------------------------------------
+def maraude_retraitement(df_maraude_beneficiaire, df_maraude, df_maraude_filtre): 
 
-def Nb_maraudes_SIGMA_DT(df, filtre=None,
-                        col_structure="DT_de_rattachement",
-                        col_user="Maraude Nb_maraudes_SIGMA",
-                        out_col="Maraude Nb_maraudes_SIGMA",
-                        fillna_dt=None):
-    d = df.query(filtre) if filtre else df
+    df_benef = df_maraude_beneficiaire.copy()
 
-    if fillna_dt is not None:
-        d = d.copy()
-        d[col_structure] = d[col_structure].fillna(fillna_dt)
 
-    return (
-        d.groupby(col_structure, dropna=False)[col_user]
-         .sum()
-         .rename(out_col)
-         .to_frame()
-         .reset_index()
+
+    # -------------------------------------------------------------------
+    # 1) Préparation des variables
+    # -------------------------------------------------------------------
+    df_maraude["maraude_date_debut"] = pd.to_datetime(
+        df_maraude["maraude_date_debut"],
+        errors="coerce"
+    )
+
+    df_maraude["maraude_rencontre_typologie_norm"] = (
+        df_maraude["maraude_rencontre_typologie"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+
+    # -------------------------------------------------------------------
+    # 2) Filtres
+    # -------------------------------------------------------------------
+    df_maraude_filtre = df_maraude[
+        (df_maraude["maraude_date_debut"] >= pd.Timestamp("2026-01-01")) &
+        (df_maraude["maraude_date_debut"] <= pd.Timestamp("2026-05-31")) &
+        (df_maraude["maraude_statut"] == "FINISHED") &
+        (df_maraude["maraude_rencontre_contact_realise"] == "Oui") &
+        (df_maraude["maraude_rencontre_typologie_norm"].isin(["famille", "individu"])) &
+        (df_maraude["maraude_rencontre_beneficiaire_id_fk"].notna())
+    ].copy()
+
+    # -------------------------------------------------------------------
+    # 3) Jointure
+    # -------------------------------------------------------------------
+    df_jointure = df_maraude_filtre.merge(
+        df_benef[["beneficiaire_id_pk", "beneficiaire_identification_id"]],
+        how="inner",
+        left_on="maraude_rencontre_beneficiaire_id_fk",
+        right_on="beneficiaire_id_pk"
+    )
+
+    # Exclusion des bénéficiaires sans identifiant
+    df_jointure = df_jointure[
+        df_jointure["beneficiaire_identification_id"].notna()
+    ].copy()
+
+    # -------------------------------------------------------------------
+    # 4) Création de nombre_personnes_diff
+    # -------------------------------------------------------------------
+    cols_famille = [
+        "maraude_rencontre_nb_hommes",
+        "maraude_rencontre_nb_femmes",
+        "maraude_rencontre_nb_transgenres",
+        "maraude_rencontre_nb_mineurs",
+        "maraude_rencontre_nb_inconnus",
+    ]
+
+    for col in cols_famille:
+        df_jointure[col] = pd.to_numeric(df_jointure[col], errors="coerce").fillna(0)
+
+    df_jointure["nombre_personnes_diff"] = np.where(
+        df_jointure["maraude_rencontre_typologie_norm"] == "famille",
+        df_jointure[cols_famille].sum(axis=1),
+        1
+    )
+
+    # -------------------------------------------------------------------
+    # 5) Contrôle : un beneficiaire_identification_id ne doit appartenir
+    #    qu'à une seule structure
+    # -------------------------------------------------------------------
+    controle_structure = (
+        df_jointure
+        .groupby("beneficiaire_identification_id")["maraude_structure_id_fk"]
+        .nunique()
+        .reset_index(name="nb_structures_distinctes")
+    )
+
+    anomalies = controle_structure[controle_structure["nb_structures_distinctes"] > 1]
+
+    if not anomalies.empty:
+        raise ValueError(
+            "Anomalie détectée : certains beneficiaire_identification_id sont rattachés à plusieurs maraude_structure_id_fk."
+        )
+
+    # -------------------------------------------------------------------
+    # 6) Moyenne par beneficiaire_identification_id
+    # -------------------------------------------------------------------
+    df_benef_moyenne = (
+        df_jointure
+        .groupby("beneficiaire_identification_id", as_index=False)["nombre_personnes_diff"]
+        #.mean()
+        .max()
+        .rename(columns={"nombre_personnes_diff": "nombre_personnes_diff_moyenne"})
+    )
+
+    # -------------------------------------------------------------------
+    # 7) Récupération de la structure unique par bénéficiaire
+    # -------------------------------------------------------------------
+    df_benef_structure = (
+        df_jointure[["beneficiaire_identification_id", "maraude_structure_id_fk"]]
+        .drop_duplicates(subset=["beneficiaire_identification_id"])
+        .copy()
+    )
+
+    # -------------------------------------------------------------------
+    # 8) Table bénéficiaire finale
+    # -------------------------------------------------------------------
+    df_benef_final = df_benef_moyenne.merge(
+        df_benef_structure,
+        how="left",
+        on="beneficiaire_identification_id"
+    )
+
+    # -------------------------------------------------------------------
+    # 9) Somme finale par structure
+    # -------------------------------------------------------------------
+    df_final = (
+        df_benef_final
+        .groupby("maraude_structure_id_fk", as_index=False)["nombre_personnes_diff_moyenne"]
+        .sum()
+        .rename(columns={
+            "nombre_personnes_diff_moyenne": "nb_beneficiaires_differents_rencontres"
+        })
     )
 
 
-def nb_contact_SIGMA_DT(df, filtre=None,
-                        col_structure="DT_de_rattachement",
-                        col_user="Maraude Nb_contacts",
-                        out_col="Maraude Nb_contacts",
-                        fillna_dt=None):
-    d = df.query(filtre) if filtre else df
 
-    if fillna_dt is not None:
-        d = d.copy()
-        d[col_structure] = d[col_structure].fillna(fillna_dt)
+    df_final.rename(columns={'maraude_structure_id_fk': 'n_structure'}, inplace=True)
 
-    return (
-        d.groupby(col_structure, dropna=False)[col_user]
-         .sum()
-         .rename(out_col)
-         .to_frame()
-         .reset_index()
-    )
+    return df_final
 
 
-def nb_personnes_diff_SIGMA_DT(df, filtre=None,
-                              col_structure="DT_de_rattachement",
-                              col_user="Maraude Nb_personnes_rencontrees",
-                              out_col="Maraude Nb_personnes_rencontrees",
-                              fillna_dt=None):
-    d = df.query(filtre) if filtre else df
+def maraude_calcul_final(df_final, df_Nb_maraudes_SIGMA_prep, df_nb_personnes_rencontrees_sigma, df_ref_structure): 
 
-    if fillna_dt is not None:
-        d = d.copy()
-        d[col_structure] = d[col_structure].fillna(fillna_dt)
-
-    return (
-        d.groupby(col_structure, dropna=False)[col_user]
-         .sum()
-         .rename(out_col)
-         .to_frame()
-         .reset_index()
-    )
-
-
-# ---------------------------------------------------------------------
-# Indicateurs (final)
-# ---------------------------------------------------------------------
-def indicateurs_maraude(df_nb_personnes_rencontrees_sigma,
-                        df_Nb_maraudes_SIGMA_prep,
-                        df_rattachement_court):
-    """
-    Calcule :
-    - maraudes par structure + DT
-    - contacts par structure + DT
-    - personnes différentes (max par bénéficiaire) par structure + DT
-
-    Returns
-    -------
-    df_maraudes_struct
-    df_maraudes_dt
-    df_contacts_struct
-    df_contacts_dt
-    df_personnes_diff_base
-    df_personnes_diff_struct
-    df_personnes_diff_dt
-    """
-
-    # --- Normalisation types pour merges ---
-    df_ratt = df_rattachement_court.copy()
-    if "n_structure" in df_ratt.columns:
-        df_ratt["n_structure"] = pd.to_numeric(df_ratt["n_structure"], errors="coerce").astype("Int64")
-
-    # -----------------------------------------------------------------
+        # -----------------------------------------------------------------
     # 1) MARAUDES (STRUCT)
     # -----------------------------------------------------------------
     d_m = df_Nb_maraudes_SIGMA_prep.copy()
@@ -270,9 +283,7 @@ def indicateurs_maraude(df_nb_personnes_rencontrees_sigma,
     df_maraudes_struct = d_m.groupby("n_structure", as_index=False)["maraude_id_fk"].count()
     df_maraudes_struct.columns = ["n_structure", "Maraude Nb_maraudes_SIGMA"]
 
-    # MARAUDES (DT)
-    df_maraudes_struct = pd.merge(df_maraudes_struct, df_ratt, on="n_structure", how="left")
-    df_maraudes_dt = Nb_maraudes_SIGMA_DT(df_maraudes_struct)
+
 
     # -----------------------------------------------------------------
     # 2) CONTACTS (STRUCT)
@@ -285,228 +296,39 @@ def indicateurs_maraude(df_nb_personnes_rencontrees_sigma,
     df_contacts_struct = d_c.groupby("n_structure", as_index=False)["nb personnes"].sum()
     df_contacts_struct.columns = ["n_structure", "Maraude Nb_contacts"]
 
-    # CONTACTS (DT)  ✅ on calcule bien sur le df MERGE avec DT
-    df_contacts_struct = pd.merge(df_contacts_struct, df_ratt, on="n_structure", how="left")
-    df_contacts_dt = nb_contact_SIGMA_DT(df_contacts_struct)
 
-    # -----------------------------------------------------------------
-    # 3) PERSONNES DIFFERENTES (BASE + STRUCT + DT)
-    # -----------------------------------------------------------------
-    # base max par beneficiaire
-    df_personnes_diff_base = d_c.loc[
-        d_c.groupby("maraude_rencontre_beneficiaire_id_fk")["nb personnes"].idxmax(),
-        ["maraude_rencontre_beneficiaire_id_fk", "n_structure", "nb personnes"]
-    ].reset_index(drop=True)
+    df_final = pd.merge(df_final, df_contacts_struct, on='n_structure', how="outer")
 
-    df_personnes_diff_base.columns = [
-        "maraude_rencontre_beneficiaire_id_fk",
-        "n_structure",
-        "Maraude Nb_personnes_rencontrees"
-    ]
+    df_final = pd.merge(df_final, df_maraudes_struct, on='n_structure', how="outer")
 
-    # struct (somme)
-    df_personnes_diff_struct = (
-        df_personnes_diff_base
-        .groupby("n_structure", as_index=False)["Maraude Nb_personnes_rencontrees"]
-        .sum()
-    )
+    df_final = pd.merge(df_final, df_ref_structure[["n_structure",'n_structure-ratt']], on='n_structure', how="inner")
 
-    # DT
-    df_personnes_diff_struct = pd.merge(df_personnes_diff_struct, df_ratt, on="n_structure", how="left")
-    df_personnes_diff_dt = nb_personnes_diff_SIGMA_DT(df_personnes_diff_struct)
-
-    return (
-        df_maraudes_struct,
-        df_maraudes_dt,
-        df_contacts_struct,
-        df_contacts_dt,
-        df_personnes_diff_base,
-        df_personnes_diff_struct,
-        df_personnes_diff_dt,
-    )
-
-
-# ---------------------------------------------------------------------
-# Checks / QA
-# ---------------------------------------------------------------------
-def lignes_vides(df, col_code_structure, label=None, raise_error=False):
-    """
-    Vérifie si une colonne contient des NaN ou des valeurs vides.
-    """
-    s = df[col_code_structure]
-    lv = df[s.isna() | (s.astype(str).str.strip() == "")]
-
-    col_name = label or col_code_structure
-    if not lv.empty:
-        msg = f"❌ {len(lv)} valeur(s) manquante(s) ou vide(s) détectée(s) dans '{col_name}'."
-        print(msg)
-        if raise_error:
-            raise ValueError(msg)
-        return False, lv
-    else:
-        print(f"✅ Aucun NaN ou valeur vide détecté dans '{col_name}'.")
-        return True, lv
-
-
-def check_same_col_sum(df_left: pd.DataFrame,
-                       df_right: pd.DataFrame,
-                       col: str,
-                       dropna: bool = True,
-                       atol: float = 0.0,
-                       rtol: float = 0.0,
-                       label: str = "") -> bool:
-    """
-    Vérifie que la somme de `col` est identique entre 2 DataFrames.
-    Affiche ✅ OK / ❌ PAS OK (avec les sommes et la différence si KO).
-    """
-    if col not in df_left.columns:
-        raise KeyError(f"Colonne '{col}' absente de df_left")
-    if col not in df_right.columns:
-        raise KeyError(f"Colonne '{col}' absente de df_right")
-
-    s1 = pd.to_numeric(df_left[col], errors="coerce")
-    s2 = pd.to_numeric(df_right[col], errors="coerce")
-
-    if dropna:
-        s1 = s1.fillna(0)
-        s2 = s2.fillna(0)
-
-    sum1 = float(s1.sum())
-    sum2 = float(s2.sum())
-    delta = sum1 - sum2
-
-    ok = abs(delta) <= (atol + rtol * abs(sum2))
-
-    prefix = f"{label} - " if label else ""
-    if ok:
-        print(f"✅ {prefix}OK : somme(df_left['{col}']) = somme(df_right['{col}'])")
-    else:
-        print(
-            f"❌ {prefix}PAS OK : somme(df_left['{col}']) ≠ somme(df_right['{col}']) "
-            f"(df_left={sum1:.0f} ; df_right={sum2:.0f} ; delta={delta:.0f})"
+    df_SIGMA_struct = (
+            df_final.groupby('n_structure-ratt', as_index=False)
+            .agg(
+                **{
+                    'nb_beneficiaires_differents_rencontres': ('nb_beneficiaires_differents_rencontres', 'sum'),
+                    'Maraude Nb_contacts': ('Maraude Nb_contacts', 'sum'),
+                    'Maraude Nb_maraudes_SIGMA': ('Maraude Nb_maraudes_SIGMA', 'sum')
+                }
+            )
         )
 
-    return ok
+    df_SIGMA_struct.rename(columns={'n_structure-ratt': 'n_structure'}, inplace=True)
 
+    df_SIGMA_DT = pd.merge(df_SIGMA_struct, df_ref_structure[["n_structure",'DT_de_rattachement']], on='n_structure', how="inner")
 
-##vérification : il s'agit des lignes de vérification Maraude que j'ai copié 
-
-def check_same_col_sum(
-    df_left: pd.DataFrame,
-    df_right: pd.DataFrame,
-    col: str,
-    dropna: bool = True,
-    atol: float = 0.0,
-    rtol: float = 0.0,
-    label: str = "",
-) -> bool:
-    if col not in df_left.columns:
-        raise KeyError(f"Colonne '{col}' absente de df_left")
-    if col not in df_right.columns:
-        raise KeyError(f"Colonne '{col}' absente de df_right")
-
-    s1 = pd.to_numeric(df_left[col], errors="coerce")
-    s2 = pd.to_numeric(df_right[col], errors="coerce")
-    if dropna:
-        s1 = s1.fillna(0)
-        s2 = s2.fillna(0)
-
-    sum1 = float(s1.sum())
-    sum2 = float(s2.sum())
-    delta = sum1 - sum2
-    ok = abs(delta) <= (atol + rtol * abs(sum2))
-
-    prefix = f"{label} - " if label else ""
-    if ok:
-        print(f"✅ {prefix}OK : somme(df_left['{col}']) = somme(df_right['{col}']) (total={sum1:.0f})")
-    else:
-        print(
-            f"❌ {prefix}PAS OK : somme(df_left['{col}']) ≠ somme(df_right['{col}']) "
-            f"(df_left={sum1:.0f} ; df_right={sum2:.0f} ; delta={delta:.0f})"
+    df_SIGMA_DT = (
+            df_SIGMA_DT.groupby('DT_de_rattachement', as_index=False)
+            .agg(
+                **{
+                    'nb_beneficiaires_differents_rencontres': ('nb_beneficiaires_differents_rencontres', 'sum'),
+                    'Maraude Nb_contacts': ('Maraude Nb_contacts', 'sum'),
+                    'Maraude Nb_maraudes_SIGMA': ('Maraude Nb_maraudes_SIGMA', 'sum')
+                }
+            )
         )
-    return ok
 
 
-def run_verif_maraude(
-    df_Nb_maraudes_SIGMA_struct: pd.DataFrame,
-    df_Nb_maraudes_SIGMA_DT: pd.DataFrame,
-    df_nb_contacts_SIGMA_struct: pd.DataFrame,
-    df_nb_contacts_SIGMA_DT: pd.DataFrame,
-    df_nb_personnes_rencontrees_SIGMA_struct: pd.DataFrame,
-    df_nb_personnes_rencontrees_SIGMA_DT: pd.DataFrame,
-    df_Nb_maraudes_SIGMA: pd.DataFrame,
-    df_maraude_verif: pd.DataFrame,
-    df_personnes_diff_base: pd.DataFrame,
-) -> None:
+    return df_SIGMA_DT, df_SIGMA_struct
 
-    print("\n====================")
-    print("VERIF MARAUDE")
-    print("====================\n")
-
-    # #1 Nb maraudes : Struct vs DT
-    ok = check_same_col_sum(
-        df_Nb_maraudes_SIGMA_struct,
-        df_Nb_maraudes_SIGMA_DT,
-        "Maraude Nb_maraudes_SIGMA",
-        label="#1 Nb maraudes (Struct vs DT)",
-    )
-    if not ok:
-        raise ValueError("KO #1 : Nb maraudes Struct vs DT")
-
-    # #2 Nb contacts : Struct vs DT
-    ok = check_same_col_sum(
-        df_nb_contacts_SIGMA_struct,
-        df_nb_contacts_SIGMA_DT,
-        "Maraude Nb_contacts",
-        label="#2 Nb contacts (Struct vs DT)",
-    )
-    if not ok:
-        raise ValueError("KO #2 : Nb contacts Struct vs DT")
-
-    # #3 Nb personnes rencontrées : Struct vs DT
-    ok = check_same_col_sum(
-        df_nb_personnes_rencontrees_SIGMA_struct,
-        df_nb_personnes_rencontrees_SIGMA_DT,
-        "Maraude Nb_personnes_rencontrees",
-        label="#3 Nb personnes rencontrées (Struct vs DT)",
-    )
-    if not ok:
-        raise ValueError("KO #3 : Nb personnes rencontrées Struct vs DT")
-
-    # #4 Somme maraudes structure == len(df_Nb_maraudes_SIGMA)
-    s_maraudes_struct = df_Nb_maraudes_SIGMA_struct["Maraude Nb_maraudes_SIGMA"].sum()
-    n_base = len(df_Nb_maraudes_SIGMA)
-
-    if s_maraudes_struct != n_base:
-        raise ValueError(
-            f"KO #4 : Incohérence maraudes : somme struct={s_maraudes_struct} ≠ len(df_Nb_maraudes_SIGMA)={n_base}"
-        )
-    else:
-        print(f"✅ #4 OK : somme maraudes structure ({s_maraudes_struct}) = len(df_Nb_maraudes_SIGMA) ({n_base})")
-
-    # #5 Personnes différentes rencontrées : df_personnes_diff_base vs df_struct
-    s_base = df_personnes_diff_base["Maraude Nb_personnes_rencontrees"].sum()
-    s_struct = df_nb_personnes_rencontrees_SIGMA_struct["Maraude Nb_personnes_rencontrees"].sum()
-
-    if s_base != s_struct:
-        diff = s_base - s_struct
-        raise ValueError(
-            f"KO #5 : personnes différentes rencontrées : somme df_base={s_base} ≠ somme df_struct={s_struct} (écart={diff})"
-        )
-    else:
-        print(f"✅ #5 OK : personnes différentes rencontrées — somme df_base = {s_base} = somme df_struct = {s_struct}")
-
-    # #6 Somme personnes rencontrées : df_struct vs df_maraude_verif['nb personnes']
-    # df_maraude_verif= prep_nb_personnes_rencontrees_sigma(df_maraude, filtre_annee_fn=None)
-    # df_maraude_verif= add_nb_personnes(df_maraude_verif,
-    # out_col="nb personnes",
-    # cols=None,
-    # col_typologie="maraude_rencontre_typologie")
-
-    s_struct = df_nb_contacts_SIGMA_struct["Maraude Nb_contacts"].sum()
-    s_base = df_maraude_verif["nb personnes"].sum()
-
-    if s_struct == s_base:
-      print(f"✅ #6 OK Somme contact  OK : somme 'Maraude Nb contacts struct' df struct = somme Nb contacts df maraude verif = {s_struct}" )
-    else:
-      print(f"❌ PROBLÈME : Maraude Nb_contacts struct={s_struct} ≠ somme Nb_contacts df_maraude_verif={s_base} (écart={s_base - s_struct})")
