@@ -300,7 +300,7 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
   return all_data, all_data_DT, liste_df_a_fusionner_toutes_structures, liste_df_a_fusionner_DT
 
 
-def ajouter_colonnes_taux(df: pd.DataFrame, denominateur: str, year: int) -> pd.DataFrame:
+def ajouter_colonnes_taux(df: pd.DataFrame, year: int) -> pd.DataFrame:
     """
     Ajoute des colonnes calculées comme (colonne / denominateur).
 
@@ -311,22 +311,20 @@ def ajouter_colonnes_taux(df: pd.DataFrame, denominateur: str, year: int) -> pd.
     f"Structure Nb_formes_CRB_{year}"]
     # ⚠️ noms hardcodés (modifie-les ici selon ton besoin)
     mapping_noms = {
-        f"Dispositifs_d_urgence Nb_formes_TCAU_{year}": f"Dispositifs_d_urgence Taux_formation_TCAU_{year}",
-        f"Dispositifs_d_urgence Nb_formes_TCEO_{year}": f"Dispositifs_d_urgence Taux_formation_TCEO_{year}",
-        f"Dispositifs_d_urgence Nb_formes_PSP_{year}": f"Dispositifs_d_urgence Taux_formation_PSP_{year}",
-        f"Dispositifs_d_urgence Nb_formes_IRR_{year}" : f"Dispositifs_d_urgence Taux_formation_IRR_{year}",
-        f"Dispositifs_d_urgence Nb_formes_GQS_{year}" : f"Dispositifs_d_urgence Taux_formation_GQS_{year}",
-        f"Structure Nb_formes_CRB_{year}" : f"Structure Taux_formation_CRB_{year}"
+        (f"Dispositifs_d_urgence Nb_formes_TCAU_{year}", "Structure Nb_Benevoles"): f"Dispositifs_d_urgence Taux_formation_TCAU_{year}",
+        (f"Dispositifs_d_urgence Nb_formes_TCEO_{year}", "Structure Nb_Benevoles"): f"Dispositifs_d_urgence Taux_formation_TCEO_{year}",
+        (f"Dispositifs_d_urgence Nb_formes_PSP_{year}", "Structure Nb_Benevoles"): f"Dispositifs_d_urgence Taux_formation_PSP_{year}",
+        (f"Dispositifs_d_urgence Nb_formes_IRR_{year}", "Structure Nb_Benevoles"): f"Dispositifs_d_urgence Taux_formation_IRR_{year}",
+        (f"Dispositifs_d_urgence Nb_formes_GQS_{year}", "Structure Nb_Benevoles"): f"Dispositifs_d_urgence Taux_formation_GQS_{year}",
+        (f"Structure Nb_formes_CRB_{year}", "Structure Nb_Benevoles"): f"Structure Taux_formation_CRB_{year}",
+        (f"Structure Nb_nvx_formes_CRB_{year}", f"Structure Nb_nvx_Benevoles_{year}"): f"Structure Taux_nvx_formes_CRB_{year}"
     }
 
-    for col in colonnes:
+    for col, denominateur in colonnes:
         if col not in df.columns:
             raise ValueError(f"Colonne absente du dataframe : {col}")
         if denominateur not in df.columns:
             raise ValueError(f"Colonne denominateur absente : {denominateur}")
-
-        if col not in mapping_noms:
-            raise ValueError(f"Aucun nom hardcodé prévu pour {col}")
 
         nouveau_nom = mapping_noms[col]
         df[nouveau_nom] = df[col] / df[denominateur]
@@ -428,7 +426,7 @@ def vision_conso(df_alldata, df_alldata_DT, year):
 
   colonnes_nb_structure = [
     (('OCR Nb_deployees',), 'OCR Structures_menant_activite'),
-    # (('Secours Nb_DPS_2025','Secours Nb_PAPS_2025','Secours Nb_DPS_PE_2025','Secours Nb_DPS_ME_2025','Secours Nb_DPS_GE_2025'), 'Secours Structures_menant_activite'),
+    ((f'Secours Nb_DPS_{year}',f'Secours Nb_PAPS_{year}',f'Secours Nb_DPS_PE_{year}',f'Secours Nb_DPS_ME_{year}',f'Secours Nb_DPS_GE_{year}'), 'Secours Structures_menant_activite'),
     (('Secours Nb_PSE1','Secours Nb_PSE2','Secours Nb_CI'), 'Secours Structures_menant_activite_formes'),
     (('Secours Nb_sessions_PSE','Secours Nb_sessions_CI','Secours Nb_sessions_FPSE'), 'Secours Structures_menant_activite_sessions'),
     (('Maraude Nb_maraudes_PEGASS',), 'Maraudes Structures_menant_activite'),
