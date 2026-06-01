@@ -306,9 +306,7 @@ def ajouter_colonnes_taux(df: pd.DataFrame, year: int) -> pd.DataFrame:
 
     Les noms des nouvelles colonnes sont définis en dur dans la fonction.
     """
-    colonnes = [f"Dispositifs_d_urgence Nb_formes_TCAU_{year}",f"Dispositifs_d_urgence Nb_formes_TCEO_{year}",
-    f"Dispositifs_d_urgence Nb_formes_PSP_{year}", f"Dispositifs_d_urgence Nb_formes_IRR_{year}", f"Dispositifs_d_urgence Nb_formes_GQS_{year}",
-    f"Structure Nb_formes_CRB_{year}"]
+
     # ⚠️ noms hardcodés (modifie-les ici selon ton besoin)
     mapping_noms = {
         (f"Dispositifs_d_urgence Nb_formes_TCAU_{year}", "Structure Nb_Benevoles"): f"Dispositifs_d_urgence Taux_formation_TCAU_{year}",
@@ -320,13 +318,13 @@ def ajouter_colonnes_taux(df: pd.DataFrame, year: int) -> pd.DataFrame:
         (f"Structure Nb_nvx_formes_CRB_{year}", f"Structure Nb_nvx_Benevoles_{year}"): f"Structure Taux_nvx_formes_CRB_{year}"
     }
 
-    for col, denominateur in colonnes:
+    for col, denominateur in mapping_noms:
         if col not in df.columns:
             raise ValueError(f"Colonne absente du dataframe : {col}")
         if denominateur not in df.columns:
             raise ValueError(f"Colonne denominateur absente : {denominateur}")
 
-        nouveau_nom = mapping_noms[col]
+        nouveau_nom = mapping_noms[(col, denominateur)]
         df[nouveau_nom] = df[col] / df[denominateur]
 
     return df

@@ -30,7 +30,7 @@ def main():
 
     # Initialisation du client gspread et import des dataframes all_data contenant l'output de la pipeline
     client = client_gspread()
-    df_UL, df_DT = import_dataframes('https://docs.google.com/spreadsheets/d/1maXN8FgvkzZEjivAfj5uRdCSnWOa_OQdekEXVAVGrgg/', client)
+    df_UL, df_DT = import_dataframes('https://docs.google.com/spreadsheets/d/1pmEUcLvVOK3t7TWmXL6cN0uTWJ9kPgIwd2x3hy14Alk', client)
     df = df_DT.copy()
 
     # Les colonnes à ignorer
