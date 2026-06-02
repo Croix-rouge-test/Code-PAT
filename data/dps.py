@@ -200,6 +200,9 @@ def indicateurs_dps(df_dps_dimensionnement, df_dps_manifestation, df_dps_ref_typ
 
     df_dps_DT = df_dps_DT[(df_dps_DT['DT_de_rattachement'] != 'NaN') & (df_dps_DT['DT_de_rattachement'].notnull())]
 
+    df_dps_DT = df_dps_DT.rename(columns={'DT_de_rattachement': 'n_structure'})
+    df_dps_DT['n_structure'] = df_dps_DT['n_structure'].apply(keep_integer).astype(int)
+
     return df_dps, df_dps_DT
 
 

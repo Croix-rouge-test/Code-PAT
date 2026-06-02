@@ -314,7 +314,7 @@ def nb_session_form(df_year, filtres_bc, col_groupby, target_date):
                        (f'Formation_grand_public Nb_sessions_PREVIC_{year}', 'PREVIC'),
                        (f'Secours Nb_sessions_PSE', 'PSE'),
                        (f'Secours Nb_sessions_CI', 'CI'),
-                       (f'Secours Nb_sessions_FPSE', 'FPS')]
+                       (f'Secours Nb_sessions_FPSE', 'FPSE')]
     indic_liste = [col for col, _ in indic_filtres]
     for name, code in indic_filtres:
         df_res[name] = df_res['FORMATION_CODE'].isin(filtres_bc[code])
@@ -631,7 +631,7 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
     for code, alias in [('RECPSE1', 'nb_recy_PSE1'),
                         ('RECPSE2', 'nb_recy_PSE2'),
                         ('RECCI', 'nb_recy_CI'),
-                        ('FPSE', 'nb_recy_FPSE')]:
+                        ('RECFPSE', 'nb_recy_FPSE')]:
         taux = df_res.groupby(col_groupby).apply(
             lambda g: g[
                 g['FORMATION_CODE'].isin(filtres_bc[code]) &
@@ -965,7 +965,7 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
                         FROM `crf-pat.dataset_PAT_{year}.crf_pat_{year}_pegass_activite` AS act
                         INNER JOIN `crf-pat.dataset_PAT_{year}.crf_pat_{year}_pegass_activite_seance_inscription` AS insc
                             ON act.PEGASS_ACTIVITE_ID_PK = insc.PEGASS_ACTIVITE_ID_FK
-                        WHERE insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide' AND PEGASS_ACTIVITE_DATE_DEBUT >= DATE('{year}-01-01') AND PEGASS_ACTIVITE_DATE_DEBUT >= DATE('{year}-01-01') AND PEGASS_ACTIVITE_DATE_DEBUT <= DATE('{target_date}')"""
+                        WHERE insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide' AND PEGASS_ACTIVITE_DATE_DEBUT >= DATE('{year}-01-01')  AND PEGASS_ACTIVITE_DATE_DEBUT <= DATE('{target_date}')"""
 
     df_bene_actifs = client.query(query_bene_actifs).to_dataframe()
     df_bene_actifs = df_bene_actifs.rename(columns = {'PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK': 'n_structure','PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['n_structure','NIVOL_ID_FK']].drop_duplicates()
@@ -1043,6 +1043,9 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     df_formation_session_resultat_fpg = df_formation_session_resultat.copy()
     df_formation_session_resultat_fpg = df_formation_session_resultat_fpg.rename(columns={'FORMATION_SESSION_STRUCTURE_ID_FK' : 'n_structure'})
 
+    df_formation_session_resultat_fpg = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat_fpg, col = 'n_structure')
+
+
     query_rattachement_benevole = f"""
         SELECT *
         FROM `crf-pat.dataset_PAT_{TARGET_YEAR}.crf_pat_{TARGET_YEAR}_rattachement_benevole`
@@ -1090,11 +1093,17 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     df_formation_count_session = df_formation_session_resultat.copy()
     df_formation_count_session = df_formation_count_session.rename(columns={"FORMATION_SESSION_STRUCTURE_ID_FK": "n_structure"})
 
+    df_formation_count_session = apply_rattachement_successif(df_ref_structure, df_formation_count_session, col = 'n_structure')
+
+
     df_formation_count_session = dt_rattachement(df_formation_count_session, df_ref_structure)
     df_formation_count_session_year = df_formation_count_session[df_formation_count_session['FORMATION_DATE_OBTENTION'].dt.year == TARGET_YEAR].copy()
 
     df_formation_session_resultat =df_formation_session_resultat_rattachement
     df_formation_session_resultat = df_formation_session_resultat.rename(columns={"rattachement_benevole_structure_id_fk": "n_structure"})
+    df_formation_session_resultat = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat, col = 'n_structure')
+
+    
 
     mask_year = df_formation_session_resultat['FORMATION_DATE_OBTENTION'].dt.year == TARGET_YEAR
 

@@ -254,7 +254,7 @@ def taux_nvx_benevoles(nb_benevoles, nb_nvx_benevoles, nb_benevoles_DT, nb_nvx_b
     )
 
     # Calcul du taux de nouveaux bénévoles
-    df_merge_DT["Structure Taux_nvx_Benevoles"] = (df_merge_DT[f"Structure Nb_nvx_Benevoles_{year}"] / df_merge_DT["Structure Nb_Benevoles"]) * 100
+    df_merge_DT["Structure Taux_nvx_Benevoles"] = (df_merge_DT[f"Structure Nb_nvx_Benevoles_{year}"] / df_merge_DT["Structure Nb_Benevoles"])
 
     return df_merge, df_merge_DT
 

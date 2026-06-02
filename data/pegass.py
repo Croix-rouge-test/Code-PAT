@@ -604,8 +604,8 @@ def calcul_PEGASS_indicateurs(
     colonnes_finales_struct = [
         "n_structure",
         "Maraude Nb_maraudes_PEGASS",
-        "Dispositifs_d_urgence Nb_operations",
-        "Dispositifs_d_urgence Nb_exercices",
+        #"Dispositifs_d_urgence Nb_operations",
+        #"Dispositifs_d_urgence Nb_exercices",
         "AEO Structure_activite_fixe",
         "AEO Structure_domiciliation_fixe",
         "AEO Structure_ecrivain_public_fixe",
@@ -671,3 +671,109 @@ def calcul_PEGASS_indicateurs(
         "Domiciliation": Domiciliation,
         "Ecrivain_public": Ecrivain_public,
     }
+
+def calcul_PEGASS_DT_indicateurs(Indics_pegass_struct, df_ref_structure):
+
+    # On travaille sur une copie pour ne pas modifier le df structure original
+    Indics_pegass_struct = Indics_pegass_struct.copy()
+
+    # =========================================================
+    # 1. Transformer les colonnes texte AEO en compteurs numériques
+    # =========================================================
+
+    Indics_pegass_struct["AEO Nb_activites_fixes"] = (
+        Indics_pegass_struct["AEO Structure_activite_fixe"]
+        .apply(lambda x: 1 if x == "Activités AEO/AAD menée en fixe" else 0)
+    )
+
+    Indics_pegass_struct["AEO Structure_domiciliation_fixe"] = (
+        Indics_pegass_struct["AEO Structure_domiciliation_fixe"]
+        .apply(lambda x: 1 if x == "Domiciliation" else 0)
+    )
+
+    Indics_pegass_struct["AEO Structure_ecrivain_public_fixe"] = (
+        Indics_pegass_struct["AEO Structure_ecrivain_public_fixe"]
+        .apply(lambda x: 1 if x == "Ecrivain public" else 0)
+    )
+
+    # On supprime la colonne texte, remplacée par AEO Nb_activites_fixes
+    Indics_pegass_struct = Indics_pegass_struct.drop(
+        columns=["AEO Structure_activite_fixe"],
+        errors="ignore"
+    )
+
+    # =========================================================
+    # 2. Rattacher chaque structure à sa structure de rattachement
+    # =========================================================
+
+    Indics_pegass_struct = pd.merge(
+        Indics_pegass_struct,
+        df_ref_structure[["n_structure", "n_structure-ratt"]],
+        on="n_structure",
+        how="inner"
+    )
+
+    # On remplace n_structure par la structure de rattachement
+    Indics_pegass_struct = Indics_pegass_struct.drop(
+        columns=["n_structure"],
+        errors="ignore"
+    )
+
+    Indics_pegass_struct = Indics_pegass_struct.rename(
+        columns={"n_structure-ratt": "n_structure"}
+    )
+
+    # =========================================================
+    # 3. Agréger les indicateurs au niveau structure de rattachement
+    # =========================================================
+
+    Indics_pegass_struct = (
+        Indics_pegass_struct
+        .groupby("n_structure", as_index=False)
+        .sum(numeric_only=True)
+    )
+
+    Indics_pegass_struct["AEO Structure_ecrivain_public_fixe"] = (
+    Indics_pegass_struct["AEO Structure_ecrivain_public_fixe"]
+    .replace(2, 1)
+    )
+
+    Indics_pegass_struct['AEO Structure_domiciliation_fixe'] = (
+        Indics_pegass_struct['AEO Structure_domiciliation_fixe']
+        .replace(2, 1)
+    )
+
+    # =========================================================
+    # 4. Rattacher les structures de rattachement à leur DT
+    # =========================================================
+
+    Indics_pegass_DT = pd.merge(
+        Indics_pegass_struct,
+        df_ref_structure[["n_structure", "DT_de_rattachement"]],
+        on="n_structure",
+        how="inner"
+    )
+
+    # Recréer un indicateur structure AEO fixe :
+    # 1 si au moins une activité AEO/AAD fixe sur la structure de rattachement
+    Indics_pegass_DT["AEO Structure_activite_fixe"] = (
+        Indics_pegass_DT["AEO Nb_activites_fixes"]
+        .apply(lambda x: 1 if x > 0 else 0)
+    )
+
+    # =========================================================
+    # 5. Agréger au niveau DT
+    # =========================================================
+
+    Indics_pegass_DT = (
+        Indics_pegass_DT
+        .groupby("DT_de_rattachement", as_index=False)
+        .sum(numeric_only=True)
+    )
+
+    Indics_pegass_DT = Indics_pegass_DT.drop(
+        columns=["n_structure"],
+        errors="ignore"
+    )
+
+    return Indics_pegass_DT, Indics_pegass_struct

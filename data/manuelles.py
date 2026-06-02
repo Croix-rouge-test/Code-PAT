@@ -929,6 +929,18 @@ def tracabilite_textile_DT(df_tracabilite_textileVF):
     df_tracabilite_textileVF_DT = df_tracabilite_textileVF_DT.groupby('DT_de_rattachement', as_index=False)['nb_flux'].sum()
     return df_tracabilite_textileVF_DT
 
+def crope_DT(df_CRopeVF, rattachement_court):
+    df_CRopeVF_DT = pd.merge(df_CRopeVF, rattachement_court, on='n_structure', how="left")
+
+    df_CRoPeVF_DT = (
+        df_CRopeVF_DT
+        .groupby("DT_de_rattachement", as_index=False)
+        .sum(numeric_only=True)
+    )
+
+    df_CRopeVF_DT.drop(columns=["n_structure"], inplace=True)
+    return df_CRopeVF_DT
+
 
 def verif_textile(df_raw_Textile_c, df_raw_Textile, df_Textile_DT, df_ref_structure,rattachement_court):
   df_t = df_raw_Textile_c[df_raw_Textile_c["statut"] == "A jour"]
