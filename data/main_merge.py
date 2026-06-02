@@ -140,7 +140,7 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     f"Secours Nb_DPS_PE_{year}",
     f"Secours Nb_DPS_ME_{year}",
     f"Secours Nb_DPS_GE_{year}",
-    f"Secours Produits_DPS_{year}",
+    f"Secours Produits_DPS_{year-1}",
     "Secours Structures_menant_activite",
 
     "AEO Structures_menant_activite",
@@ -162,7 +162,6 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Aide_alimentaire Nb_Centre_distribution_alimentaire",
     "Aide_alimentaire Nb_epiceries_sociales",
     "Aide_alimentaire Nb_crsr",
-    "Aide_alimentaire nb_EBP",
     "Aide_alimentaire nb_PA",
     "Aide_alimentaire nb_tonnes",
     "Aide_alimentaire nb_distributions",
