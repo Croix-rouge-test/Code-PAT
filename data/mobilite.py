@@ -63,7 +63,7 @@ def indicateurs_mobilite(df_mobilite, df_ref_structure):
     mobilite_DT = pd.merge(mobilite_struct, df_ref_structure, on='n_structure', how="left")
 
     mobilite_DT = (
-        mobilite_DT.groupby('n_structure', as_index=False)
+        mobilite_DT.groupby('DT_de_rattachement', as_index=False)
         .agg(
             **{
                 'AEO Structure_activite_mobile': ('AEO Structure_activite_mobile', 'sum'),
