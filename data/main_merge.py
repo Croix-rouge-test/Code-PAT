@@ -140,7 +140,7 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     f"Secours Nb_DPS_PE_{year}",
     f"Secours Nb_DPS_ME_{year}",
     f"Secours Nb_DPS_GE_{year}",
-    f"Secours Produits_DPS_{year}",
+    f"Secours Produits_DPS_2025",
     "Secours Structures_menant_activite",
 
     "AEO Structures_menant_activite",

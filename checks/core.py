@@ -43,9 +43,19 @@ def client_gspread():
 
     return gspread_client
 
-def import_dataframes(url,gspread_client):
-    df_UL = get_as_dataframe(gspread_client.open_by_url(url).worksheet('UL'))
-    df_DT = get_as_dataframe(gspread_client.open_by_url(url).worksheet('DT'))
+def import_dataframes(url, gspread_client):
+    spreadsheet = gspread_client.open_by_url(url)
+
+    df_UL = get_as_dataframe(
+        spreadsheet.worksheet('UL'),
+        evaluate_formulas=True
+    ).dropna(how="all").dropna(axis=1, how="all")
+
+    df_DT = get_as_dataframe(
+        spreadsheet.worksheet('DT'),
+        evaluate_formulas=True
+    ).dropna(how="all").dropna(axis=1, how="all")
+
     return df_UL, df_DT
 
 def col_sum(df, column):
@@ -130,12 +140,20 @@ def compare_dataframe_columns(df1, df2, columns=None):
         raise ValueError("Aucune colonne commune à comparer trouvée.")
     
     results = {}
+
     for col in columns:
+        if col not in df1.columns or col not in df2.columns:
+            continue
+
         try:
-            sum1 = df1[col].sum()
-            sum2 = df2[col].sum()
+            s1 = pd.to_numeric(df1[col], errors="coerce").fillna(0)
+            s2 = pd.to_numeric(df2[col], errors="coerce").fillna(0)
+
+            sum1 = s1.sum()
+            sum2 = s2.sum()
+
             diff_info = _calculate_difference(sum1, sum2)
-            
+
             results[col] = {
                 'sum_df1': sum1,
                 'sum_df2': sum2,
@@ -143,8 +161,9 @@ def compare_dataframe_columns(df1, df2, columns=None):
                 'percentage': diff_info['percentage'],
                 'is_equal': diff_info['is_equal']
             }
-        except (KeyError, TypeError):
-            # Ignore les colonnes qui ne peuvent pas être converties en nombres
+
+        except Exception as e:
+            print(f"⚠️ Colonne ignorée : {col} — {e}")
             continue
     
     return results
@@ -466,7 +485,8 @@ def compare_dt_row_by_row(
     # --- Préparer df_DT avec clé normalisée ---
     df_dt = df_DT.copy()
 
-    df_dt['__dt_key__'] = df_dt[dt_key_dt].astype(int).astype(str)
+    #df_dt['__dt_key__'] = df_dt[dt_key_dt].astype(int).astype(str)
+    df_dt['__dt_key__'] = df_dt[dt_key_dt].apply(_normalize_dt_key)
     if df_dt['__dt_key__'].duplicated().any():
         duplicated_keys = sorted(df_dt['__dt_key__'][df_dt['__dt_key__'].duplicated()].unique())
         raise ValueError(
@@ -676,6 +696,188 @@ def load_reference_sheets(
 # 2. Comparaison source vs référence
 # ---------------------------------------------------------------------------
  
+# def compare_with_reference(
+#     df_source: pd.DataFrame,
+#     df_ref: pd.DataFrame,
+#     columns: list = None,
+#     id_col: str = None,
+# ) -> pd.DataFrame:
+#     """
+#     Compare df_source (données terrain réelles) avec df_ref (feuille de référence).
+ 
+#     Règles :
+#       - Seules les cellules **renseignées** dans df_ref (non-NaN) sont comparées.
+#       - Les NaN dans df_source sont traités comme 0.
+#       - La jointure se fait sur id_col (si fourni) ou sur la position des lignes.
+ 
+#     Args:
+#         df_source (pd.DataFrame): Données source (df_UL ou df_DT).
+#         df_ref (pd.DataFrame): Feuille de référence chargée depuis Google Sheets.
+#         columns (list, optional): Colonnes numériques à comparer.
+#                                    Si None, toutes les colonnes numériques communes
+#                                    entre df_source et df_ref.
+#         id_col (str, optional): Colonne identifiant pour la jointure (ex: 'n_structure').
+#                                  Si None, jointure par position.
+ 
+#     Returns:
+#         pd.DataFrame: Colonnes :
+#             [id_col ou 'Index'] | Colonne | Valeur_Source | Valeur_Ref |
+#             Différence | Pourcentage | Statut
+ 
+#     Raises:
+#         ValueError: Si aucune colonne commune n'est trouvée.
+#     """
+#     src = df_source.copy()
+#     ref = df_ref.copy()
+ 
+#     # --- Déterminer les colonnes à comparer ---
+#     if columns is None:
+#         num_src = set(src.select_dtypes(include='number').columns)
+#         num_ref = set(ref.select_dtypes(include='number').columns)
+#         columns = list(num_src & num_ref)
+ 
+#     if not columns:
+#         raise ValueError("Aucune colonne numérique commune entre source et référence.")
+ 
+#     # --- Alignement par id_col ou par position ---
+#     # if id_col and id_col in src.columns and id_col in ref.columns:
+#     #     src = src.set_index(id_col)
+#     #     ref = ref.set_index(id_col)
+#     #     common_idx = src.index.intersection(ref.index)
+#     #     src = src.loc[common_idx]
+#     #     ref = ref.loc[common_idx]
+#     #     index_label = id_col
+
+#     if id_col and id_col in src.columns and id_col in ref.columns:
+#         src[id_col] = src[id_col].apply(_normalize_dt_key)
+#         ref[id_col] = ref[id_col].apply(_normalize_dt_key)
+
+#         src = src.set_index(id_col)
+#         ref = ref.set_index(id_col)
+
+#         common_idx = src.index.intersection(ref.index)
+
+#         print(f"🔗 Nombre de clés communes trouvées sur {id_col} : {len(common_idx)}")
+
+#     if len(common_idx) == 0:
+#         print("⚠️ Aucune clé commune trouvée.")
+#         print("Exemples clés source :", list(src.index.dropna().unique())[:10])
+#         print("Exemples clés référence :", list(ref.index.dropna().unique())[:10])
+
+#         src = src.loc[common_idx]
+#         ref = ref.loc[common_idx]
+#         index_label = id_col
+
+#     else:
+#         # Alignement par position — tronquer à la plus courte
+#         min_len = min(len(src), len(ref))
+#         src = src.iloc[:min_len].reset_index(drop=True)
+#         ref = ref.iloc[:min_len].reset_index(drop=True)
+#         index_label = 'Index'
+ 
+#     # --- Construire le résultat ---
+#     # rows = []
+#     # for idx in src.index:
+#     #     for col in columns:
+#     #         val_ref_raw = ref.loc[idx, col] if col in ref.columns else float('nan')
+ 
+#     #         # Ignorer les cellules non renseignées dans la référence
+#     #         if pd.isna(val_ref_raw):
+#     #             continue
+ 
+#     #         val_src_raw = src.loc[idx, col] if col in src.columns else float('nan')
+
+
+            
+#     #     # NaN dans la source → 0
+#     #     val_src = pd.to_numeric(val_src_raw, errors="coerce")
+#     #     val_ref = pd.to_numeric(val_ref_raw, errors="coerce")
+
+#     #     # Si la valeur de référence n'est pas numérique, on ignore la cellule
+#     #     # Exemple : "#N/A (...)", texte, formule en erreur, etc.
+#     #     if pd.isna(val_ref):
+#     #         print(
+#     #             f"⚠️ Référence ignorée car non numérique | "
+#     #             f"{index_label}={idx} | colonne={col} | valeur_ref={val_ref_raw!r}"
+#     #         )
+#     #         continue
+
+#     #     # Si la source est vide ou non numérique, on la traite comme 0
+#     #     if pd.isna(val_src):
+#     #         val_src = 0.0
+
+#     #     val_src = float(val_src)
+#     #     val_ref = float(val_ref)
+
+#     #     diff = _calculate_difference(val_ref, val_src)
+
+#     #     rows.append({
+#     #         index_label:     idx,
+#     #         'Colonne':       col,
+#     #         'Valeur_Source': val_src,
+#     #         'Valeur_Ref':    val_ref,
+#     #         'Différence':    diff['difference'],
+#     #         'Pourcentage':   diff['percentage'],
+#     #         'Statut':        _get_status_marker(diff['is_equal'], diff['difference']),
+#     #     })
+ 
+#     # return pd.DataFrame(rows)
+    
+
+#     rows = []
+
+#     for idx in src.index:
+#         for col in columns:
+
+#             # Si la colonne n'existe pas dans la référence, on ignore
+#             if col not in ref.columns:
+#                 continue
+
+#             val_ref_raw = ref.loc[idx, col]
+
+#             # Ignorer les cellules non renseignées dans la référence
+#             if pd.isna(val_ref_raw):
+#                 continue
+
+#             # Si la colonne n'existe pas dans la source, on considère 0
+#             if col in src.columns:
+#                 val_src_raw = src.loc[idx, col]
+#             else:
+#                 val_src_raw = 0
+
+#             # Conversion sécurisée
+#             val_ref = pd.to_numeric(val_ref_raw, errors="coerce")
+#             val_src = pd.to_numeric(val_src_raw, errors="coerce")
+
+#             # Si la référence contient une erreur Google Sheets du type #N/A, on ignore
+#             if pd.isna(val_ref):
+#                 print(
+#                     f"⚠️ Référence ignorée car non numérique | "
+#                     f"{index_label}={idx} | colonne={col} | valeur_ref={val_ref_raw!r}"
+#                 )
+#                 continue
+
+#             # Si la source est vide ou non numérique, on la traite comme 0
+#             if pd.isna(val_src):
+#                 val_src = 0.0
+
+#             val_ref = float(val_ref)
+#             val_src = float(val_src)
+
+#             diff = _calculate_difference(val_ref, val_src)
+
+#             rows.append({
+#                 index_label:     idx,
+#                 'Colonne':       col,
+#                 'Valeur_Source': val_src,
+#                 'Valeur_Ref':    val_ref,
+#                 'Différence':    diff['difference'],
+#                 'Pourcentage':   diff['percentage'],
+#                 'Statut':        _get_status_marker(diff['is_equal'], diff['difference']),
+#             })
+
+#     return pd.DataFrame(rows)
+ 
 def compare_with_reference(
     df_source: pd.DataFrame,
     df_ref: pd.DataFrame,
@@ -683,87 +885,112 @@ def compare_with_reference(
     id_col: str = None,
 ) -> pd.DataFrame:
     """
-    Compare df_source (données terrain réelles) avec df_ref (feuille de référence).
- 
+    Compare df_source avec df_ref.
+
     Règles :
-      - Seules les cellules **renseignées** dans df_ref (non-NaN) sont comparées.
-      - Les NaN dans df_source sont traités comme 0.
-      - La jointure se fait sur id_col (si fourni) ou sur la position des lignes.
- 
-    Args:
-        df_source (pd.DataFrame): Données source (df_UL ou df_DT).
-        df_ref (pd.DataFrame): Feuille de référence chargée depuis Google Sheets.
-        columns (list, optional): Colonnes numériques à comparer.
-                                   Si None, toutes les colonnes numériques communes
-                                   entre df_source et df_ref.
-        id_col (str, optional): Colonne identifiant pour la jointure (ex: 'n_structure').
-                                 Si None, jointure par position.
- 
-    Returns:
-        pd.DataFrame: Colonnes :
-            [id_col ou 'Index'] | Colonne | Valeur_Source | Valeur_Ref |
-            Différence | Pourcentage | Statut
- 
-    Raises:
-        ValueError: Si aucune colonne commune n'est trouvée.
+      - Seules les cellules renseignées dans df_ref sont comparées.
+      - Les erreurs / textes non numériques dans df_ref sont ignorés.
+      - Les NaN ou textes non numériques dans df_source sont traités comme 0.
+      - Si id_col est fourni, jointure sur id_col.
+      - Sinon, comparaison ligne à ligne par position.
     """
+
     src = df_source.copy()
     ref = df_ref.copy()
- 
+
     # --- Déterminer les colonnes à comparer ---
     if columns is None:
-        num_src = set(src.select_dtypes(include='number').columns)
-        num_ref = set(ref.select_dtypes(include='number').columns)
+        num_src = set(src.select_dtypes(include="number").columns)
+        num_ref = set(ref.select_dtypes(include="number").columns)
         columns = list(num_src & num_ref)
- 
+
     if not columns:
-        raise ValueError("Aucune colonne numérique commune entre source et référence.")
- 
+        raise ValueError("Aucune colonne commune à comparer.")
+
     # --- Alignement par id_col ou par position ---
     if id_col and id_col in src.columns and id_col in ref.columns:
+        src[id_col] = src[id_col].apply(_normalize_dt_key)
+        ref[id_col] = ref[id_col].apply(_normalize_dt_key)
+
         src = src.set_index(id_col)
         ref = ref.set_index(id_col)
+
         common_idx = src.index.intersection(ref.index)
+
+        print(f"🔗 Nombre de clés communes trouvées sur {id_col} : {len(common_idx)}")
+
+        if len(common_idx) == 0:
+            print("⚠️ Aucune clé commune trouvée.")
+            print("Exemples clés source :", list(src.index.dropna().unique())[:10])
+            print("Exemples clés référence :", list(ref.index.dropna().unique())[:10])
+
         src = src.loc[common_idx]
         ref = ref.loc[common_idx]
         index_label = id_col
+
     else:
-        # Alignement par position — tronquer à la plus courte
+        # Cas du Total : comparaison par position, sans common_idx
         min_len = min(len(src), len(ref))
+
         src = src.iloc[:min_len].reset_index(drop=True)
         ref = ref.iloc[:min_len].reset_index(drop=True)
-        index_label = 'Index'
- 
+
+        index_label = "Index"
+
     # --- Construire le résultat ---
     rows = []
+
     for idx in src.index:
         for col in columns:
-            val_ref_raw = ref.loc[idx, col] if col in ref.columns else float('nan')
- 
-            # Ignorer les cellules non renseignées dans la référence
+
+            # Si la colonne n'existe pas dans la référence, on ignore
+            if col not in ref.columns:
+                continue
+
+            val_ref_raw = ref.loc[idx, col]
+
+            # Ignorer les cellules vides dans la référence
             if pd.isna(val_ref_raw):
                 continue
- 
-            val_src_raw = src.loc[idx, col] if col in src.columns else float('nan')
- 
-            # NaN dans la source → 0
-            val_src = 0.0 if pd.isna(val_src_raw) else float(val_src_raw)
-            val_ref = float(val_ref_raw)
- 
+
+            # Si la colonne n'existe pas dans la source, on considère 0
+            if col in src.columns:
+                val_src_raw = src.loc[idx, col]
+            else:
+                val_src_raw = 0
+
+            # Conversion sécurisée
+            val_ref = pd.to_numeric(val_ref_raw, errors="coerce")
+            val_src = pd.to_numeric(val_src_raw, errors="coerce")
+
+            # Si la référence est une erreur Google Sheets du type #N/A, on ignore
+            if pd.isna(val_ref):
+                print(
+                    f"⚠️ Référence ignorée car non numérique | "
+                    f"{index_label}={idx} | colonne={col} | valeur_ref={val_ref_raw!r}"
+                )
+                continue
+
+            # Si la source est vide ou non numérique, on la traite comme 0
+            if pd.isna(val_src):
+                val_src = 0.0
+
+            val_ref = float(val_ref)
+            val_src = float(val_src)
+
             diff = _calculate_difference(val_ref, val_src)
+
             rows.append({
                 index_label:     idx,
-                'Colonne':       col,
-                'Valeur_Source': val_src,
-                'Valeur_Ref':    val_ref,
-                'Différence':    diff['difference'],
-                'Pourcentage':   diff['percentage'],
-                'Statut':        _get_status_marker(diff['is_equal'], diff['difference']),
+                "Colonne":       col,
+                "Valeur_Source": val_src,
+                "Valeur_Ref":    val_ref,
+                "Différence":    diff["difference"],
+                "Pourcentage":   diff["percentage"],
+                "Statut":        _get_status_marker(diff["is_equal"], diff["difference"]),
             })
- 
+
     return pd.DataFrame(rows)
- 
- 
 # ---------------------------------------------------------------------------
 # 3. Affichage console
 # ---------------------------------------------------------------------------
@@ -852,7 +1079,12 @@ def compare_reference_and_export(
     df_dt_total = df_DT[num_cols_dt].sum().to_frame().T.reset_index(drop=True)
 
     # 🔑 2. Récupérer UNE seule ligne de référence (ligne "Total")
-    df_ref_total = refs['DT'][refs['DT']['n_structure'] == 'Total' ]
+    df_ref_total = refs['DT'][
+        refs['DT']['n_structure'].astype(str).str.strip().str.lower() == 'total'
+    ]
+
+    if df_ref_total.empty:
+        raise ValueError("Aucune ligne 'Total' trouvée dans la feuille de référence DT.")
 
     if df_ref_total.shape[0] > 1:
         # 👉 on prend la ligne qui contient "Total" si elle existe

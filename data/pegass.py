@@ -2,443 +2,8 @@ import pandas as pd
 import numpy as np
 import re
 
+
 """##Appel des fonction PEGASS.PY"""
-
-def filter_df1_on_df2(df1, df2, col_df1="N°structure", col_df2="N°structure"):
-    return df1[df1[col_df1].isin(df2[col_df2])].copy()
-
-def def_Structure_de_rattachement(df_ref_structure):
-  rattachement_successif =   df_ref_structure[
-        df_ref_structure["type_structure"].isin([ 'IMPLANTATION LOCALE HORS AL - IL', 'ANTENNE LOCALE - AL'])
-    ].copy()
-
-  rattachement_successif = rattachement_successif [[
-        "n_structure",
-        "type_structure",
-        "Structure_de_rattachement"
-    ]].copy()
-
-  rattachement_successif["N structure de rattachement"] = (
-        rattachement_successif ["Structure_de_rattachement"]
-        .astype("string")
-        .str.split("-", n=1, expand=True)[0]
-        .str.strip()
-    )
-  rattachement_successif .loc[rattachement_successif ["Structure_de_rattachement"].isna(), "N structure de rattachement"] = pd.NA
-
-
-  return rattachement_successif
-
-#Fonction pour merge les tables
-
-def filter_ul_dt(df_ref_structure):
-    return df_ref_structure[
-        df_ref_structure["type_structure"].isin(["UNITE LOCALE - UL", "DELEGATION TERRITORIALE - DT", 'IMPLANTATION LOCALE HORS AL - IL', 'ANTENNE LOCALE - AL'])
-    ].copy()
-
-def Structure_de_rattachement(df_ref_structure):
-    return df_ref_structure[
-        df_ref_structure["type_structure"].isin([ 'IMPLANTATION LOCALE HORS AL - IL', 'ANTENNE LOCALE - AL'])
-    ].copy()
-
-def add_num_structure_rattachement(
-    df: pd.DataFrame,
-    col_source: str,
-    col_out: str = "N structure de rattachement"
-) -> pd.DataFrame:
-    """
-    Crée une colonne col_out = partie avant le 1er '-' dans col_source.
-    Exemple: '10 - DT DES ALPES MARITIMES' -> '10'
-
-    - Gère NaN
-    - Trim espaces
-    - Ne modifie pas le df original (retourne une copie)
-    """
-    out = df.copy()
-
-    out[col_out] = (
-        out[col_source]
-        .astype("string")
-        .str.split("-", n=1, expand=True)[0]
-        .str.strip()
-    )
-
-    # Optionnel : remettre <NA> si la source est vide/NA
-    out.loc[out[col_source].isna(), col_out] = pd.NA
-
-    return out
-
-def Structure_de_rattachement(df_ref_structure):
-  rattachement_successif =   df_ref_structure[
-        df_ref_structure["type_structure"].isin([ 'IMPLANTATION LOCALE HORS AL - IL', 'ANTENNE LOCALE - AL'])
-    ].copy()
-
-  rattachement_successif = rattachement_successif [[
-        "n_structure",
-        "type_structure",
-        "Structure_de_rattachement"
-    ]].copy()
-
-  rattachement_successif["N structure de rattachement"] = (
-        rattachement_successif ["Structure_de_rattachement"]
-        .astype("string")
-        .str.split("-", n=1, expand=True)[0]
-        .str.strip()
-    )
-  rattachement_successif .loc[rattachement_successif ["Structure_de_rattachement"].isna(), "N structure de rattachement"] = pd.NA
-
-
-  return rattachement_successif
-
-def merge_action_activite(df_ref_action_groupe_action, df_ref_activite_benevole):
-    return pd.merge(df_ref_action_groupe_action, df_ref_activite_benevole, on="action_id_fk", how="left")
-
-def rename_pegass_activite_id(df_pegass_activite):
-    return df_pegass_activite.rename(columns={"PEGASS_ACTIVITE_ID_PK": "PEGASS_ACTIVITE_ID_FK"})
-
-#Filtres activités
-
-
-
-def get_codes_activite_ben():
-    return [
-        10119, 10122, 10123, 10125, 10126, 10127, 10128, 10129,
-        10132, 10133, 10134, 10135, 10136, 10137,
-        10032, 10033, 10034, 10035, 11110,
-        10015, 10046, 10047, 11126,
-        10105, 10106, 11007, 10108, 10113
-    ]
-
-def get_codes_maraude():
-    return [10032, 10033, 10034, 10035, 10036, 10037, 11110]
-
-def get_codes_nb_exercice():
-    return [10122, 10123]
-
-def get_codes_nb_operations():
-    return [11015, 10132, 10133, 10134, 10135, 10136, 10137, 10119, 10125, 10126, 10127, 10128, 10129]
-
-def get_codes_aeo():
-    return [10015]
-
-def get_codes_domiciliation():
-    return [10046]
-
-def get_codes_ecrivain_public():
-    return [10047, 11126]
-
-def get_codes_dps():
-    return [10105, 10106, 11007, 10108, 10113]
-
-def get_codes_is_actifs():
-    return [10105, 10106, 10108, 10113, 10114, 10115, 10116]
-
-
-
-def filter_ref_action_activite(df_ref_action_activite, codes_activite_ben=None):
-    if codes_activite_ben is None:
-        codes_activite_ben = get_codes_activite_ben()
-    return df_ref_action_activite[
-        df_ref_action_activite["activite_benevole_id_pk"].isin(codes_activite_ben)
-    ].copy()
-
-def rename_activite_benevole_id(df_ref_action_activite_filtre):
-    return df_ref_action_activite_filtre.rename(
-        columns={"activite_benevole_id_pk": "ACTIVITE_BENEVOLE_ID_FK"}
-    )
-
-def merge_on_activite_benevole(df_left, df_ref_action_activite_filtre, how="inner"):
-    return pd.merge(df_left, df_ref_action_activite_filtre, on="ACTIVITE_BENEVOLE_ID_FK", how=how)
-
-def drop_duplicates_seance(df, col="PEGASS_ACTIVITE_SEANCE_ID_FK"):
-    return df.drop_duplicates(col)
-
-def merge_activite_seance(df_pegass_activite_seance, df_pegass_activite):
-    # merge left sur PEGASS_ACTIVITE_ID_FK
-    return pd.merge(df_pegass_activite_seance, df_pegass_activite, on="PEGASS_ACTIVITE_ID_FK", how="left")
-
-def build_ben_activite(df_pegass_activite, df_pegass_activite_seance_inscription):
-    # merge right sur PEGASS_ACTIVITE_ID_FK
-    return pd.merge(df_pegass_activite, df_pegass_activite_seance_inscription, on="PEGASS_ACTIVITE_ID_FK", how="right")
-
-def filter_inscriptions_valides(df_pegass_ben_activite):
-    return df_pegass_ben_activite[
-        df_pegass_ben_activite["PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT"] == "Valide"
-    ].copy()
-
-def build_ben_activite_synthetique(df_pegass_ben_activite):
-    df_syn = df_pegass_ben_activite[[
-        "PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK",
-        "ACTIVITE_BENEVOLE_ID_FK",
-        "PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK"
-    ]].copy()
-    return df_syn.drop_duplicates()
-
-#fonction indicateurs
-
-def count_ben_structure(df):
-    # compte nb lignes par structure
-    return (
-        df.groupby("PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK", as_index=False)
-          .size()
-          .rename(columns={
-              "PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK": "n_structure",
-              "size": "nb_benevoles"
-          })
-    )
-
-def filter_ben_by_activite(df_synth, codes_activite):
-    # filtre par liste de codes, enlève la colonne activité, enlève doublons
-    df_out = df_synth[df_synth["ACTIVITE_BENEVOLE_ID_FK"].isin(codes_activite)].copy()
-    df_out = df_out.drop(columns=["ACTIVITE_BENEVOLE_ID_FK"])
-    return df_out.drop_duplicates()
-
-def compute_nb_benevoles_indicator(df_synth, codes_activite, out_col_name):
-    # pipeline : filtre -> compte -> renomme la colonne nb_benevoles
-    df_filtered = filter_ben_by_activite(df_synth, codes_activite)
-    df_count = count_ben_structure(df_filtered)
-    return df_count.rename(columns={"nb_benevoles": out_col_name})
-
-#Création d'une fonction action menée
-
-
-def add_statut_action(
-    df,
-    col_nb,
-    out_col="activité menée",
-    label_yes="Action menée",
-    label_no="Action non menée",
-    treat_zero_as_no=True,
-    copy=True
-):
-    """
-    Ajoute une colonne de statut basée sur une colonne de comptage.
-
-    - Si col_nb contient une valeur numérique (et optionnellement != 0), => label_yes
-    - Sinon (NaN / vide / non numérique) => label_no
-
-    Params
-    ------
-    df : pd.DataFrame
-    col_nb : str
-        Nom de la colonne à tester (comptage / nb / etc.)
-    out_col : str
-        Nom de la colonne créée
-    treat_zero_as_no : bool
-        True => 0 => label_no ; False => 0 => label_yes
-    copy : bool
-        True => retourne une copie ; False => modifie df en place
-    """
-    df_out = df.copy() if copy else df
-
-    nb = pd.to_numeric(df_out[col_nb], errors="coerce")
-
-    if treat_zero_as_no:
-        mask_yes = nb.notna() & (nb != 0)
-    else:
-        mask_yes = nb.notna()
-
-    df_out[out_col] = np.where(mask_yes, label_yes, label_no)
-    return df_out
-
-#calcul nb activite
-
-def calc_nb_activite_pegass(df):
-    # compte nb lignes par (structure, activité)
-    return (
-        df.groupby(
-            ["PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK", "ACTIVITE_BENEVOLE_ID_FK"],
-            dropna=False
-        )
-        .size()
-        .reset_index(name="nb_activite")
-        .rename(columns={
-            "PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK": "n_structure",
-            "ACTIVITE_BENEVOLE_ID_FK": "N° activité"
-        })
-    )
-
-def indicator_nb_activites(df_activite_counts, codes_activite, out_col):
-    # filtre sur les codes, renomme, drop la colonne activité, puis somme par structure
-    df_out = df_activite_counts[df_activite_counts["N° activité"].isin(codes_activite)].copy()
-    df_out = df_out.rename(columns={"nb_activite": out_col}).drop(columns=["N° activité"])
-    return df_out.groupby("n_structure", as_index=False)[out_col].sum()
-
-def verifier_colonne_structure(df, col_code_structure, df_ref_structure):
-    """
-    Vérifie la validité d'une colonne de codes structure :
-    - Présence de NaN ou de chaînes vides
-    - Doublons
-    - Existence dans le référentiel
-    """
-    print(f"\n🔎 Vérification de la colonne '{col_code_structure}'")
-
-    # 1. Vérification des NaN ou valeurs vides
-    lignes_vides = df[df[col_code_structure].isna() | (df[col_code_structure] == "")]
-    if not lignes_vides.empty:
-        print(f"   ❌ {len(lignes_vides)} valeur(s) manquante(s) ou vide(s) détectée(s).")
-    else:
-        print("   ✅ Aucun NaN ou valeur vide détecté.")
-
-    # 2. Vérification des doublons (uniquement les codes)
-    doublons_series = df[col_code_structure][df[col_code_structure].duplicated(keep=False)]
-    if not doublons_series.empty:
-        codes_doublons = sorted(doublons_series.value_counts().index.tolist())
-        print(f"   ❌ {len(codes_doublons)} code(s) en doublon : {codes_doublons}")
-    else:
-        print("   ✅ Aucun doublon détecté.")
-
-    # 3. Vérification des codes absents du référentiel
-    codes_dans_df = set(df[col_code_structure].dropna().unique())
-    codes_dans_ref = set(df_ref_structure[col_code_structure].dropna().unique())
-    codes_manquants = codes_dans_df - codes_dans_ref
-
-    if codes_manquants:
-        print(f"   ❌ {len(codes_manquants)} code(s) non trouvés dans le référentiel : {sorted(codes_manquants)}")
-    else:
-        print("   ✅ Tous les codes sont présents dans le référentiel.")
-
-def rattache_structure(df1, df_ratt):
-    # mapping : n_structure -> N structure de rattachement
-    mapping = (
-        df_ratt.set_index(df_ratt["n_structure"].astype("string"))["N structure de rattachement"]
-        .astype("string")
-    )
-
-    col = "PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK"
-
-    s = df1[col].astype("string")
-    s2 = s.map(mapping)
-
-    # si pas trouvé dans le mapping, on garde l'original
-    df1[col] = s2.fillna(s)
-
-    # optionnel : repasser en entier nullable
-    df1[col] = pd.to_numeric(df1[col], errors="coerce").astype("Int64")
-
-    return df1
-
-
-
-"""###Fonction de vérification"""
-
-def check_sum_vs_unique_pairs(df_indicator, col_sum, df_source, codes_activite, label=""):
-    # 1) somme de l'indicateur
-    s = df_indicator[col_sum].sum()
-
-    # 2) nb de couples uniques (structure, nivol) dans la table source filtrée
-    n_unique = (
-        df_source.loc[
-            df_source["ACTIVITE_BENEVOLE_ID_FK"].isin(codes_activite),
-            ["PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK",
-             "PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK"]
-        ]
-        .drop_duplicates()
-        .shape[0]
-    )
-
-    if s == n_unique:
-        print(f"✅ OK {label} : sum({col_sum})={s} = uniques(structure,nivol)={n_unique}")
-        return True
-    else:
-        diff = s - n_unique
-        print(f"❌ PROBLÈME {label} : sum({col_sum})={s} ≠ uniques(structure,nivol)={n_unique} (diff={diff})")
-        return False
-
-def check_same_col_sum(df_left: pd.DataFrame,
-                       df_right: pd.DataFrame,
-                       col: str,
-                       dropna: bool = True,
-                       atol: float = 0.0,
-                       rtol: float = 0.0):
-    """
-    Vérifie que la somme de la colonne `col` est la même dans 2 DataFrames.
-
-    Parameters
-    ----------
-    df_left, df_right : pd.DataFrame
-        DataFrames à comparer
-    col : str
-        Nom de la colonne (même intitulé dans les 2 df)
-    dropna : bool
-        Si True, les NaN sont traités comme 0 (via fillna(0))
-    atol, rtol : float
-        Tolérances absolue et relative (utile si float)
-
-    Returns
-    -------
-    result : dict
-        Résumé des sommes + delta
-    ok : bool
-        True si égalité (avec tolérances), sinon False
-    """
-    if col not in df_left.columns:
-        raise KeyError(f"Colonne '{col}' absente de df_left")
-    if col not in df_right.columns:
-        raise KeyError(f"Colonne '{col}' absente de df_right")
-
-    s1 = pd.to_numeric(df_left[col], errors="coerce")
-    s2 = pd.to_numeric(df_right[col], errors="coerce")
-
-    if dropna:
-        s1 = s1.fillna(0)
-        s2 = s2.fillna(0)
-
-    sum1 = float(s1.sum())
-    sum2 = float(s2.sum())
-    delta = sum1 - sum2
-
-    ok = abs(delta) <= (atol + rtol * abs(sum2))
-
-    result = {
-        "col": col,
-        "sum_df_left": sum1,
-        "sum_df_right": sum2,
-        "delta_left_minus_right": delta,
-        "atol": atol,
-        "rtol": rtol,
-        "ok": ok
-    }
-    return result, ok
-
-#fonction qui vérifie la longueur d'une table avec celle d'une autre table
-def check_len_df_equals_sum_other(df_len, df_sum, col_sum, label=""):
-    n = len(df_len)
-    s = df_sum[col_sum].sum()
-
-    if n == s:
-        print(f"✅ OK {label} : len(df1)={n} = sum(df2[{col_sum}])={s}")
-        return True
-    else:
-        print(f"❌ PROBLÈME {label} : len(df1)={n} ≠ sum(df2[{col_sum}])={s}")
-        return False
-
-#Fonction de comparaison de 2 tables pour savoir qu'elles seront les lignes non mergées
-
-def rows_not_in_merge(df_left: pd.DataFrame, df_right: pd.DataFrame, id_col: str, keep_cols_left=None, keep_cols_right=None):
-    """
-    Compare 2 tables sur id_col et retourne:
-    - left_only: lignes de df_left dont l'id n'existe pas dans df_right
-    - right_only: lignes de df_right dont l'id n'existe pas dans df_left
-
-    keep_cols_left / keep_cols_right : liste de colonnes à conserver (optionnel).
-    """
-    left_ids = set(df_left[id_col].dropna().unique())
-    right_ids = set(df_right[id_col].dropna().unique())
-
-    left_only = df_left[df_left[id_col].isin(left_ids - right_ids)].copy()
-    right_only = df_right[df_right[id_col].isin(right_ids - left_ids)].copy()
-
-    if keep_cols_left is not None:
-        left_only = left_only[[c for c in keep_cols_left if c in left_only.columns]]
-    if keep_cols_right is not None:
-        right_only = right_only[[c for c in keep_cols_right if c in right_only.columns]]
-
-    return left_only, right_only
-
-#CODE POUR IMPORTER LES TABLES
-
-
 
 def import_tables_PEGASS(client,target_date = '2025-12-31',  project_id="crf-pat"):
     """
@@ -517,78 +82,340 @@ def import_tables_PEGASS(client,target_date = '2025-12-31',  project_id="crf-pat
     )
 
 
+def get_codes_activite_ben():
+    return [
+        10119, 10122, 10123, 10125, 10126, 10127, 10128, 10129,
+        10132, 10133, 10134, 10135, 10136, 10137,
+        10032, 10033, 10034, 10035, 11110,
+        10015, 10046, 10047, 11126,
+        10105, 10106, 11007, 10108, 10113
+    ]
 
-# CODE DE CALCUL DES INDICATEURS
+def get_codes_maraude():
+    return [10032, 10033, 10034, 10035, 10036, 10037, 11110]
+
+def get_codes_nb_exercice():
+    return [10122, 10123]
+
+def get_codes_nb_operations():
+    return [11015, 10132, 10133, 10134, 10135, 10136, 10137, 10119, 10125, 10126, 10127, 10128, 10129]
+
+def get_codes_aeo():
+    return [10015]
+
+def get_codes_domiciliation():
+    return [10046]
+
+def get_codes_ecrivain_public():
+    return [10047, 11126]
+
+def get_codes_dps():
+    return [10105, 10106, 11007, 10108, 10113]
+
+def get_codes_is_actifs():
+    return [10105, 10106, 10108, 10113, 10114, 10115, 10116]
+
+# =========================================================
+# FONCTIONS DE MERGE / PRÉPARATION PEGASS
+# =========================================================
+
+def merge_action_activite(df_ref_action_groupe_action, df_ref_activite_benevole):
+    return pd.merge(
+        df_ref_action_groupe_action,
+        df_ref_activite_benevole,
+        on="action_id_fk",
+        how="left"
+    )
+
+
+def rename_pegass_activite_id(df_pegass_activite):
+    return df_pegass_activite.rename(
+        columns={"PEGASS_ACTIVITE_ID_PK": "PEGASS_ACTIVITE_ID_FK"}
+    )
+
+
+def merge_activite_seance(df_pegass_activite_seance, df_pegass_activite):
+    return pd.merge(
+        df_pegass_activite_seance,
+        df_pegass_activite,
+        on="PEGASS_ACTIVITE_ID_FK",
+        how="left"
+    )
+
+
+def build_ben_activite(df_pegass_activite, df_pegass_activite_seance_inscription):
+    return pd.merge(
+        df_pegass_activite,
+        df_pegass_activite_seance_inscription,
+        on="PEGASS_ACTIVITE_ID_FK",
+        how="right"
+    )
+
+
+def filter_inscriptions_valides(df_pegass_ben_activite):
+    return df_pegass_ben_activite[
+        df_pegass_ben_activite["PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT"] == "Valide"
+    ].copy()
+
+
+def build_ben_activite_synthetique(df_pegass_ben_activite):
+    df_syn = df_pegass_ben_activite[[
+        "PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK",
+        "ACTIVITE_BENEVOLE_ID_FK",
+        "PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK"
+    ]].copy()
+
+    return df_syn.drop_duplicates()
+
+
+# =========================================================
+# FONCTIONS DE FILTRE ACTIVITÉS
+# =========================================================
+
+def filter_ref_action_activite(df_ref_action_activite, codes_activite_ben=None):
+    if codes_activite_ben is None:
+        codes_activite_ben = get_codes_activite_ben()
+
+    return df_ref_action_activite[
+        df_ref_action_activite["activite_benevole_id_pk"].isin(codes_activite_ben)
+    ].copy()
+
+
+def rename_activite_benevole_id(df_ref_action_activite_filtre):
+    return df_ref_action_activite_filtre.rename(
+        columns={"activite_benevole_id_pk": "ACTIVITE_BENEVOLE_ID_FK"}
+    )
+
+
+def merge_on_activite_benevole(df_left, df_ref_action_activite_filtre, how="inner"):
+    return pd.merge(
+        df_left,
+        df_ref_action_activite_filtre,
+        on="ACTIVITE_BENEVOLE_ID_FK",
+        how=how
+    )
+
+
+def drop_duplicates_seance(df, col="PEGASS_ACTIVITE_SEANCE_ID_FK"):
+    return df.drop_duplicates(col)
+
+
+# =========================================================
+# FONCTIONS INDICATEURS BÉNÉVOLES
+# =========================================================
+
+def count_ben_structure(df):
+    return (
+        df.groupby("PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK", as_index=False)
+          .size()
+          .rename(columns={
+              "PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK": "n_structure",
+              "size": "nb_benevoles"
+          })
+    )
+
+
+def filter_ben_by_activite(df_synth, codes_activite):
+    df_out = df_synth[
+        df_synth["ACTIVITE_BENEVOLE_ID_FK"].isin(codes_activite)
+    ].copy()
+
+    df_out = df_out.drop(columns=["ACTIVITE_BENEVOLE_ID_FK"])
+
+    return df_out.drop_duplicates()
+
+
+def compute_nb_benevoles_indicator(df_synth, codes_activite, out_col_name):
+    df_filtered = filter_ben_by_activite(df_synth, codes_activite)
+    df_count = count_ben_structure(df_filtered)
+
+    return df_count.rename(columns={"nb_benevoles": out_col_name})
+
+
+# =========================================================
+# FONCTION STATUT ACTION MENÉE
+# =========================================================
+
+def add_statut_action(
+    df,
+    col_nb,
+    out_col="activité menée",
+    label_yes="Action menée",
+    label_no="Action non menée",
+    treat_zero_as_no=True,
+    copy=True
+):
+    df_out = df.copy() if copy else df
+
+    nb = pd.to_numeric(df_out[col_nb], errors="coerce")
+
+    if treat_zero_as_no:
+        mask_yes = nb.notna() & (nb != 0)
+    else:
+        mask_yes = nb.notna()
+
+    df_out[out_col] = np.where(mask_yes, label_yes, label_no)
+
+    return df_out
+
+
+# =========================================================
+# FONCTIONS INDICATEURS ACTIVITÉS
+# =========================================================
+
+def calc_nb_activite_pegass(df):
+    return (
+        df.groupby(
+            [
+                "PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK",
+                "ACTIVITE_BENEVOLE_ID_FK"
+            ],
+            dropna=False
+        )
+        .size()
+        .reset_index(name="nb_activite")
+        .rename(columns={
+            "PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK": "n_structure",
+            "ACTIVITE_BENEVOLE_ID_FK": "N° activité"
+        })
+    )
+
+
+def indicator_nb_activites(df_activite_counts, codes_activite, out_col):
+    df_out = df_activite_counts[
+        df_activite_counts["N° activité"].isin(codes_activite)
+    ].copy()
+
+    df_out = (
+        df_out
+        .rename(columns={"nb_activite": out_col})
+        .drop(columns=["N° activité"])
+    )
+
+    return df_out.groupby("n_structure", as_index=False)[out_col].sum()
 
 def calcul_PEGASS_indicateurs(
-    df_ref_structure,
-    # ref_structure1,
+    df_ref_structure,  # conservé dans la signature mais non utilisé
     df_ref_action_groupe_action,
     df_ref_activite_benevole,
     df_pegass_activite,
     df_pegass_activite_seance,
     df_pegass_activite_seance_inscription,
-    df_rattachement_court,
+    df_rattachement_court,  # conservé dans la signature mais non utilisé
     df_nivols_gaia
 ):
     """
-    Reprend la séquence "Merge les tables" + calcul indicateurs (linéaire),
-    et renvoie tous les DataFrames créés pendant le process.
+    Version sans rattachement structure.
 
-    Entrées = les DF importés (issus de ta def load_pegass_dfs).
-    Sortie = dict avec tous les DF + listes de codes.
+    Principe :
+    - On ne travaille plus avec le référentiel structure.
+    - On ne rattache plus les IL / AL à une UL ou DT.
+    - On calcule les indicateurs directement sur :
+      PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK
+    - On ne calcule plus Indics_pegass_DT, car cela nécessite un rattachement à une DT.
     """
 
-    # #Merge les tables
-    Structure_de_rattachement1 = def_Structure_de_rattachement(df_ref_structure)
-    df_ref_structure = filter_ul_dt(df_ref_structure)
-    df_ref_structure = add_num_structure_rattachement(df_ref_structure, col_source="Structure_de_rattachement")
+    # =========================================================
+    # 1. Merge des tables d'activités
+    # =========================================================
 
-    df_ref_action_activite = merge_action_activite(df_ref_action_groupe_action, df_ref_activite_benevole)
-
-    df_pegass_activite = rename_pegass_activite_id(df_pegass_activite)
-    df_pegass_activite = filter_df1_on_df2(
-        df_pegass_activite,
-        df_ref_structure,
-        col_df1="PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK",
-        col_df2="n_structure"
+    df_ref_action_activite = merge_action_activite(
+        df_ref_action_groupe_action,
+        df_ref_activite_benevole
     )
 
-    df_pegass_activite_merge = merge_activite_seance(df_pegass_activite_seance, df_pegass_activite)
+    df_pegass_activite = rename_pegass_activite_id(df_pegass_activite)
 
-    df_pegass_ben_activite = build_ben_activite(df_pegass_activite, df_pegass_activite_seance_inscription)
-    df_pegass_ben_activite = filter_inscriptions_valides(df_pegass_ben_activite)
+    # IMPORTANT :
+    # on ne filtre plus df_pegass_activite avec df_ref_structure
+    # on garde directement la structure PEGASS :
+    # PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK
 
-    df_pegass_ben_activite_synthetique = build_ben_activite_synthetique(df_pegass_ben_activite)
+    df_pegass_activite_merge = merge_activite_seance(
+        df_pegass_activite_seance,
+        df_pegass_activite
+    )
+
+    df_pegass_ben_activite = build_ben_activite(
+        df_pegass_activite,
+        df_pegass_activite_seance_inscription
+    )
+
+    df_pegass_ben_activite = filter_inscriptions_valides(
+        df_pegass_ben_activite
+    )
+
+    df_pegass_ben_activite_synthetique = build_ben_activite_synthetique(
+        df_pegass_ben_activite
+    )
+
+    # =========================================================
+    # 2. Filtre sur les activités utiles
+    # =========================================================
 
     codes_activite_ben = get_codes_activite_ben()
 
-    df_ref_action_activite_filtre = filter_ref_action_activite(df_ref_action_activite, codes_activite_ben)
-    df_ref_action_activite_filtre = rename_activite_benevole_id(df_ref_action_activite_filtre)
+    df_ref_action_activite_filtre = filter_ref_action_activite(
+        df_ref_action_activite,
+        codes_activite_ben
+    )
 
-    df_pegass_activite_merge2 = merge_on_activite_benevole(df_pegass_activite_merge, df_ref_action_activite_filtre, how="inner")
-    df_pegass_ben_activite    = merge_on_activite_benevole(df_pegass_ben_activite,    df_ref_action_activite_filtre, how="inner")
+    df_ref_action_activite_filtre = rename_activite_benevole_id(
+        df_ref_action_activite_filtre
+    )
 
-    df_pegass_activite_merge2 = drop_duplicates_seance(df_pegass_activite_merge2, col="PEGASS_ACTIVITE_SEANCE_ID_FK")
+    df_pegass_activite_merge2 = merge_on_activite_benevole(
+        df_pegass_activite_merge,
+        df_ref_action_activite_filtre,
+        how="inner"
+    )
+
+    df_pegass_ben_activite = merge_on_activite_benevole(
+        df_pegass_ben_activite,
+        df_ref_action_activite_filtre,
+        how="inner"
+    )
+
+    df_pegass_activite_merge2 = drop_duplicates_seance(
+        df_pegass_activite_merge2,
+        col="PEGASS_ACTIVITE_SEANCE_ID_FK"
+    )
+
+    # =========================================================
+    # 3. Codes activités
+    # =========================================================
 
     Activite_maraude = get_codes_maraude()
-    Nb_Exercice      = get_codes_nb_exercice()
-    NB_operations    = get_codes_nb_operations()
-    AEO              = get_codes_aeo()
-    DPS              = get_codes_dps()
-    IS_actifs        = get_codes_is_actifs()
+    Nb_Exercice = get_codes_nb_exercice()
+    NB_operations = get_codes_nb_operations()
+    AEO = get_codes_aeo()
+    DPS = get_codes_dps()
+    IS_actifs = get_codes_is_actifs()
     Domiciliation = get_codes_domiciliation()
     Ecrivain_public = get_codes_ecrivain_public()
 
-    # rattachement structure
+    # =========================================================
+    # 4. Filtre des bénévoles à date fixe
+    # =========================================================
 
-    df_pegass_ben_activite_synthetique = rattache_structure(df_pegass_ben_activite_synthetique, Structure_de_rattachement1)
-    df_pegass_activite_merge2          = rattache_structure(df_pegass_activite_merge2,          Structure_de_rattachement1)
+    liste_nivols_date_fixe = (
+        df_nivols_gaia["rattachement_benevole_nivol_id_fk"]
+        .drop_duplicates()
+        .tolist()
+    )
 
-    liste_nivols_date_fixe = df_nivols_gaia['rattachement_benevole_nivol_id_fk'].drop_duplicates().tolist()
-    df_pegass_ben_activite_synthetique = df_pegass_ben_activite_synthetique[df_pegass_ben_activite_synthetique['PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK'].isin(liste_nivols_date_fixe)]
+    df_pegass_ben_activite_synthetique = (
+        df_pegass_ben_activite_synthetique[
+            df_pegass_ben_activite_synthetique[
+                "PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK"
+            ].isin(liste_nivols_date_fixe)
+        ]
+    )
 
-    # #Calcul nb de bénévoles
+    # =========================================================
+    # 5. Calcul du nombre de bénévoles actifs
+    # =========================================================
+
     nb_ben_Maraude_Pegass = compute_nb_benevoles_indicator(
         df_pegass_ben_activite_synthetique,
         Activite_maraude,
@@ -607,61 +434,56 @@ def calcul_PEGASS_indicateurs(
         "IS Nb_benevoles_actifs"
     )
 
-    # base : nb d'activités par (structure, activité)
-    nb_activite_Pegass = calc_nb_activite_pegass(df_pegass_activite_merge2)
+    # =========================================================
+    # 6. Calcul du nombre d'activités par structure PEGASS
+    # =========================================================
 
-    # Maraude
+    nb_activite_Pegass = calc_nb_activite_pegass(
+        df_pegass_activite_merge2
+    )
+
     nb_Maraude_Pegass1 = indicator_nb_activites(
         nb_activite_Pegass,
         Activite_maraude,
         "Maraude Nb_maraudes_PEGASS"
     )
 
-    # Opérations
     nb_operations_Pegass1 = indicator_nb_activites(
         nb_activite_Pegass,
         NB_operations,
         "Dispositifs_d_urgence Nb_operations"
     )
 
-    # Exercices
     nb_Exercice_Pegass1 = indicator_nb_activites(
         nb_activite_Pegass,
         Nb_Exercice,
         "Dispositifs_d_urgence Nb_exercices"
     )
 
-    # AEO / AAD
     nb_AEO_Pegass1 = indicator_nb_activites(
         nb_activite_Pegass,
         AEO,
         "nb_activite_AEO"
     )
 
-        # Domiciliation
     nb_Domiciliation_Pegass = indicator_nb_activites(
         nb_activite_Pegass,
         Domiciliation,
         "AEO activite_domiciliation_fixe"
     )
 
-    # Ecrivain public
     nb_Ecrivain_public_Pegass = indicator_nb_activites(
         nb_activite_Pegass,
         Ecrivain_public,
         "AEO activite_ecrivain_public_fixe"
     )
 
+    nb_Maraude_Pegass_verif = nb_Maraude_Pegass1.copy()
 
-    nb_Maraude_Pegass_verif = nb_Maraude_Pegass1
+    # =========================================================
+    # 7. Statuts AEO / domiciliation / écrivain public
+    # =========================================================
 
-    ref_structure1 = filter_ul_dt(df_ref_structure)
-    ref_structure2 = ref_structure1[["n_structure", "DT_de_rattachement"]]
-
-    # 1) merge avec ref struct et structure de ratachement
-    nb_Maraude_Pegass1 = pd.merge(nb_Maraude_Pegass1, ref_structure2, on="n_structure", how="inner")
-
-    # Calcul Action Menée et non menée pour AEO
     nb_AEO_Pegass1 = add_statut_action(
         nb_AEO_Pegass1,
         col_nb="nb_activite_AEO",
@@ -670,8 +492,7 @@ def calcul_PEGASS_indicateurs(
         treat_zero_as_no=True
     )
 
-    # Calcul Action Menée et non menée pour Domiciliation
-    nb_Domiciliation_Pegass1  = add_statut_action(
+    nb_Domiciliation_Pegass1 = add_statut_action(
         nb_Domiciliation_Pegass,
         col_nb="AEO activite_domiciliation_fixe",
         out_col="AEO Structure_domiciliation_fixe",
@@ -679,8 +500,7 @@ def calcul_PEGASS_indicateurs(
         treat_zero_as_no=True
     )
 
-    # Calcul Action Menée et non menée pour Ecrivain public
-    nb_Ecrivain_public_Pegass1  = add_statut_action(
+    nb_Ecrivain_public_Pegass1 = add_statut_action(
         nb_Ecrivain_public_Pegass,
         col_nb="AEO activite_ecrivain_public_fixe",
         out_col="AEO Structure_ecrivain_public_fixe",
@@ -688,98 +508,130 @@ def calcul_PEGASS_indicateurs(
         treat_zero_as_no=True
     )
 
-    # Merge global des 3 indicateurs
-    Indics_pegass = pd.merge(nb_Maraude_Pegass1, nb_operations_Pegass1, on="n_structure", how="outer")
-    Indics_pegass = pd.merge(Indics_pegass, nb_Exercice_Pegass1, on="n_structure", how="outer")
-    Indics_pegass = pd.merge(Indics_pegass, nb_ben_Maraude_Pegass, on="n_structure", how="outer")
-    Indics_pegass = pd.merge(Indics_pegass, nb_ben_IS_Pegass, on="n_structure", how="outer")
-    Indics_pegass = pd.merge(Indics_pegass, nb_ben_AEO_Pegass, on="n_structure", how="outer")
+    # =========================================================
+    # 8. Merge global des indicateurs structure
+    # =========================================================
 
-    Indics_pegass_struct = pd.merge(Indics_pegass, nb_AEO_Pegass1, on="n_structure", how="outer")
+    Indics_pegass = pd.merge(
+        nb_Maraude_Pegass1,
+        nb_operations_Pegass1,
+        on="n_structure",
+        how="outer"
+    )
 
-    Indics_pegass_struct = pd.merge(Indics_pegass_struct, nb_Ecrivain_public_Pegass1, on="n_structure", how="outer")
-    Indics_pegass_struct = pd.merge(Indics_pegass_struct, nb_Domiciliation_Pegass1, on="n_structure", how="outer")
+    Indics_pegass = pd.merge(
+        Indics_pegass,
+        nb_Exercice_Pegass1,
+        on="n_structure",
+        how="outer"
+    )
+
+    Indics_pegass = pd.merge(
+        Indics_pegass,
+        nb_ben_Maraude_Pegass,
+        on="n_structure",
+        how="outer"
+    )
+
+    Indics_pegass = pd.merge(
+        Indics_pegass,
+        nb_ben_IS_Pegass,
+        on="n_structure",
+        how="outer"
+    )
+
+    Indics_pegass = pd.merge(
+        Indics_pegass,
+        nb_ben_AEO_Pegass,
+        on="n_structure",
+        how="outer"
+    )
+
+    Indics_pegass_struct = pd.merge(
+        Indics_pegass,
+        nb_AEO_Pegass1,
+        on="n_structure",
+        how="outer"
+    )
+
+    Indics_pegass_struct = pd.merge(
+        Indics_pegass_struct,
+        nb_Ecrivain_public_Pegass1,
+        on="n_structure",
+        how="outer"
+    )
+
+    Indics_pegass_struct = pd.merge(
+        Indics_pegass_struct,
+        nb_Domiciliation_Pegass1,
+        on="n_structure",
+        how="outer"
+    )
+
+
+
+
+    # =========================================================
+    # 9. Création de la variable Activités AAD facultatives
+    # =========================================================
 
     Indics_pegass_struct["Activités AAD facultatives"] = (
-    Indics_pegass_struct["AEO Structure_ecrivain_public_fixe"].fillna("").astype(str)
-    + " "
-    + Indics_pegass_struct["AEO Structure_domiciliation_fixe"].fillna("").astype(str)
+        Indics_pegass_struct["AEO Structure_ecrivain_public_fixe"]
+        .fillna("")
+        .astype(str)
+        + " "
+        + Indics_pegass_struct["AEO Structure_domiciliation_fixe"]
+        .fillna("")
+        .astype(str)
     ).str.strip()
 
-    Indics_pegass_struct["Activités AAD facultatives"]  = Indics_pegass_struct["Activités AAD facultatives"].replace({
-    "Ecrivain public Domiciliation": "Domiciliation & Ecrivain public"
-    })
-
-    Indics_pegass_struct["Activités AAD facultatives"] = Indics_pegass_struct["Activités AAD facultatives"].replace(r'^\s*$', np.nan, regex=True)
-
-    #Ajout d'un indic pour le calcul du nombre d'AEO fixe par DT
-    Indics_pegass_struct["AEO_COUNT_Structure_activite_fixe"] = (Indics_pegass_struct["AEO Structure_activite_fixe"].eq("Activités AEO/AAD menée en fixe").astype(int)
+    Indics_pegass_struct["Activités AAD facultatives"] = (
+        Indics_pegass_struct["Activités AAD facultatives"]
+        .replace({
+            "Ecrivain public Domiciliation": "Domiciliation & Ecrivain public"
+        })
     )
 
-    #Ajout d'un indic pour le calcul du nombre de domiciliation fixe par DT
-    Indics_pegass_struct["Domiciliation_COUNT_Structure_activite_fixe"] = (Indics_pegass_struct["AEO Structure_domiciliation_fixe"].eq("Domiciliation").astype(int)
-    )
-    #Ajout d'un indic pour le calcul du nombre d'écrivain public fixe par DT
-    Indics_pegass_struct["Ecrivain_public_COUNT_Structure_activite_fixe"] = (Indics_pegass_struct["AEO Structure_ecrivain_public_fixe"].eq("Ecrivain public").astype(int)
+    Indics_pegass_struct["Activités AAD facultatives"] = (
+        Indics_pegass_struct["Activités AAD facultatives"]
+        .replace(r"^\s*$", np.nan, regex=True)
     )
 
+    # =========================================================
+    # 10. Nettoyage du df final structure
+    # =========================================================
 
-    ref_structure2 = filter_ul_dt(df_ref_structure)
-    Indics_pegass_struct = pd.merge(Indics_pegass_struct, ref_structure2, on="n_structure", how="inner")
-
-    # Calcul DT
-    Indics_pegass_DT = Indics_pegass_struct[[
-        "n_structure",
-        "Maraude Nb_maraudes_PEGASS",
-        "Dispositifs_d_urgence Nb_operations",
-        "Dispositifs_d_urgence Nb_exercices",
-        "nb_activite_AEO",
-        #"Maraude Nb_benevoles_actifs",
-        #"AEO Nb_benevoles_actifs",
-        #"IS Nb_benevoles_actifs",
-        "AEO_COUNT_Structure_activite_fixe",
-        "Domiciliation_COUNT_Structure_activite_fixe",
-        "Ecrivain_public_COUNT_Structure_activite_fixe"
-    ]]
-
-    nb_ben_Maraude_Pegass_DT = compute_nb_benevoles_indicator_DT_distinct(df_pegass_ben_activite_synthetique,Activite_maraude,"Maraude Nb_benevoles_actifs", df_rattachement_court)
-    nb_ben_IS_Pegass_DT = compute_nb_benevoles_indicator_DT_distinct(df_pegass_ben_activite_synthetique,IS_actifs,"IS Nb_benevoles_actifs", df_rattachement_court)
-    nb_ben_AEO_Pegass_DT = compute_nb_benevoles_indicator_DT_distinct(df_pegass_ben_activite_synthetique,AEO,"AEO Nb_benevoles_actifs", df_rattachement_court)
-
-    Indics_pegass_DT = pd.merge(Indics_pegass_DT, df_rattachement_court, on="n_structure", how="inner")
-    Indics_pegass_DT = (Indics_pegass_DT.groupby("DT_de_rattachement", as_index=False).sum(numeric_only=True))
-    Indics_pegass_DT = Indics_pegass_DT.rename(columns={
-        "AEO_COUNT_Structure_activite_fixe": "AEO Structure_activite_fixe",
-        "Domiciliation_COUNT_Structure_activite_fixe": "AEO Structure_domiciliation_fixe",
-        "Ecrivain_public_COUNT_Structure_activite_fixe": "AEO Structure_ecrivain_public_fixe",
-    }).drop(columns=["n_structure"], errors="ignore")
-
-    # Indics_pegass_DT = pd.merge(Indics_pegass_DT, nb_ben_Maraude_Pegass_DT, on="DT_de_rattachement", how="outer")
-    # Indics_pegass_DT = pd.merge(Indics_pegass_DT,nb_ben_IS_Pegass_DT, on="DT_de_rattachement", how="outer")
-    # Indics_pegass_DT = pd.merge(Indics_pegass_DT, nb_ben_AEO_Pegass_DT, on="DT_de_rattachement", how="outer")
-
-    # #Ajout des indicateurs du nombre de bénévoles actifs par DT
-
-
-    # netoyage DF structure => j'ai dupliqué et CALER APRES LES VERIFS
-    Indics_pegass_struct = Indics_pegass_struct[[
+    colonnes_finales_struct = [
         "n_structure",
         "Maraude Nb_maraudes_PEGASS",
         "Dispositifs_d_urgence Nb_operations",
         "Dispositifs_d_urgence Nb_exercices",
         "AEO Structure_activite_fixe",
+        "AEO Structure_domiciliation_fixe",
+        "AEO Structure_ecrivain_public_fixe",
         "Maraude Nb_benevoles_actifs",
         "AEO Nb_benevoles_actifs",
-        "IS Nb_benevoles_actifs",
-        "Activités AAD facultatives",
-        #"AEO Structure_domiciliation_fixe",
-        #"AEO Structure_ecrivain_public_fixe"
-    ]]
+        "IS Nb_benevoles_actifs"
+        #"Activités AAD facultatives"
+        #"nb_activite_AEO"
+        
+    ]
+
+    Indics_pegass_struct = Indics_pegass_struct.reindex(
+        columns=colonnes_finales_struct
+    )
+
+    # Pas de calcul DT dans cette version :
+    # sans référentiel structure / rattachement, on ne peut pas produire
+    # DT_de_rattachement proprement.
+    Indics_pegass_DT = pd.DataFrame()
+
+    # =========================================================
+    # 11. Return
+    # =========================================================
 
     return {
         # tables ref / bases
-        "Structure_de_rattachement1": Structure_de_rattachement1,
-        "df_ref_structure": df_ref_structure,
         "df_ref_action_activite": df_ref_action_activite,
         "df_ref_action_activite_filtre": df_ref_action_activite_filtre,
 
@@ -800,13 +652,15 @@ def calcul_PEGASS_indicateurs(
         "nb_Exercice_Pegass1": nb_Exercice_Pegass1,
         "nb_AEO_Pegass1": nb_AEO_Pegass1,
         "nb_Maraude_Pegass_verif": nb_Maraude_Pegass_verif,
+        "nb_Domiciliation_Pegass": nb_Domiciliation_Pegass,
+        "nb_Ecrivain_public_Pegass": nb_Ecrivain_public_Pegass,
 
         # outputs finaux
         "Indics_pegass": Indics_pegass,
         "Indics_pegass_struct": Indics_pegass_struct,
-        "Indics_pegass_DT": Indics_pegass_DT,
+        #"Indics_pegass_DT": Indics_pegass_DT,
 
-        # codes (utile à ressortir)
+        # codes
         "codes_activite_ben": codes_activite_ben,
         "Activite_maraude": Activite_maraude,
         "Nb_Exercice": Nb_Exercice,
@@ -814,110 +668,6 @@ def calcul_PEGASS_indicateurs(
         "AEO": AEO,
         "DPS": DPS,
         "IS_actifs": IS_actifs,
+        "Domiciliation": Domiciliation,
+        "Ecrivain_public": Ecrivain_public,
     }
-
-
-
-def compute_nb_benevoles_indicator_DT_distinct(df_synth, activite_codes, nom_indicateur, df_rattachement_court):
-    df = df_synth[df_synth["ACTIVITE_BENEVOLE_ID_FK"].isin(activite_codes)].copy()
-
-    # Harmonisation des types de clés
-    df["PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK"] = pd.to_numeric(
-        df["PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK"],
-        errors="coerce"
-    ).astype("Int64")
-
-    ratt = df_rattachement_court[["n_structure", "DT_de_rattachement"]].copy()
-    ratt["n_structure"] = pd.to_numeric(ratt["n_structure"], errors="coerce").astype("Int64")
-
-    # Sécurisation si doublons sur n_structure dans la table de rattachement
-    ratt = ratt.drop_duplicates(subset=["n_structure"])
-
-    # Merge structure -> DT
-    df = df.merge(
-        ratt,
-        left_on="PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK",
-        right_on="n_structure",
-        how="left"
-    )
-
-    # On enlève les lignes sans DT
-    df = df[df["DT_de_rattachement"].notna()].copy()
-
-    # Un bénévole unique par DT
-    df = df.drop_duplicates(
-        subset=[
-            "DT_de_rattachement",
-            "PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK"
-        ]
-    ).copy()
-
-    # Comptage distinct par DT
-    df = (
-        df.groupby("DT_de_rattachement", as_index=False)
-        .agg({
-            "PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK": "nunique"
-        })
-        .rename(columns={
-            "PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK": nom_indicateur
-        })
-    )
-
-    return df
-
-
-def add_nb_benevoles_DT_distincts(Indics_pegass_DT, df_synth, df_rattachement_court):
-    IS_actifs = [10105, 10106, 10108, 10113, 10114, 10115, 10116]
-    Activite_maraude = [10032, 10033, 10034, 10035, 10036, 10037, 11110]
-    AEO = [10015]
-
-    nb_ben_Maraude_Pegass_DT = compute_nb_benevoles_indicator_DT_distinct(
-        df_synth,
-        Activite_maraude,
-        "Maraude Nb_benevoles_actifs",
-        df_rattachement_court
-    )
-
-    nb_ben_IS_Pegass_DT = compute_nb_benevoles_indicator_DT_distinct(
-        df_synth,
-        IS_actifs,
-        "IS Nb_benevoles_actifs",
-        df_rattachement_court
-    )
-
-    nb_ben_AEO_Pegass_DT = compute_nb_benevoles_indicator_DT_distinct(
-        df_synth,
-        AEO,
-        "AEO Nb_benevoles_actifs",
-        df_rattachement_court
-    )
-
-    Indics_pegass_DT = pd.merge(
-        Indics_pegass_DT,
-        nb_ben_Maraude_Pegass_DT,
-        on="DT_de_rattachement",
-        how="outer"
-    )
-    Indics_pegass_DT = pd.merge(
-        Indics_pegass_DT,
-        nb_ben_IS_Pegass_DT,
-        on="DT_de_rattachement",
-        how="outer"
-    )
-    Indics_pegass_DT = pd.merge(
-        Indics_pegass_DT,
-        nb_ben_AEO_Pegass_DT,
-        on="DT_de_rattachement",
-        how="outer"
-    )
-
-    # Remplissage éventuel
-    for col in [
-        "Maraude Nb_benevoles_actifs",
-        "IS Nb_benevoles_actifs",
-        "AEO Nb_benevoles_actifs"
-    ]:
-        if col in Indics_pegass_DT.columns:
-            Indics_pegass_DT[col] = Indics_pegass_DT[col].fillna(0).astype(int)
-
-    return Indics_pegass_DT

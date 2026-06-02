@@ -16,7 +16,10 @@ def main():
     df_UL, df_DT = import_dataframes('https://docs.google.com/spreadsheets/d/1pmEUcLvVOK3t7TWmXL6cN0uTWJ9kPgIwd2x3hy14Alk/', client)
     df_UL_sans_IN = df_UL[df_UL['n_structure'] != 1]
 
-    df_IN = df_UL[df_UL['n_structure'] == 1]
+    df_UL["n_structure"] = pd.to_numeric(df_UL["n_structure"], errors="coerce").astype("Int64")
+    df_DT["n_structure"] = pd.to_numeric(df_DT["n_structure"], errors="coerce").astype("Int64")
+
+    df_IN = df_UL[df_UL['n_structure'] == 1].copy()
 
     liste_activite_map = ['AEO Structure_activite_mobile', 'OCR Structures_menant_activite',
                         # 'Secours Structures_menant_activite',
