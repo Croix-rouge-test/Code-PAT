@@ -77,37 +77,23 @@ def clean_PST(df_PST):
     return df_PST
 
 
-def clean_declenchement(df_declenchement, df_conventions):
-    df = df_declenchement.drop(df_declenchement.index[0]).copy()
+def clean_declenchement(df_declenchement):
+    df = df_declenchement.copy()
 
-    df = pd.merge(df, df_conventions[["DT Annuaire Opé", "Nombre de participations à des exercices organisés par les secours publics"]], left_on="COUNTA of Catégorie", right_on="DT Annuaire Opé", how="left")
-
-    df.rename(
-        columns={
-            'COUNTA of Catégorie': 'Département',
-            'Catégorie': 'Etablissements',
-            'Unnamed: 2': 'Exercice',
-            'Nombre de participations à des exercices organisés par les secours publics': 'Exercice_convention',
-            'Unnamed: 3': 'Fonctionnement',
-            'Unnamed: 4': 'Opérations',
-            'Unnamed: 5': 'Grand Total'
-        },
-        inplace=True
+    # Conversion de la date
+    df['horodateur'] = pd.to_datetime(
+        df['horodateur'],
+         format='%d/%m/%Y %H:%M:%S'
     )
 
-    df['Exercice_convention'] = df['Exercice_convention'].fillna(0).astype(int)
-    df[['Grand Total', 'Exercice']] = df[['Grand Total', 'Exercice']].fillna(0)
-    df['Exercice'] = df['Exercice'].fillna(0).astype(int)
+    # Filtre
+    df_filtre = df[
+        (df['Horodateur'].dt.year == 2026) &
+        (df['Typologie'].isin(['Opérations', 'Fonctionnement / Sureté / Sécurité', 'Fonctionnement et vie des DT/Sûreté/Sécurité', 'Etablissements']))
+    ]
 
-
-
-    df["nb_declenchements"] = df["Grand Total"].astype(int) - df["Exercice"].astype(int)
-    df["nb_declenchements"] = df['nb_declenchements'] + df['Exercice_convention']
-
-
-    df[["n_dept", "DT"]] = df["Département"].str.split(" - ", expand=True)
-    df["DT"] = "DT " + df["DT"]
-
+    df_filtre[["n_dept", "DT"]] = df_filtre["Département concerné"].str.split(" - ", expand=True)
+    df_filtre["DT"] = "DT " + df["DT"]
 
     return df
 
@@ -369,6 +355,7 @@ def clean_CR_operations(df):
 def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR,
     df_PST,
+    df_declenchement,
     df_CAICHUCMCC_conventions,
     df_raw_Textile,
     df_CRope,
@@ -376,7 +363,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
 ):
     df_OCR_clean = clean_OCR(df_OCR)
     df_PST_clean = clean_PST(df_PST)
-    # df_declenchement_clean = clean_declenchement(df_declenchement, df_CAICHUCMCC_conventions)
+    df_declenchement_clean = clean_declenchement(df_declenchement)
     # df_redcall_clean = clean_redcall(df_redcall)
     df_CAIconv_clean = clean_CAIconv(df_CAICHUCMCC_conventions)
     df_raw_Textile_clean = clean_raw_Textile(df_raw_Textile, df_ref_structure)
@@ -385,6 +372,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     return (
         df_OCR_clean,
         df_PST_clean,
+        df_declenchement_clean,
         df_CAIconv_clean,
         df_raw_Textile_clean,
         df_CRope_clean
@@ -494,8 +482,8 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
     df["DT"] = df["DT"].astype(str)
     df["n_dept"] = df["n_dept"].astype(str)
 
-    df = rapprochement_libelles(df_ref_structure, df, "DT")
-
+    df = rapprochement_libelles(df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"], df, "DT")
+    
     mask = df["n_structure"] == ""
     mapping_dict = (
         df_ref_structure[
@@ -506,7 +494,7 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
     )
 
     df.loc[mask, "n_structure"] = df.loc[mask, "n_dept"].map(mapping_dict)
-
+    
     df = df.dropna(subset=["n_structure"])
 
     df.loc[
@@ -514,9 +502,8 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
         ["n_structure", "nom_structure"]
     ] = [47, "DT DE LA LOIRE"]
 
-    df = df.rename(
-        columns={"nb_declenchements": "Dispositifs_d_urgence Nb_declenchements"}
-    )
+    df = df["n_structure"].value_counts().reset_index()
+    df = df.rename(columns={"count": "Dispositifs_d_urgence Nb_declenchements"})
 
     return df
 
