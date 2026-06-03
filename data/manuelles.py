@@ -81,8 +81,8 @@ def clean_declenchement(df_declenchement):
     df = df_declenchement.copy()
 
     # Conversion de la date
-    df['horodateur'] = pd.to_datetime(
-        df['horodateur'],
+    df['Horodateur'] = pd.to_datetime(
+        df['Horodateur'],
          format='%d/%m/%Y %H:%M:%S'
     )
 
@@ -395,7 +395,7 @@ def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
     df = df.rename(columns={"nom_structure": "nom_structure_OCR"})
 
 
-    df = rapprochement_libelles(df_ref_structure, df, "nom_structure")
+    df = rapprochement_libelles(df_ref_structure, df, "nom_structure_OCR")
 
     mask = df["n_structure"] == ""
     mapping_dict = (
@@ -897,7 +897,7 @@ def indicateurs_redcall_DT(df_redcall2, rattachement_court):
 
 
 def OCR_RedCall_DT(df_OCR_Nb_deployees, df_redcall2, rattachement_court):
-    Nb_OCR_DT = indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court)
+    Nb_OCR_DT = indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court).reset_index()
     RedCall_DT = indicateurs_redcall_DT(df_redcall2, rattachement_court)
 
     return (
