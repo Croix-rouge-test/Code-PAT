@@ -925,8 +925,8 @@ def Textile_DT(df_raw_Textile, rattachement_court):
 
 def tracabilite_textile_DT(df_tracabilite_textileVF):
     df_tracabilite_textileVF_DT = df_tracabilite_textileVF.copy()
-    df_tracabilite_textileVF_DT['nb_flux'] = df_tracabilite_textileVF_DT['Textile tracabilite_flux'].apply(lambda x: 1 if x == 'Oui' else 0)
-    df_tracabilite_textileVF_DT = df_tracabilite_textileVF_DT.groupby('DT_de_rattachement', as_index=False)['nb_flux'].sum()
+    df_tracabilite_textileVF_DT['Textile tracabilite_flux'] = df_tracabilite_textileVF_DT['Textile tracabilite_flux'].apply(lambda x: 1 if x == 'Oui' else 0)
+    df_tracabilite_textileVF_DT = df_tracabilite_textileVF_DT.groupby('DT_de_rattachement', as_index=False)['Textile tracabilite_flux'].sum()
     return df_tracabilite_textileVF_DT
 
 def crope_DT(df_CRopeVF, rattachement_court):
