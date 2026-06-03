@@ -41,7 +41,7 @@ filtres_bc = {
         'PREVIC' : ['PREVIC'],
         'FPS': ['RECFPS', 'FPS', 'FPSE', 'FCFPSE', 'RATFCFPSE', 'PICF FPS', 'PICF FPSE'], #ajout de 'PICF FPS', 'PICF FPSE'
         'PSE': ['APTE PSE1', 'PSE1','RECPSE1', 'RATPSE1', 'FCPSE1', 'RECPSE2','PSE2','RECPSE2', 'PSE', 'FCPSE', 'RATPSE2', 'FCPSE2'],
-        'ATEX' : ['ATEX'],
+        'ATEX' : ['ATEXTILE'],
         'SAH' : ['SAH', 'TASA'],
         'ASAH' : ['ASAH', 'FASAH']
 

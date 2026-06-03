@@ -24,7 +24,9 @@ def main():
     liste_activite_map = ['AEO Structure_activite_mobile', 'OCR Structures_menant_activite',
                         # 'Secours Structures_menant_activite',
                         'Maraudes Structures_menant_activite',
-                        'Formation_grand_public Structures_menant_activite']
+                        'Formation_grand_public Structures_menant_activite',
+                        'Textile Structures_menant_activite']
+    
     for col in liste_activite_map:
         df_IN[col] = (
             df_IN[col]
