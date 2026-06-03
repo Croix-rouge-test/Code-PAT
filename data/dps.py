@@ -184,12 +184,12 @@ def indicateurs_dps(df_dps_dimensionnement, df_dps_manifestation, df_dps_ref_typ
 
     # Merge des tables pour avoir les libellés des dispositifs et des manifestations ainsi que les numéros de structure
     df_dps = pd.merge(
-        df_dps_dimensionnement, df_dps_ref_type_dispositif, left_on="DPS_TYPE_DISPOSITIF_ID_FK", right_on="TYPE_DISPOSITIF_ID_PK", how="left"
+        df_dps_dimensionnement, df_dps_ref_type_dispositif, left_on="DPS_TYPE_DISPOSITIF_ID_FK", right_on="TYPE_DISPOSITIF_ID_PK", how="inner"
     )
 
-    df_dps = pd.merge(df_dps, df_dps_manifestation, left_on="DPS_MANIFESTATION_ID_FK", right_on="DPS_MANIFESTATION_ID_PK", how="left")
+    df_dps = pd.merge(df_dps, df_dps_manifestation, left_on="DPS_MANIFESTATION_ID_FK", right_on="DPS_MANIFESTATION_ID_PK", how="inner")
 
-    df_dps = pd.merge(df_dps, df_dps_ref_type_statut_demande, left_on="DPS_TYPE_STATUT_DEMANDE_ID_FK", right_on="TYPE_STATUT_DEMANDE_ID_PK", how="left")
+    df_dps = pd.merge(df_dps, df_dps_ref_type_statut_demande, left_on="DPS_TYPE_STATUT_DEMANDE_ID_FK", right_on="TYPE_STATUT_DEMANDE_ID_PK", how="inner")
 
     df_dps = df_dps[df_dps['TYPE_STATUT_DEMANDE_LIBELLE'] == "DPS cloture"]
 
