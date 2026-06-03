@@ -404,6 +404,8 @@ def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
     df = df[
         ["Année", "Statut", "Nom du Département", "Numéro du Département", "nom_structure"]
     ]
+    df = df.rename(columns={"nom_structure": "nom_structure_OCR"})
+
 
     df = rapprochement_libelles(df_ref_structure, df, "nom_structure")
 
