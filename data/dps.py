@@ -46,6 +46,11 @@ def import_clean_dps(client, df_ref_structure,target_date = '2025-12-31',  proje
 
     df_dps_manifestation = df_dps_manifestation.rename(columns = {"DPS_DEMANDE_STRUCTURE_ID":"n_structure"})
 
+    liste_structure_garder = df_ref_structure['n_structure'].drop_duplicates().tolist()
+    
+    df_dps_manifestation = df_dps_manifestation[df_dps_manifestation['n_structure'].isin(liste_structure_garder)]
+
+
     df_dps_manifestation = pd.merge(df_dps_manifestation, df_ref_structure[['n_structure','DT_de_rattachement']].drop_duplicates(),on="n_structure", how="left")
 
 
