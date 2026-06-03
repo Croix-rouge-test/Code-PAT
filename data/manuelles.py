@@ -832,6 +832,7 @@ def indicateurs_tracabilite_textile(df_tracabilite_textile, df_ref_structure):
 def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR,
     df_PST,
+    df_declenchement_clean,
     df_CAICHUCMCC_conventions,
     df_raw_Textile,
     df_CRope_clean,
@@ -840,7 +841,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
 ):
     df_OCR_Nb_deployees = indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure)
     df_Dispositifs_d_urgence_PST = indicateurs_PST(df_PST, df_ref_structure)
-    # df_declenchement3 = indicateurs_declenchements(df_declenchement2, df_ref_structure)
+    df_declenchement_VF = indicateurs_declenchements(df_declenchement_clean, df_ref_structure)
     # df_redcall2 = indicateurs_redcall(df_RC_grouped, df_ref_structure)
     df_CAICHUCMCC_conventionsVF = indicateurs_bilanus2025(df_CAICHUCMCC_conventions, df_ref_structure)
     df_raw_TextileVF = indicateurs_raw_Textile(df_raw_Textile)
@@ -851,6 +852,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     return (
         df_OCR_Nb_deployees,
         df_Dispositifs_d_urgence_PST,
+        df_declenchement_VF,
         df_CAICHUCMCC_conventionsVF,
         df_raw_TextileVF,
         df_CRopeVF,
