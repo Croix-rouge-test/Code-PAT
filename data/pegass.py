@@ -696,6 +696,12 @@ def calcul_PEGASS_DT_indicateurs(Indics_pegass_struct, df_ref_structure):
         .apply(lambda x: 1 if x == "Ecrivain public" else 0)
     )
 
+    # On supprime la colonne texte, remplacée par AEO Nb_activites_fixes
+    Indics_pegass_struct = Indics_pegass_struct.drop(
+        columns=["AEO Structure_activite_fixe"],
+        errors="ignore"
+    )
+
     # =========================================================
     # 2. Rattacher chaque structure à sa structure de rattachement
     # =========================================================

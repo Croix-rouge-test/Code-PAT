@@ -472,10 +472,10 @@ def vision_conso(df_alldata, df_alldata_DT, year):
   #Partie structure menant activite AEO
 
   df_alldata["AEO Structure_activite_mobile"] = df_alldata["AEO Structure_activite_mobile"].astype(object)
-  df_alldata.loc[df_alldata["AEO Structure_activite_mobile"].notna(), ["AEO Structure_activite_mobile"]] = "Activité AEO/AAD en dispositif mobile"
+  df_alldata.loc[(df_alldata["AEO Structure_activite_mobile"].notna()) | (df_alldata["AEO Structure_activite_mobile"] > 0), ["AEO Structure_activite_mobile"]] = "Activité AEO/AAD en dispositif mobile"
   
   
-  fixe = df_alldata["AEO Structure_activite_fixe"]
+  fixe = df_alldata["AEO Nb_activites_fixes"].fillna(0).apply(lambda x: "Activité AEO/AAD menée en fixe" if x > 0 else "").fillna("")
   mobile = df_alldata["AEO Structure_activite_mobile"]
   
   df_alldata["AEO Structures_menant_activite"] = (
