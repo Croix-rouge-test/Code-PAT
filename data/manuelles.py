@@ -742,6 +742,8 @@ def indicateurs_CRope(df, df_ref_structure):
     df[start_col] = pd.to_datetime(df[start_col], errors="coerce", dayfirst=True)
     df[end_col] = pd.to_datetime(df[end_col], errors="coerce", dayfirst=True)
 
+    df = df[df["Date et heure du début de l'opération"].dt.year == 2026]
+
     # Calcul durée en jours
     df["nb_jours_operation"] = (
         (df[end_col] - df[start_col]).dt.total_seconds() / 86400
