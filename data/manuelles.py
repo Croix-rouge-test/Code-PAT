@@ -14,17 +14,19 @@ def clean_OCR(df_OCR):
         "Statut",
         "Nom du Département",
         'Structure CRf\n(Ville)',
-        "Nom Commune de l'établissement"
+        "Nom Commune de l'établissement",
+        "nom_structure"
     ]
 
     df_OCR[cols_OCR] = df_OCR[cols_OCR].astype(str)
-
+    """
     mapping = {
     "DT46": "DT DU LOT",
     "DT64": "DT DES PYRENEES ATLANTIQUES",
     "DT22": "DT DES COTES D'ARMOR",
     "DT18": "DT DU CHER",
     "DT 28 ": "DT D'EURE ET LOIR",
+    "DT 37": "DT D'INDRE ET LOIRE",
     "DT 42 ? ": "DT DE LA LOIRE",
     "DT 69": "DT DU RHONE",
     "DT 73": "DT DE LA SAVOIE",
@@ -34,9 +36,9 @@ def clean_OCR(df_OCR):
     "AT Haut-Allier": "AL LE HAUT ALLIER",
     "UL Villefranche sur Saône": "UL BEAUJOLAIS VALS DE SAONE",
     "UL d'Orthez": "UL DES TROIS RIVIERES",
-    "Arras": "UL D'ARRAS" 
+    "Arras": "UL D'ARRAS",
+    "UL de Carpentras": "UL SUD VENTOUX"
     }
-
   
     # Remplacer les valeurs vides (NaN ou chaînes vides)
     df_OCR['Structure CRf\n(Ville)'] = df_OCR['Structure CRf\n(Ville)'].fillna('nan')
@@ -48,6 +50,7 @@ def clean_OCR(df_OCR):
     )
 
     df_OCR["Structure CRf\n(Ville)"] = df_OCR["Structure CRf\n(Ville)"].replace(mapping)
+    """
 
     return df_OCR
 
@@ -74,44 +77,53 @@ def clean_PST(df_PST):
     return df_PST
 
 
-def clean_declenchement(df_declenchement, df_conventions):
-    df = df_declenchement.drop(df_declenchement.index[0]).copy()
+def clean_declenchement(df_declenchement):
+    df = df_declenchement.copy()
 
-    df = pd.merge(df, df_conventions[["DT Annuaire Opé", "Nombre de participations à des exercices organisés par les secours publics"]], left_on="COUNTA of Catégorie", right_on="DT Annuaire Opé", how="left")
-
-    df.rename(
-        columns={
-            'COUNTA of Catégorie': 'Département',
-            'Catégorie': 'Etablissements',
-            'Unnamed: 2': 'Exercice',
-            'Nombre de participations à des exercices organisés par les secours publics': 'Exercice_convention',
-            'Unnamed: 3': 'Fonctionnement',
-            'Unnamed: 4': 'Opérations',
-            'Unnamed: 5': 'Grand Total'
-        },
-        inplace=True
+    df = df[df["Horodateur"] != "26/08/2025"]
+    # Conversion de la date
+    df['Horodateur'] = pd.to_datetime(
+        df['Horodateur'],
+         format='%d/%m/%Y %H:%M:%S'
     )
 
-    df['Exercice_convention'] = df['Exercice_convention'].fillna(0).astype(int)
-    df[['Grand Total', 'Exercice']] = df[['Grand Total', 'Exercice']].fillna(0)
-    df['Exercice'] = df['Exercice'].fillna(0).astype(int)
+    # Filtre
+    df_filtre = df[
+        (df['Horodateur'].dt.year == 2026) &
+        (df['Typologie'].isin(['Opérations', 'Fonctionnement / Sureté / Sécurité', 'Fonctionnement et vie des DT/Sûreté/Sécurité', 'Etablissements']))
+    ]
 
-
-
-    df["nb_declenchements"] = df["Grand Total"].astype(int) - df["Exercice"].astype(int)
-    df["nb_declenchements"] = df['nb_declenchements'] + df['Exercice_convention']
-
-
-    df[["n_dept", "DT"]] = df["Département"].str.split(" - ", expand=True)
-    df["DT"] = "DT " + df["DT"]
-
+    df_filtre[["n_dept", "DT"]] = df_filtre["Département concerné"].str.split(" - ", expand=True)
+    df_filtre["DT"] = "DT " + df["DT"]
 
     return df
 
 
+
+def clean_exercices(df_declenchement):
+    df = df_declenchement.copy()
+
+    df = df[df["Horodateur"] != "26/08/2025"]
+    # Conversion de la date
+    df['Horodateur'] = pd.to_datetime(
+        df['Horodateur'],
+         format='%d/%m/%Y %H:%M:%S'
+    )
+
+    # Filtre
+    df_filtre = df[
+        (df['Horodateur'].dt.year == 2026) & (df['Typologie'].isin(['Exercices']))
+    ]
+
+    df_filtre[["n_dept", "DT"]] = df_filtre["Département concerné"].str.split(" - ", expand=True)
+    df_filtre["DT"] = "DT " + df["DT"]
+
+    return df
+
+
+
 def clean_redcall(df_redcall):
     df = df_redcall.drop(columns=["Type", "Coûts", "Devise"])
-
 
     cols_to_sum = [
         "Déclenchements",
@@ -122,25 +134,21 @@ def clean_redcall(df_redcall):
         "Erreurs"
     ]
 
-
     df_grouped = (
         df
         .groupby("Nom de la structure", as_index=False)[cols_to_sum]
         .sum()
     )
 
-
     df_grouped["Total"] = df_grouped[
         ["Communications", "Messages", "Questions"]
     ].sum(axis=1)
-
 
     df_grouped["Utilisation_Redcall"] = (
         df_grouped["Total"]
         .gt(0)
         .map({True: "Oui", False: "Non"})
     )
-
 
     return df_grouped
 
@@ -366,6 +374,7 @@ def clean_CR_operations(df):
 def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR,
     df_PST,
+    df_declenchement,
     df_CAICHUCMCC_conventions,
     df_raw_Textile,
     df_CRope,
@@ -373,7 +382,8 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
 ):
     df_OCR_clean = clean_OCR(df_OCR)
     df_PST_clean = clean_PST(df_PST)
-    # df_declenchement_clean = clean_declenchement(df_declenchement, df_CAICHUCMCC_conventions)
+    df_declenchement_clean = clean_declenchement(df_declenchement)
+    df_exercices_clean = clean_exercices(df_declenchement)
     # df_redcall_clean = clean_redcall(df_redcall)
     df_CAIconv_clean = clean_CAIconv(df_CAICHUCMCC_conventions)
     df_raw_Textile_clean = clean_raw_Textile(df_raw_Textile, df_ref_structure)
@@ -382,6 +392,8 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     return (
         df_OCR_clean,
         df_PST_clean,
+        df_declenchement_clean,
+        df_exercices_clean,
         df_CAIconv_clean,
         df_raw_Textile_clean,
         df_CRope_clean
@@ -399,10 +411,12 @@ def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
     df = df[df["Année"] == "2025-2026"]
 
     df = df[
-        ["Année", "Statut", "Nom du Département", "Numéro du Département", "Structure CRf\n(Ville)"]
+        ["Année", "Statut", "Nom du Département", "Numéro du Département", "nom_structure"]
     ]
+    df = df.rename(columns={"nom_structure": "nom_structure_OCR"})
 
-    df = rapprochement_libelles(df_ref_structure, df, "Structure CRf\n(Ville)")
+
+    df = rapprochement_libelles(df_ref_structure, df, "nom_structure_OCR")
 
     mask = df["n_structure"] == ""
     mapping_dict = (
@@ -491,8 +505,8 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
     df["DT"] = df["DT"].astype(str)
     df["n_dept"] = df["n_dept"].astype(str)
 
-    df = rapprochement_libelles(df_ref_structure, df, "DT")
-
+    df = rapprochement_libelles(df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"], df, "DT")
+    
     mask = df["n_structure"] == ""
     mapping_dict = (
         df_ref_structure[
@@ -503,20 +517,52 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
     )
 
     df.loc[mask, "n_structure"] = df.loc[mask, "n_dept"].map(mapping_dict)
-
+    
     df = df.dropna(subset=["n_structure"])
 
     df.loc[
         df["Département"] == "42 - Loire",
         ["n_structure", "nom_structure"]
     ] = [47, "DT DE LA LOIRE"]
-
-    df = df.rename(
-        columns={"nb_declenchements": "Dispositifs_d_urgence Nb_declenchements"}
-    )
+    
+    df = df["n_structure"].value_counts().reset_index()
+    df = df.rename(columns={"count": "Dispositifs_d_urgence Nb_declenchements"})
 
     return df
 
+
+
+
+def indicateurs_exercices(df_exercices2, df_ref_structure):
+    df = df_exercices2.copy()
+
+    df["DT"] = df["DT"].astype(str)
+    df["n_dept"] = df["n_dept"].astype(str)
+
+    df = rapprochement_libelles(df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"], df, "DT")
+    
+    mask = df["n_structure"] == ""
+    mapping_dict = (
+        df_ref_structure[
+            df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"
+        ]
+        .set_index("n_dept")["n_structure"]
+        .to_dict()
+    )
+
+    df.loc[mask, "n_structure"] = df.loc[mask, "n_dept"].map(mapping_dict)
+    
+    df = df.dropna(subset=["n_structure"])
+
+    df.loc[
+        df["Département"] == "42 - Loire",
+        ["n_structure", "nom_structure"]
+    ] = [47, "DT DE LA LOIRE"]
+    
+    df = df["n_structure"].value_counts().reset_index()
+    df = df.rename(columns={"count": "Dispositifs_d_urgence Nb_exercices"})
+
+    return df
 
 
 
@@ -696,6 +742,8 @@ def indicateurs_CRope(df, df_ref_structure):
     df[start_col] = pd.to_datetime(df[start_col], errors="coerce", dayfirst=True)
     df[end_col] = pd.to_datetime(df[end_col], errors="coerce", dayfirst=True)
 
+    df = df[df["Date et heure du début de l'opération"].dt.year == 2026]
+
     # Calcul durée en jours
     df["nb_jours_operation"] = (
         (df[end_col] - df[start_col]).dt.total_seconds() / 86400
@@ -840,6 +888,8 @@ def indicateurs_tracabilite_textile(df_tracabilite_textile, df_ref_structure):
 def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR,
     df_PST,
+    df_declenchement_clean,
+    df_exercices_clean,
     df_CAICHUCMCC_conventions,
     df_raw_Textile,
     df_CRope_clean,
@@ -848,7 +898,8 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
 ):
     df_OCR_Nb_deployees = indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure)
     df_Dispositifs_d_urgence_PST = indicateurs_PST(df_PST, df_ref_structure)
-    # df_declenchement3 = indicateurs_declenchements(df_declenchement2, df_ref_structure)
+    df_declenchement_VF = indicateurs_declenchements(df_declenchement_clean, df_ref_structure)
+    df_exercices_VF = indicateurs_exercices(df_exercices_clean, df_ref_structure)
     # df_redcall2 = indicateurs_redcall(df_RC_grouped, df_ref_structure)
     df_CAICHUCMCC_conventionsVF = indicateurs_bilanus2025(df_CAICHUCMCC_conventions, df_ref_structure)
     df_raw_TextileVF = indicateurs_raw_Textile(df_raw_Textile)
@@ -859,6 +910,8 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     return (
         df_OCR_Nb_deployees,
         df_Dispositifs_d_urgence_PST,
+        df_declenchement_VF,
+        df_exercices_VF,
         df_CAICHUCMCC_conventionsVF,
         df_raw_TextileVF,
         df_CRopeVF,
@@ -903,7 +956,7 @@ def indicateurs_redcall_DT(df_redcall2, rattachement_court):
 
 
 def OCR_RedCall_DT(df_OCR_Nb_deployees, df_redcall2, rattachement_court):
-    Nb_OCR_DT = indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court)
+    Nb_OCR_DT = indicateurs_OCR_DT(df_OCR_Nb_deployees, rattachement_court).reset_index()
     RedCall_DT = indicateurs_redcall_DT(df_redcall2, rattachement_court)
 
     return (
@@ -925,8 +978,8 @@ def Textile_DT(df_raw_Textile, rattachement_court):
 
 def tracabilite_textile_DT(df_tracabilite_textileVF):
     df_tracabilite_textileVF_DT = df_tracabilite_textileVF.copy()
-    df_tracabilite_textileVF_DT['nb_flux'] = df_tracabilite_textileVF_DT['Textile tracabilite_flux'].apply(lambda x: 1 if x == 'Oui' else 0)
-    df_tracabilite_textileVF_DT = df_tracabilite_textileVF_DT.groupby('DT_de_rattachement', as_index=False)['nb_flux'].sum()
+    df_tracabilite_textileVF_DT['Textile tracabilite_flux'] = df_tracabilite_textileVF_DT['Textile tracabilite_flux'].apply(lambda x: 1 if x == 'Oui' else 0)
+    df_tracabilite_textileVF_DT = df_tracabilite_textileVF_DT.groupby('DT_de_rattachement', as_index=False)['Textile tracabilite_flux'].sum()
     return df_tracabilite_textileVF_DT
 
 def crope_DT(df_CRopeVF, rattachement_court):
@@ -981,59 +1034,59 @@ def verif_textile(df_raw_Textile_c, df_raw_Textile, df_Textile_DT, df_ref_struct
 ############################################
 
 
-# def clean_ProdResTextile(df_raw_ProdResTextile):
-#     df = df_raw_ProdResTextile.iloc[:-1]
+def clean_ProdResTextile(df_raw_ProdResTextile):
+    df = df_raw_ProdResTextile.iloc[:-1]
 
-#     # Renommer les colonnes
-#     df.columns.values[0] = 'code_comptable'
-#     df.columns.values[1] = 'libelle'
-#     df.columns.values[22] = 'Textile Produit_2024'
-#     df.columns.values[24] = 'Textile Resultat_2024'
+    # Renommer les colonnes
+    df.columns.values[0] = 'code_comptable'
+    df.columns.values[1] = 'libelle'
+    df.columns.values[22] = 'Textile Produit_2024'
+    df.columns.values[24] = 'Textile Resultat_2024'
 
-#     # Conserver les lignes liées aux DT
-#     df = df[df['code_comptable'].str.contains("DD", na=False)]
+    # Conserver les lignes liées aux DT
+    df = df[df['code_comptable'].str.contains("DD", na=False)]
 
-# # Extraire le département
-#     def extraire_et_nettoyer_code_departement(texte):
-#         code = texte[-3:] # Extraire les 3 derniers caractères
-#         code = code.lstrip('0') # Supprimer les zéros initiaux
-#         return code
+# Extraire le département
+    def extraire_et_nettoyer_code_departement(texte):
+        code = texte[-3:] # Extraire les 3 derniers caractères
+        code = code.lstrip('0') # Supprimer les zéros initiaux
+        return code
 
-#     df['Code Département'] = df['code_comptable'].apply(extraire_et_nettoyer_code_departement)
+    df['Code Département'] = df['code_comptable'].apply(extraire_et_nettoyer_code_departement)
 
-#     return df
-
-
-# def indicateurs_ProdResTextile(df_raw_ProdResTextile, df_ref_structure):
-#     # Mapping sur le département
-#     mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
-#     df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['Code Département'].map(mapping_dict)
-#     verifier_mapping(df_raw_ProdResTextile, "n_structure", "libelle" ,df_ref_structure)
-
-#     # Conservation des colonnes utiles
-#     df = df_raw_ProdResTextile[["n_structure","Textile Produit_2024", "Textile Resultat_2024"]]
-
-#     # Suppression des espaces et "-"
-#     df['Textile Produit_2024'] = df['Textile Produit_2024'].str.replace(r"\s+", "", regex=True)
-#     df['Textile Produit_2024'] = df['Textile Produit_2024'].str.replace("-", "")
-#     df['Textile Resultat_2024'] = df['Textile Resultat_2024'].str.replace(r"\s+", "", regex=True)
-#     df['Textile Resultat_2024'] = df['Textile Resultat_2024'].str.replace("-", "")
-#     df = df.rename(columns = {'Textile Produit_2024' : 'Textile Produit_2025', 'Textile Resultat_2024' : 'Textile Resultat_2025'})
-
-#     return df
+    return df
 
 
-# def Textile_financier_DT(df_raw_ProdResTextile, rattachement_court):
-#     df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['n_structure'].astype('float64')
-#     # Merge données avec rattachement_court
-#     textile_financier = pd.merge(df_raw_ProdResTextile, rattachement_court, left_on="n_structure", right_on="n_structure", how="left")
+def indicateurs_ProdResTextile(df_raw_ProdResTextile, df_ref_structure):
+    # Mapping sur le département
+    mapping_dict = df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"].set_index('n_dept')['n_structure'].to_dict()
+    df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['Code Département'].map(mapping_dict)
+    verifier_mapping(df_raw_ProdResTextile, "n_structure", "libelle" ,df_ref_structure)
 
-#     # Groupby sur DT_de_rattachement
-#     Textile_financier__DT = (
-#     textile_financier
-#         .groupby('DT_de_rattachement')[['Textile Produit_2025', 'Textile Resultat_2025']]
-#         .sum()
-#         .reset_index()
-#     )
+    # Conservation des colonnes utiles
+    df = df_raw_ProdResTextile[["n_structure","Textile Produit_2024", "Textile Resultat_2024"]]
 
-#     return Textile_financier__DT
+    # Suppression des espaces et "-"
+    df['Textile Produit_2024'] = df['Textile Produit_2024'].str.replace(r"\s+", "", regex=True)
+    df['Textile Produit_2024'] = df['Textile Produit_2024'].str.replace("-", "")
+    df['Textile Resultat_2024'] = df['Textile Resultat_2024'].str.replace(r"\s+", "", regex=True)
+    df['Textile Resultat_2024'] = df['Textile Resultat_2024'].str.replace("-", "")
+    df = df.rename(columns = {'Textile Produit_2024' : 'Textile Produit_2025', 'Textile Resultat_2024' : 'Textile Resultat_2025'})
+
+    return df
+
+
+def Textile_financier_DT(df_raw_ProdResTextile, rattachement_court):
+    df_raw_ProdResTextile['n_structure'] = df_raw_ProdResTextile['n_structure'].astype('float64')
+    # Merge données avec rattachement_court
+    textile_financier = pd.merge(df_raw_ProdResTextile, rattachement_court, left_on="n_structure", right_on="n_structure", how="left")
+
+    # Groupby sur DT_de_rattachement
+    Textile_financier__DT = (
+    textile_financier
+        .groupby('DT_de_rattachement')[['Textile Produit_2025', 'Textile Resultat_2025']]
+        .sum()
+        .reset_index()
+    )
+
+    return Textile_financier__DT

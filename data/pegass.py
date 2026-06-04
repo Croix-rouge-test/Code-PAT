@@ -42,18 +42,6 @@ def import_tables_PEGASS(client,target_date = '2025-12-31',  project_id="crf-pat
 
     query = f"""
     SELECT *
-    FROM `{project_id}.{dataset_id}.Ref_structure`
-    """
-    df_ref_structure = client.query(query).to_dataframe()
-
-    # Preparation ref structure (comme ton code)
-    ref_structure1 = df_ref_structure[
-        (df_ref_structure["type_structure"] == "UNITE LOCALE - UL")
-        | (df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT")
-    ]
-
-    query = f"""
-    SELECT *
     FROM `{project_id}.{dataset_id}.rattachement_court`
     """
     df_rattachement_court = client.query(query).to_dataframe()
