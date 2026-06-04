@@ -235,9 +235,272 @@ def fusion_donnees_financieres(financial_data, df_ref_structure):
 
     return result
 
+def textile_calc(df_raw_ProdResTextile_c, df_ref_structure):
+
+    # Nettoyage des DF et sélection des colonnes pertinentes
+
+    df_ProdResTextile_clean = df_raw_ProdResTextile_c.iloc[:, [0,1,25,-1]].copy()
+
+    df_ProdResTextile_clean.columns = ["n_structure", "nom_structure",
+        "Textile Produit_2025",
+        "Textile Vente_solidaire"
+    ]
+
+    df_ProdResTextile_clean.replace({"n_structure": {"ORDD02A": 3965}}, inplace=True)
+    df_ProdResTextile_clean.replace({"n_structure": {"ORDD02B": 3967}}, inplace=True)
+
+
+    df_ProdResTextile_clean = df_ProdResTextile_clean[~df_ProdResTextile_clean["n_structure"].isna()]
+
+    df_ProdResTextile_clean["n_structure"] = (
+        df_ProdResTextile_clean["n_structure"]
+        .astype(str)
+        .str.replace(r"\D", "", regex=True)
+        .replace("", pd.NA)
+    )
+
+    df_ProdResTextile_clean["n_structure"] = pd.to_numeric(
+        df_ProdResTextile_clean["n_structure"],
+        errors="coerce"
+    ).astype("Int64")
+
+
+    #Transforme les données en valeurs numériques, en supprimant les espaces, les caractères spéciaux et en gérant les erreurs de conversion
+
+    cols = ["Textile Vente_solidaire"]
+
+    for col in cols:
+        df_ProdResTextile_clean[col] = (
+            df_ProdResTextile_clean[col]
+            .astype(str)
+            .str.replace(" ", "", regex=False)
+            .str.replace("\u00a0", "", regex=False)  # espaces insécables
+            .str.replace("%", "", regex=False)
+        )
+
+    df_ProdResTextile_clean["Textile Vente_solidaire"] = pd.to_numeric(
+    df_ProdResTextile_clean["Textile Vente_solidaire"],
+    errors="coerce"
+    )
+
+    df_ProdResTextile_clean["Textile Produit_2025"] = (
+        df_ProdResTextile_clean["Textile Produit_2025"]
+        .astype(str)
+        .str.replace(r"\D", "", regex=True)
+    )
+
+    df_ProdResTextile_clean["Textile Produit_2025"] = pd.to_numeric(
+        df_ProdResTextile_clean["Textile Produit_2025"],
+        errors="coerce"
+    )
+
+    #On supprimme les doubles lignes vides
+    cols = ["Textile Produit_2025", "Textile Vente_solidaire"]
+
+    # Remplacer les valeurs vides ou " - " par NA
+    df_ProdResTextile_clean[cols] = (
+        df_ProdResTextile_clean[cols]
+        .replace(r"^\s*-\s*$", pd.NA, regex=True)
+        .replace(r"^\s*$", pd.NA, regex=True)
+    )
+
+    # Garder les lignes où au moins une des deux colonnes est renseignée
+    df_ProdResTextile_clean = df_ProdResTextile_clean[
+        df_ProdResTextile_clean[cols].notna().any(axis=1)
+    ].copy()
+
+    df_ProdResTextile_clean= df_ProdResTextile_clean[
+        (
+            df_ProdResTextile_clean["Textile Produit_2025"].notna()
+            & (df_ProdResTextile_clean["Textile Produit_2025"] != " - ")
+        )
+        |
+        (
+            df_ProdResTextile_clean["Textile Vente_solidaire"].notna()
+            & (df_ProdResTextile_clean["Textile Vente_solidaire"] != " - ")
+        )
+    ].copy()
+
+
+    #On supprimme les DR avec "REGION"
+    df_ProdResTextile_clean = df_ProdResTextile_clean[
+        ~df_ProdResTextile_clean["nom_structure"].str.contains("REGION", case=False, na=False)
+    ].copy()
+
+    #Création des DF Structures et DT 
+
+    df_ProdResTextile_clean_structure = df_ProdResTextile_clean[
+        ~df_ProdResTextile_clean["nom_structure"].str.contains("DELEGATIONS", case=False, na=False)
+    ].copy()
+
+    df_ProdResTextile_clean_DT = df_ProdResTextile_clean[
+        df_ProdResTextile_clean["nom_structure"].str.contains("DELEGATIONS", case=False, na=False)
+    ].copy()
+
+    df_ProdResTextile_clean_DT = df_ProdResTextile_clean_DT[['nom_structure', 'Textile Produit_2025',
+        'Textile Vente_solidaire']]
+
+
+    #RENAME DES DTs
+
+    df_ProdResTextile_clean_DT["nom_structure"] = (
+        df_ProdResTextile_clean_DT["nom_structure"]
+        .astype(str)
+        .str.strip()
+    )
+
+    df_ProdResTextile_clean_DT.replace({
+        "nom_structure": {
+            "DELEGATIONS DES ALPES DE HAUTE PROVENCE": "DT DES ALPES DE HAUTE PROVENCE",
+            "DELEGATIONS DES ALPES MARITIMES": "DT DES ALPES MARITIMES",
+            "DELEGATIONS DES ARDENNES": "DT DES ARDENNES",
+            "DELEGATIONS DU BAS RHIN": "DT DU BAS RHIN",
+            "DELEGATIONS DES BOUCHES DU RHONE": "DT DES BOUCHES DU RHONE",
+            "DELEGATIONS DU CALVADOS": "DT DU CALVADOS",
+            "DELEGATIONS DU CANTAL": "DT DU CANTAL",
+            "DELEGATIONS DE CHARENTE": "DT DE LA CHARENTE",
+            "DELEGATIONS DE CHARENTE MARITIME": "DT DE CHARENTE MARITIME",
+            "DELEGATIONS DU CHER": "DT DU CHER",
+            "DELEGATIONS DE COTE D'OR": "DT DE LA COTE D'OR",
+            "DELEGATIONS DES COTES D'ARMOR": "DT DES COTES D'ARMOR",
+            "DELEGATIONS DES DEUX SEVRES": "DT DES DEUX SEVRES",
+            "DELEGATIONS DU DOUBS": "DT DU DOUBS",
+            "DELEGATIONS DU FINISTERE": "DT DU FINISTERE",
+            "DELEGATIONS DU GARD": "DT DU GARD",
+            "DELEGATIONS DU GERS": "DT DU GERS",
+            "DELEGATIONS DU HAUT RHIN": "DT DU HAUT RHIN",
+            "DELEGATIONS DE HAUTE GARONNE": "DT DE HAUTE GARONNE",
+            "DELEGATIONS DE HAUTE SAVOIE": "DT DE LA HAUTE SAVOIE",
+            "DELEGATIONS DES HAUTES ALPES": "DT DES HAUTES ALPES",
+            "DELEGATIONS DES HAUTES PYRENEES": "DT DES HAUTES PYRENEES",
+            "DELEGATIONS DES HAUTS DE SEINE": "DT DES HAUTS DE SEINE",
+            "DELEGATIONS D'ILLE ET VILAINE": "DT DE L'ILLE ET VILAINE",
+            "DELEGATIONS DU JURA": "DT DU JURA",
+            "DELEGATIONS DE LA CORREZE": "DT DE LA CORREZE",
+            "DELEGATIONS DE LA CORSE DU SUD": "DT DE LA CORSE DU SUD",
+            "DELEGATIONS DE LA CREUSE": "DT DE LA CREUSE",
+            "DELEGATIONS DE LA DORDOGNE": "DT DE LA DORDOGNE",
+            "DELEGATIONS DE LA DROME": "DT DE LA DROME",
+            "DELEGATIONS DE LA GIRONDE": "DT DE LA GIRONDE",
+            "DELEGATIONS DE LA GUADELOUPE": "DT DE LA GUADELOUPE",
+            "DELEGATIONS DE LA GUYANE": "DT DE LA GUYANE",
+            "DELEGATIONS DE LA HAUTE CORSE": "DT DE LA HAUTE CORSE",
+            "DELEGATIONS DE LA HAUTE LOIRE": "DT DE LA HAUTE LOIRE",
+            "DELEGATIONS DE LA HAUTE MARNE": "DT DE LA HAUTE MARNE",
+            "DELEGATIONS DE LA HAUTE SAONE": "DT DE HAUTE SAONE",
+            "DELEGATIONS DE LA HAUTE VIENNE": "DT DE LA HAUTE VIENNE",
+            "DELEGATIONS DE LA LOIRE": "DT DE LA LOIRE",
+            "DELEGATIONS DE LA LOZERE": "DT DE LA LOZERE",
+            "DELEGATIONS DE LA MANCHE": "DT DE LA MANCHE",
+            "DELEGATIONS DE LA MARNE": "DT DE LA MARNE",
+            "DELEGATIONS DE LA MARTINIQUE": "DT DE LA MARTINIQUE",
+            "DELEGATIONS DE LA MAYENNE": "DT DE LA MAYENNE",
+            "DELEGATIONS DE LA MEURTHE-ET-M": "DT DE MEURTHE ET MOSELLE",
+            "DELEGATIONS DE LA MEUSE": "DT DE LA MEUSE",
+            "DELEGATIONS DE LA MOSELLE": "DT DE LA MOSELLE",
+            "DELEGATIONS DE LA NIEVRE": "DT DE LA NIEVRE",
+            "DELEGATIONS DE LA REUNION": "DT DE LA REUNION",
+            "DELEGATIONS DE LA SAONE ET LOI": "DT DE SAONE ET LOIRE",
+            "DELEGATIONS DE LA SARTHE": "DT DE LA SARTHE",
+            "DELEGATIONS DE LA SAVOIE": "DT DE LA SAVOIE",
+            "DELEGATIONS DE LA SOMME": "DT DE LA SOMME",
+            "DELEGATIONS DE LA VENDEE": "DT DE VENDEE",
+            "DELEGATIONS DE LA VIENNE": "DT DE LA VIENNE",
+            "DELEGATIONS DE L'AIN": "DT DE L'AIN",
+            "DELEGATIONS DE L'AISNE": "DT DE L'AISNE",
+            "DELEGATIONS DE L'ALLIER": "DT DE L'ALLIER",
+            "DELEGATIONS DES LANDES": "DT DES LANDES",
+            "DELEGATIONS DE L'ARDECHE": "DT DE L'ARDECHE",
+            "DELEGATIONS DE L'ARIEGE": "DT DE L'ARIEGE",
+            "DELEGATIONS DE L'AUBE": "DT DE L'AUBE",
+            "DELEGATIONS DE L'AUDE": "DT DE L'AUDE",
+            "DELEGATIONS DE L'AVEYRON": "DT DE L'AVEYRON",
+            "DELEGATIONS DE L'ESSONNE": "DT DE L'ESSONNE",
+            "DELEGATIONS DE L'EURE": "DT DE L'EURE",
+            "DELEGATIONS DE L'EURE ET LOIRE": "DT D'EURE ET LOIR",
+            "DELEGATIONS DE L'HERAULT": "DT DE L'HERAULT",
+            "DELEGATIONS DE L'INDRE": "DT DE L'INDRE",
+            "DELEGATIONS DE L'INDRE ET LOIRE": "DT D'INDRE ET LOIRE",
+            "DELEGATIONS DE L'ISERE": "DT DE L'ISERE",
+            "DELEGATIONS DU LOIR ET CHER": "DT DU LOIR ET CHER",
+            "DELEGATIONS DE LOIRE ATLANTIQUE": "DT DE LA LOIRE ATLANTIQUE",
+            "DELEGATIONS DU LOIRET": "DT DU LOIRET",
+            "DELEGATIONS DE L'OISE": "DT DE L'OISE",
+            "DELEGATIONS DE L'ORNE": "DT DE L'ORNE",
+            "DELEGATIONS DU LOT": "DT DU LOT",
+            "DELEGATIONS DU LOT ET GARONNE": "DT DU LOT ET GARONNE",
+            "DELEGATIONS DE L'YONNE": "DT DE L'YONNE",
+            "DELEGATIONS DU MAINE ET LOIRE": "DT DU MAINE ET LOIRE",
+            "DELEGATIONS DE MAYOTTE": "DT DE MAYOTTE",
+            "DELEGATIONS DU MORBIHAN": "DT DU MORBIHAN",
+            "DELEGATIONS DU NORD": "DT DU NORD",
+            "DELEGATIONS DE NOUVELLE CALEDONIE": "DT DE NOUVELLE CALEDONIE",
+            "DELEGATIONS DE PARIS": "DT DE PARIS",
+            "DELEGATIONS DU PAS DE CALAIS": "DT DU PAS DE CALAIS",
+            "DELEGATIONS DU PUY DE DOME": "DT DU PUY DE DOME",
+            "DELEGATIONS DES PYRENEES ORIENTALES": "DT DES PYRENEES ORIENTALES",
+            "DELEGATIONS DES PYRENEES-ATLANTIQUES": "DT DES PYRENEES ATLANTIQUES",
+            "DELEGATIONS DU RHONE": "DT DU RHONE",
+            "DELEGATIONS DE SAINT BARHELEMY": "DT DE ST BARTHELEMY",
+            "DELEGATIONS DE SAINT-MARTIN": "DT DE ST MARTIN",
+            "DELEGATIONS DE SEINE ET MARNE": "DT DE LA SEINE ET MARNE",
+            "DELEGATIONS DE SEINE MARITIME": "DT DE LA SEINE MARITIME",
+            "DELEGATIONS DE SEINE SAINT DEN": "DT DE SEINE SAINT DENIS",
+            "DELEGATIONS DU TARN": "DT DU TARN",
+            "DELEGATIONS DU TARN ET GARONNE": "DT DU TARN ET GARONNE",
+            "DELEGATIONS TERRITOIRE DE BELFORT": "DT DU TERRITOIRE DE BELFORT",
+            "DELEGATIONS DU VAL DE MARNE": "DT DU VAL DE MARNE",
+            "DELEGATIONS DU VAL D'OISE": "DT DU VAL D'OISE",
+            "DELEGATIONS DU VAR": "DT DU VAR",
+            "DELEGATIONS DU VAUCLUSE": "DT DU VAUCLUSE",
+            "DELEGATIONS DES VOSGES": "DT DES VOSGES",
+            "DELEGATIONS DES YVELINES": "DT DES YVELINES",
+        }
+    }, inplace=True)
+
+    #Correction des N° structure non pertinents (surtout les maisons)
+    #Pour le numero de l'AL AL ILE ROUSSE
+    df_ProdResTextile_clean_structure.replace({"n_structure": {3983: 4960}}, inplace=True)
+
+    df_ProdResTextile_clean_structure.replace({"n_structure": {716: 4921}}, inplace=True)
+    df_ProdResTextile_clean_structure.replace({"n_structure": {728: 4946}}, inplace=True)
+    df_ProdResTextile_clean_structure.replace({"n_structure": {730: 4947}}, inplace=True)
+
+    #Merge avec le ref structure pour récupérer les Noms de structures officiels 
+    df_ProdResTextile_clean_structure = pd.merge(df_ProdResTextile_clean_structure, df_ref_structure[["n_structure", "nom_structure"]], on="n_structure", how="left")
+
+    #Drop les lignes où le nom de structure n'a pas été trouvé dans le ref structure (structures salariées)
+    df_ProdResTextile_clean_structure = df_ProdResTextile_clean_structure.dropna(
+        subset=["nom_structure_y"]
+    )
+
+    #Récupération du n de structure officiel à partir du ref structure
+    df_ProdResTextile_clean_structure = pd.merge(df_ProdResTextile_clean_structure, df_ref_structure[["n_structure", "nom_structure"]], left_on="nom_structure_y", right_on="nom_structure", how="left")
+
+    df_ProdResTextile_clean_structure = df_ProdResTextile_clean_structure[["n_structure_y","Textile Produit_2025", "Textile Vente_solidaire",]]
+    df_ProdResTextile_clean_structure.rename(columns={"n_structure_y": "n_structure"}, inplace=True)
+
+    # Ajouter 22513 + 20 à la structure 725
+    df_ProdResTextile_clean_structure.loc[
+        df_ProdResTextile_clean_structure["n_structure"] == 725,
+        "Textile Produit_2025"
+    ] += 22513.0 + 20.0
+
+    # Ajouter 17594 à la structure 4381
+    df_ProdResTextile_clean_structure.loc[
+        df_ProdResTextile_clean_structure["n_structure"] == 4381,
+        "Textile Produit_2025"
+    ] += 17594.0
+
+    df_ProdResTextile_clean_DT = pd.merge(df_ProdResTextile_clean_DT, df_ref_structure[df_ref_structure['type_structure'] == "DELEGATION TERRITORIALE - DT"][['n_structure','nom_structure']].drop_duplicates(), left_on="nom_structure", right_on="nom_structure", how="left")
+
+    return df_ProdResTextile_clean_structure, df_ProdResTextile_clean_DT
+
 def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024,financier_textile,financier_DPS, df_ref_structure, mapping_df):
     
     donnees_2023_2024 = fusion_donnees_financieres(import_clean_donnees_financieres(financier_2023_2024,df_ref_structure, mapping_df), df_ref_structure)
+
+    df_financier_textile_struct, df_finanier_textile_DT = textile_calc(financier_textile, df_ref_structure)
 
     # query_donnees_financieres = """
     #     SELECT *
@@ -377,6 +640,9 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
 
     df_financier = pd.merge(df_financier,df_financier_dps, on='n_structure', how='left')
     df_financier_DT = pd.merge(df_financier_DT,df_financier_dps_DT, on='n_structure', how='left')
+
+    df_financier = pd.merge(df_financier,df_financier_textile_struct, on='n_structure', how='left')
+    df_financier_DT = pd.merge(df_financier_DT,df_financier_textile_DT, on='n_structure', how='left')
 
     return df_financier, df_financier_DT, financier
 
