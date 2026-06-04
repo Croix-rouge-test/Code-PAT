@@ -80,6 +80,7 @@ def clean_PST(df_PST):
 def clean_declenchement(df_declenchement):
     df = df_declenchement.copy()
 
+    df = df[df["Horodateur"] != "26/08/2025"]
     # Conversion de la date
     df['Horodateur'] = pd.to_datetime(
         df['Horodateur'],
@@ -503,7 +504,7 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
         df["Département"] == "42 - Loire",
         ["n_structure", "nom_structure"]
     ] = [47, "DT DE LA LOIRE"]
-
+    
     df = df["n_structure"].value_counts().reset_index()
     df = df.rename(columns={"count": "Dispositifs_d_urgence Nb_declenchements"})
 
