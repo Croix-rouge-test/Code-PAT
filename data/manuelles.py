@@ -99,9 +99,31 @@ def clean_declenchement(df_declenchement):
     return df
 
 
+
+def clean_exercices(df_declenchement):
+    df = df_declenchement.copy()
+
+    df = df[df["Horodateur"] != "26/08/2025"]
+    # Conversion de la date
+    df['Horodateur'] = pd.to_datetime(
+        df['Horodateur'],
+         format='%d/%m/%Y %H:%M:%S'
+    )
+
+    # Filtre
+    df_filtre = df[
+        (df['Horodateur'].dt.year == 2026) & (df['Typologie'].isin(['Exercices']))
+    ]
+
+    df_filtre[["n_dept", "DT"]] = df_filtre["Département concerné"].str.split(" - ", expand=True)
+    df_filtre["DT"] = "DT " + df["DT"]
+
+    return df
+
+
+
 def clean_redcall(df_redcall):
     df = df_redcall.drop(columns=["Type", "Coûts", "Devise"])
-
 
     cols_to_sum = [
         "Déclenchements",
@@ -112,25 +134,21 @@ def clean_redcall(df_redcall):
         "Erreurs"
     ]
 
-
     df_grouped = (
         df
         .groupby("Nom de la structure", as_index=False)[cols_to_sum]
         .sum()
     )
 
-
     df_grouped["Total"] = df_grouped[
         ["Communications", "Messages", "Questions"]
     ].sum(axis=1)
-
 
     df_grouped["Utilisation_Redcall"] = (
         df_grouped["Total"]
         .gt(0)
         .map({True: "Oui", False: "Non"})
     )
-
 
     return df_grouped
 
@@ -365,6 +383,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR_clean = clean_OCR(df_OCR)
     df_PST_clean = clean_PST(df_PST)
     df_declenchement_clean = clean_declenchement(df_declenchement)
+    df_exercices_clean = clean_exercices(df_declenchement)
     # df_redcall_clean = clean_redcall(df_redcall)
     df_CAIconv_clean = clean_CAIconv(df_CAICHUCMCC_conventions)
     df_raw_Textile_clean = clean_raw_Textile(df_raw_Textile, df_ref_structure)
@@ -374,6 +393,7 @@ def clean_OCR_PST_DEC_RED_CAI_CONV(
         df_OCR_clean,
         df_PST_clean,
         df_declenchement_clean,
+        df_exercices_clean,
         df_CAIconv_clean,
         df_raw_Textile_clean,
         df_CRope_clean
@@ -510,6 +530,39 @@ def indicateurs_declenchements(df_declenchement2, df_ref_structure):
 
     return df
 
+
+
+
+def indicateurs_exercices(df_exercices2, df_ref_structure):
+    df = df_exercices2.copy()
+
+    df["DT"] = df["DT"].astype(str)
+    df["n_dept"] = df["n_dept"].astype(str)
+
+    df = rapprochement_libelles(df_ref_structure[df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"], df, "DT")
+    
+    mask = df["n_structure"] == ""
+    mapping_dict = (
+        df_ref_structure[
+            df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"
+        ]
+        .set_index("n_dept")["n_structure"]
+        .to_dict()
+    )
+
+    df.loc[mask, "n_structure"] = df.loc[mask, "n_dept"].map(mapping_dict)
+    
+    df = df.dropna(subset=["n_structure"])
+
+    df.loc[
+        df["Département"] == "42 - Loire",
+        ["n_structure", "nom_structure"]
+    ] = [47, "DT DE LA LOIRE"]
+    
+    df = df["n_structure"].value_counts().reset_index()
+    df = df.rename(columns={"count": "Dispositifs_d_urgence Nb_exercices"})
+
+    return df
 
 
 
@@ -834,6 +887,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR,
     df_PST,
     df_declenchement_clean,
+    df_exercices_clean,
     df_CAICHUCMCC_conventions,
     df_raw_Textile,
     df_CRope_clean,
@@ -843,6 +897,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_OCR_Nb_deployees = indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure)
     df_Dispositifs_d_urgence_PST = indicateurs_PST(df_PST, df_ref_structure)
     df_declenchement_VF = indicateurs_declenchements(df_declenchement_clean, df_ref_structure)
+    df_exercices_VF = indicateurs_exercices(df_exercices_clean, df_ref_structure)
     # df_redcall2 = indicateurs_redcall(df_RC_grouped, df_ref_structure)
     df_CAICHUCMCC_conventionsVF = indicateurs_bilanus2025(df_CAICHUCMCC_conventions, df_ref_structure)
     df_raw_TextileVF = indicateurs_raw_Textile(df_raw_Textile)
@@ -854,6 +909,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
         df_OCR_Nb_deployees,
         df_Dispositifs_d_urgence_PST,
         df_declenchement_VF,
+        df_exercices_VF,
         df_CAICHUCMCC_conventionsVF,
         df_raw_TextileVF,
         df_CRopeVF,
