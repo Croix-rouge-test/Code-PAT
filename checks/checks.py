@@ -22,10 +22,13 @@ def main():
     df_IN = df_UL[df_UL['n_structure'] == 1].copy()
 
     liste_activite_map = ['AEO Structure_activite_mobile', 'OCR Structures_menant_activite',
-                        # 'Secours Structures_menant_activite',
+                        'Secours Structures_menant_activite',
                         'Maraudes Structures_menant_activite',
                         'Formation_grand_public Structures_menant_activite',
-                        'Textile Structures_menant_activite']
+                        'Textile Structures_menant_activite'
+                        ]
+    
+    df_IN['Textile tracabilite_flux'] = df_IN['Textile tracabilite_flux'].map({'Oui': 1}).fillna(0)
     
     for col in liste_activite_map:
         df_IN[col] = (
@@ -72,8 +75,8 @@ def main():
     # Tâche 2 — Comparaison ligne par ligne df_DT vs df_UL groupé par DT
     # -------------------------------------------------------------------------
     compare_dt_and_export(
-        df_DT=df_DT,
-        df_UL=df_UL_sans_IN,
+        df_DT=df_DT.drop(columns=['Textile tracabilite_flux'] + liste_activite_map),
+        df_UL=df_UL_sans_IN.drop(columns=['Textile tracabilite_flux'] + liste_activite_map),  # on enlève les colonnes d'activités et de tracabilité qui ne sont pas dans DT
         columns=columns_sans_taux,
         dt_key_dt='n_structure',          # clé dans df_DT
         dt_col_ul='DT_de_rattachement',   # colonne DT dans df_UL

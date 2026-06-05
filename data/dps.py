@@ -42,18 +42,27 @@ def import_clean_dps(client, df_ref_structure,target_date = '2025-12-31',  proje
 
     df_dps_dimensionnement = df_dps_dimensionnement[(df_dps_dimensionnement['DPS_DIMENSIONNEMENT_DATE_DEBUT'].dt.year == year) & (df_dps_dimensionnement['DPS_DIMENSIONNEMENT_DATE_DEBUT'] <= target)]
 
-    df_dps_manifestation = apply_rattachement_successif(df_ref_structure, df_dps_manifestation, "DPS_DEMANDE_STRUCTURE_ID")
-
     df_dps_manifestation = df_dps_manifestation.rename(columns = {"DPS_DEMANDE_STRUCTURE_ID":"n_structure"})
 
-    liste_structure_garder = df_ref_structure['n_structure'].drop_duplicates().tolist()
+    liste_structure_garder = df_ref_structure[df_ref_structure['type_structure'] != 'IMPLANTATION LOCALE HORS AL - IL']['n_structure'].drop_duplicates().tolist()
     
-    df_dps_manifestation = df_dps_manifestation[df_dps_manifestation['n_structure'].isin(liste_structure_garder)]
+    df_dps_manifestation = apply_rattachement_successif(
+        df_ref_structure, df_dps_manifestation, "n_structure"
+    )
 
+    # Merge DT_de_rattachement APRÈS le rattachement successif
+    df_dps_manifestation = df_dps_manifestation.drop(columns=['DT_de_rattachement'], errors='ignore')
 
-    df_dps_manifestation = pd.merge(df_dps_manifestation, df_ref_structure[['n_structure','DT_de_rattachement']].drop_duplicates(),on="n_structure", how="left")
+    df_dps_manifestation = df_dps_manifestation[
+        df_dps_manifestation['n_structure'].isin(liste_structure_garder)
+    ]
 
-
+    df_dps_manifestation = pd.merge(
+        df_dps_manifestation,
+        df_ref_structure[['n_structure', 'DT_de_rattachement']].drop_duplicates(),
+        on="n_structure",
+        how="left"
+    )
 
     return df_dps_dimensionnement, df_dps_manifestation, df_dps_ref_type_dispositif, df_dps_ref_type_statut_demande
 
@@ -82,18 +91,25 @@ def nb_dps(df_dps, target_date, col_grpby):
                      (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de grande envergure"))]
 
     df_res = pd.DataFrame()
+    frames = []
 
     for col, mask in indics_mask:
-
         serie = (
             df_dps[mask]
             .groupby(col_grpby)["DPS_DIMENSIONNEMENT_ID_PK"]
             .nunique()
+            .rename(col)
+            .reset_index()
         )
 
-        df_res[col] = serie
+        frames.append(serie)
 
-    df_res = df_res.fillna(0).astype(int).reset_index()
+    # Merge successif sur n_structure — aucune structure perdue
+    df_res = frames[0][[col_grpby]].copy()
+    for frame in frames:
+        df_res = df_res.merge(frame, on=col_grpby, how='outer')
+
+    df_res = df_res.fillna(0).astype({col: int for col in df_res.columns if col != col_grpby})
     
     return df_res
 
@@ -110,8 +126,11 @@ def equivalent_poste_secours(df_dps, target_date, col_grpby):
     """
     target = pd.Timestamp(target_date)
     year = target.year
-    s_fin = df_dps['DPS_DIMENSIONNEMENT_HEURE_FIN']
-    s_deb = df_dps['DPS_DIMENSIONNEMENT_HEURE_DEBUT']
+
+    df_dps = df_dps.copy()
+
+    s_fin = pd.to_datetime(df_dps['DPS_DIMENSIONNEMENT_HEURE_FIN'].astype(str), format='%H:%M:%S', errors='coerce')
+    s_deb = pd.to_datetime(df_dps['DPS_DIMENSIONNEMENT_HEURE_DEBUT'].astype(str), format='%H:%M:%S', errors='coerce')
 
     def to_seconds(s):
         return (s.dt.hour * 3600
@@ -119,38 +138,41 @@ def equivalent_poste_secours(df_dps, target_date, col_grpby):
                 + s.dt.second
                 + s.dt.microsecond / 1e6)
 
-    s_fin = pd.to_datetime(s_fin.astype(str), format='%H:%M:%S', errors='coerce')
-    s_deb = pd.to_datetime(s_deb.astype(str), format='%H:%M:%S', errors='coerce')
-    sec_fin = to_seconds(s_fin)
-    sec_deb = to_seconds(s_deb)
-
-    # difference in hours, with wrap-around for events past midnight
-    diff_seconds = (sec_fin - sec_deb) % (24 * 3600)
+    diff_seconds = (to_seconds(s_fin) - to_seconds(s_deb)) % (24 * 3600)
     df_dps['nb_heures'] = diff_seconds / 3600.0
-    df_dps['nb_is_reel/theorique'] = df_dps['DPS_DIMENSIONNEMENT_ACTEUR_NOMBRE_INTERVENANTS_SECOURISTES'] + df_dps['DPS_DIMENSIONNEMENT_PUBLIC_NOMBRE_INTERVENANTS_SECOURISTES'] / 4
-    df_dps['equivalent_poste_secours'] = np.ceil(df_dps['nb_heures']/ 4) * df_dps['nb_is_reel/theorique']
+    df_dps['nb_is_reel/theorique'] = (
+        df_dps['DPS_DIMENSIONNEMENT_ACTEUR_NOMBRE_INTERVENANTS_SECOURISTES']
+        + df_dps['DPS_DIMENSIONNEMENT_PUBLIC_NOMBRE_INTERVENANTS_SECOURISTES'] / 4
+    )
+    df_dps['equivalent_poste_secours'] = np.ceil(df_dps['nb_heures'] / 4) * df_dps['nb_is_reel/theorique']
 
-    indics_mask = [(f"Secours Nb_PAPS_ps_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "PAPS"),
-                    (f"Secours Nb_DPS_PE_ps_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de petite envergure"),
-                    (f"Secours Nb_DPS_ME_ps_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de moyenne envergure"),
-                    (f"Secours Nb_DPS_GE_ps_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de grande envergure"),
-                    (f"Secours Nb_DPS_ps_{year}", df_dps['DPS_DIMENSIONNEMENT_ID_PK'] == df_dps['DPS_DIMENSIONNEMENT_ID_PK'])]
-    
-    df_res = pd.DataFrame()
+    indics_mask = [
+        (f"Secours Nb_PAPS_ps_{year}",   df_dps['TYPE_DISPOSITIF_LIBELLE'] == "PAPS"),
+        (f"Secours Nb_DPS_PE_ps_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de petite envergure"),
+        (f"Secours Nb_DPS_ME_ps_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de moyenne envergure"),
+        (f"Secours Nb_DPS_GE_ps_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de grande envergure"),
+        (f"Secours Nb_DPS_ps_{year}",    df_dps['DPS_DIMENSIONNEMENT_ID_PK'] == df_dps['DPS_DIMENSIONNEMENT_ID_PK']),
+    ]
+
+    frames = []
 
     for col, mask in indics_mask:
-
         serie = (
             df_dps[mask]
             .groupby(col_grpby)["equivalent_poste_secours"]
             .sum()
+            .rename(col)
+            .reset_index()
         )
+        frames.append(serie)
 
-        df_res[col] = serie
+    df_res = frames[0][[col_grpby]].copy()
+    for frame in frames:
+        df_res = df_res.merge(frame, on=col_grpby, how='outer')
 
-    df_res = df_res.fillna(0).astype(int).reset_index()
+    df_res = df_res.fillna(0).astype({col: int for col in df_res.columns if col != col_grpby})
+
     return df_res
-
 
 def left_merge_all(df_base, list_df, on):
     """
@@ -201,12 +223,14 @@ def indicateurs_dps(df_dps_dimensionnement, df_dps_manifestation, df_dps_ref_typ
     df_equivalent_ps = equivalent_poste_secours(df_dps, target_date, "n_structure")
     df_equivalent_ps_DT = equivalent_poste_secours(df_dps, target_date, "DT_de_rattachement")
 
-    df_dps, df_dps_DT = fusion_finale_dps(df_ref_structure, [df_dispositifs, df_equivalent_ps], [df_dispositifs_DT, df_equivalent_ps_DT])
+    df_dps, df_dps_DT = fusion_finale_dps(df_ref_structure[df_ref_structure['type_structure'] != 'IMPLANTATION LOCALE HORS AL - IL'], [df_dispositifs, df_equivalent_ps], [df_dispositifs_DT, df_equivalent_ps_DT])
 
     df_dps_DT = df_dps_DT[(df_dps_DT['DT_de_rattachement'] != 'NaN') & (df_dps_DT['DT_de_rattachement'].notnull())]
 
     df_dps_DT = df_dps_DT.rename(columns={'DT_de_rattachement': 'n_structure'})
     df_dps_DT['n_structure'] = df_dps_DT['n_structure'].apply(keep_integer).astype(int)
+
+    
 
     return df_dps, df_dps_DT
 
