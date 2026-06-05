@@ -94,7 +94,7 @@ def clean_declenchement(df_declenchement):
     ]
 
     df_filtre[["n_dept", "DT"]] = df_filtre["Département concerné"].str.split(" - ", expand=True)
-    df_filtre["DT"] = "DT " + df["DT"]
+    df_filtre["DT"] = "DT " + df_filtre["DT"]
 
     return df
 
@@ -116,7 +116,7 @@ def clean_exercices(df_declenchement):
     ]
 
     df_filtre[["n_dept", "DT"]] = df_filtre["Département concerné"].str.split(" - ", expand=True)
-    df_filtre["DT"] = "DT " + df["DT"]
+    df_filtre["DT"] = "DT " + df_filtre["DT"]
 
     return df
 
