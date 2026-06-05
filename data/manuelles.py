@@ -90,7 +90,7 @@ def clean_declenchement(df_declenchement):
     # Filtre
     df_filtre = df[
         (df['Horodateur'].dt.year == 2026) &
-        (df['Typologie'].isin(['Opérations', 'Fonctionnement / Sureté / Sécurité', 'Fonctionnement et vie des DT/Sûreté/Sécurité', 'Etablissements']))
+        (df['Typologie'].isin(['Opérations', 'Fonctionnement / Sureté / Sécurité', 'Fonctionnement et vie des DT/Sûreté/Sécurité', 'Etablissements', 'Exercices']))
     ]
 
     df_filtre[["n_dept", "DT"]] = df_filtre["Département concerné"].str.split(" - ", expand=True)
