@@ -500,8 +500,6 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
     
     donnees_2023_2024 = fusion_donnees_financieres(import_clean_donnees_financieres(financier_2023_2024,df_ref_structure, mapping_df), df_ref_structure)
 
-    df_financier_textile_struct, df_finanier_textile_DT = textile_calc(financier_textile, df_ref_structure)
-
     # query_donnees_financieres = """
     #     SELECT *
     #     FROM `crf-pat.dataset_PAT_2025.donnees_financieres_2025`
@@ -612,7 +610,7 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
     df_caf_DT['n_structure'] = df_caf_DT['n_structure'].apply(keep_integer).astype(int)
 
     # Textile DPS
-    df_financier_textile, df_financier_textile_DT = indicateur_financier_Textile_2025(financier_textile,df_ref_structure)
+    df_financier_textile_struct, df_financier_textile_DT = textile_calc(financier_textile, df_ref_structure)
     df_financier_dps, df_financier_dps_DT = indicateur_financier_DPS_2025(financier_DPS,df_ref_structure)
 
 
@@ -634,9 +632,6 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
 
     df_financier = pd.merge(df_financier,df_tresobrute, on='n_structure', how='left')
     df_financier_DT = pd.merge(df_financier_DT,df_tresobrute_DT, on='n_structure', how='left')
-
-    df_financier = pd.merge(df_financier,df_financier_textile, on='n_structure', how='left')
-    df_financier_DT = pd.merge(df_financier_DT,df_financier_textile_DT, on='n_structure', how='left')
 
     df_financier = pd.merge(df_financier,df_financier_dps, on='n_structure', how='left')
     df_financier_DT = pd.merge(df_financier_DT,df_financier_dps_DT, on='n_structure', how='left')

@@ -79,7 +79,7 @@ def clean_PST(df_PST):
 
 def clean_declenchement(df_declenchement):
     df = df_declenchement.copy()
-
+    df = df[df['Département concerné'] != 'NE PAS SUPPRIMER']
     df = df[df["Horodateur"] != "26/08/2025"]
     # Conversion de la date
     df['Horodateur'] = pd.to_datetime(
@@ -96,12 +96,13 @@ def clean_declenchement(df_declenchement):
     df_filtre[["n_dept", "DT"]] = df_filtre["Département concerné"].str.split(" - ", expand=True)
     df_filtre["DT"] = "DT " + df_filtre["DT"]
 
-    return df
+    return df_filtre
 
 
 
 def clean_exercices(df_declenchement):
     df = df_declenchement.copy()
+    df = df[(df['Département concerné'] != 'NE PAS SUPPRIMER') & (df['Département concerné'] != 'Instances Nationales / Campus') & (df['Département concerné'] != 'Autre')]
 
     df = df[df["Horodateur"] != "26/08/2025"]
     # Conversion de la date
@@ -112,13 +113,13 @@ def clean_exercices(df_declenchement):
 
     # Filtre
     df_filtre = df[
-        (df['Horodateur'].dt.year == 2026) & (df['Typologie'].isin(['Exercices']))
+        (df['Horodateur'].dt.year == 2026) & (df['Typologie'].isin(['Exercice']))
     ]
 
     df_filtre[["n_dept", "DT"]] = df_filtre["Département concerné"].str.split(" - ", expand=True)
     df_filtre["DT"] = "DT " + df_filtre["DT"]
 
-    return df
+    return df_filtre
 
 
 
@@ -742,7 +743,7 @@ def indicateurs_CRope(df, df_ref_structure):
     df[start_col] = pd.to_datetime(df[start_col], errors="coerce", dayfirst=True)
     df[end_col] = pd.to_datetime(df[end_col], errors="coerce", dayfirst=True)
 
-    df = df[df["Date et heure du début de l'opération"].dt.year == 2026]
+    df = df[df["Date et heure du début de l'opération :"].dt.year == 2026]
 
     # Calcul durée en jours
     df["nb_jours_operation"] = (
