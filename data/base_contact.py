@@ -530,6 +530,125 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby, target_date):
 
     return result
 
+
+
+
+
+def nb_bene_aptes_PSE1_2_CI_2025(df, filtres_bc, col_groupby, target_date):
+    """
+    Nombre de bénévoles secouristes (aptitudes PSE1, PSE2 et CI)
+    """
+    target = pd.Timestamp(target_date)
+    year = target.year
+    # ======================
+    # Filtre principal
+    # ======================
+    df_res = df[
+        (df['FORMATION_RESULTAT'] == 'Apte') &
+        (df['FORMATION_DATE_OBTENTION'] <= target) &
+        (df['FORMATION_DATE_OBTENTION'] >= target - pd.DateOffset(years=1)) &
+        (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')
+    ].copy()
+
+    df_res = df_res[
+        df_res['FORMATION_CODE'].isin(
+            filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI'] + filtres_bc['FPSE']
+        )
+    ]
+
+    # ======================
+    # Calcul hiérarchie secours
+    # ======================
+    nivols = calcul_secours_par_annee(df_res, filtres_bc, target)
+
+    set_pse1 = set(nivols['LISTE_PSE1'])
+    set_pse2 = set(nivols['LISTE_PSE2'])
+    set_ci = set(nivols['LISTE_CI'])
+    # ======================
+    # Colonnes indicateurs
+    # ======================
+    df_res['Secours Nb_PSE1'] = (
+        df_res['FORMATION_CODE'].isin(filtres_bc['PSE1']) &
+        df_res['NIVOL_ID_FK'].isin(set_pse1)
+    )
+
+    df_res['Secours Nb_PSE2'] = (
+        df_res['FORMATION_CODE'].isin(filtres_bc['PSE2']) &
+        df_res['NIVOL_ID_FK'].isin(set_pse2)
+    )
+
+    df_res['Secours Nb_CI'] = (
+        df_res['FORMATION_CODE'].isin(filtres_bc['CI']) &
+        df_res['NIVOL_ID_FK'].isin(set_ci)
+    )
+
+    df_res['Secours Nb_FPSE'] = (
+        df_res['FORMATION_CODE'].isin(filtres_bc['FPSE'])
+    )
+
+    # ======================
+    # Vérification des codes
+    # ======================
+    print("\n===== Vérification des codes =====")
+
+    codes_df = set(df_res['FORMATION_CODE'].unique())
+
+    for name, code in [
+        ('Secours Nb_PSE1_2025', 'PSE1'),
+        ('Secours Nb_PSE2_2025', 'PSE2'),
+        ('Secours Nb_CI_2025', 'CI'),
+        ('Secours Nb_FPSE_2025', 'FPSE')
+    ]:
+
+        codes_attendus = set(filtres_bc.get(code, []))
+        codes_trouves = codes_df.intersection(codes_attendus)
+        codes_manquants = codes_attendus - codes_df
+
+        print(f"\nIndicateur : {name}")
+        print(f"  Codes attendus : {codes_attendus}")
+        print(f"  Codes trouvés  : {codes_trouves}")
+        print(f"  Codes manquants: {codes_manquants}")
+
+    # ======================
+    # Comptage optimisé
+    # ======================
+    def count_unique(df, mask):
+        return df.loc[mask, 'NIVOL_ID_FK'].nunique()
+
+    result = (
+        df_res
+        .groupby(col_groupby)
+        .apply(lambda g: pd.Series({
+            'Secours Nb_PSE1_2025': count_unique(g, g['Secours Nb_PSE1_2025']),
+            'Secours Nb_PSE2_2025': count_unique(g, g['Secours Nb_PSE2_2025']),
+            'Secours Nb_CI_2025': count_unique(g, g['Secours Nb_CI_2025']),
+            'Secours Nb_FPSE_2025': count_unique(g, g['Secours Nb_FPSE_2025'])
+        }))
+        .reset_index()
+    )
+
+    # ======================
+    # Somme globale
+    # ======================
+    print("\n===== Somme globale par indicateur =====")
+
+    totaux = result[
+        ['Secours Nb_PSE1_2025', 'Secours Nb_PSE2_2025', 'Secours Nb_CI_2025', 'Secours Nb_FPSE_2025']
+    ].sum()
+
+    for col in totaux.index:
+        print(f"{col} : {totaux[col]}")
+
+    result['Secours Nb_IS_2025'] = result['Secours Nb_PSE1_2025'] + result['Secours Nb_PSE2_2025'] + result['Secours Nb_CI_2025']
+
+    return result
+
+
+
+
+
+
+
 def nb_bene_aptes_autres(df, filtres_bc, col_groupby, target_date):
     """
     Nombre de personnes aptes aux formations
@@ -635,17 +754,17 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
         taux = df_res.groupby(col_groupby).apply(
             lambda g: g[
                 g['FORMATION_CODE'].isin(filtres_bc[code]) &
-                (g['FORMATION_DATE_OBTENTION'] <= target) & (g['FORMATION_DATE_OBTENTION'] >= target - pd.DateOffset(years=1))
+                (g['FORMATION_DATE_OBTENTION'] <= target) & (g['FORMATION_DATE_OBTENTION'].dt.year == {year}))
             ]['NIVOL_ID_FK'].nunique()
         )
         result[alias] = taux
 
     result = pd.merge(result, df_nb_aptes, on = col_groupby, how = 'outer')
 
-    for code, nb, alias in [('PSE1','Secours Nb_PSE1', f'Secours Taux_recy{year+1-2000}_PSE1'),
-                        ('PSE2', 'Secours Nb_PSE2', f'Secours Taux_recy{year+1-2000}_PSE2'),
-                        ('CI','Secours Nb_CI', f'Secours Taux_recy{year+1-2000}_CI'),
-                        ('FPSE','Secours Nb_FPSE', f'Secours Taux_recy{year+1-2000}_FPSE')]:
+    for code, nb, alias in [('PSE1','Secours Nb_PSE1_2025', f'Secours Taux_recy{year+1-2000}_PSE1'),
+                        ('PSE2', 'Secours Nb_PSE2_2025', f'Secours Taux_recy{year+1-2000}_PSE2'),
+                        ('CI','Secours Nb_CI_2025', f'Secours Taux_recy{year+1-2000}_CI'),
+                        ('FPSE','Secours Nb_FPSE_2025', f'Secours Taux_recy{year+1-2000}_FPSE')]:
         mask = result[nb] < result['nb_recy_'+code]
         print(f"nb_recy_{code} : {result['nb_recy_'+code].sum()}")
 
@@ -694,17 +813,17 @@ def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
         taux = df_res.groupby(col_groupby).apply(
             lambda g: g[
                 g['FORMATION_CODE'].isin(filtres_bc[code]) &
-                (g['FORMATION_DATE_OBTENTION'] <= target) & (g['FORMATION_DATE_OBTENTION'] >= target - pd.DateOffset(years=1))
+                (g['FORMATION_DATE_OBTENTION'] <= target) & (g['FORMATION_DATE_OBTENTION'].dt.year == {year})
             ]['NIVOL_ID_FK'].nunique()
         )
         result[alias] = taux
 
     result = pd.merge(result, df_nb_aptes, on = col_groupby, how = 'outer')
 
-    for code, nb, alias in [('PSE1','Secours Nb_PSE1', f'Secours Taux_ren{year-2000}_PSE1'),
-                        ('PSE2', 'Secours Nb_PSE2', f'Secours Taux_ren{year-2000}_PSE2'),
-                        ('CI','Secours Nb_CI', f'Secours Taux_ren{year-2000}_CI'),
-                        ('FPSE','Secours Nb_FPSE', f'Secours Taux_ren{year-2000}_FPSE')]:
+    for code, nb, alias in [('PSE1','Secours Nb_PSE1_2025', f'Secours Taux_ren{year-2000}_PSE1'),
+                        ('PSE2', 'Secours Nb_PSE2_2025', f'Secours Taux_ren{year-2000}_PSE2'),
+                        ('CI','Secours Nb_CI_2025', f'Secours Taux_ren{year-2000}_CI'),
+                        ('FPSE','Secours Nb_FPSE_2025', f'Secours Taux_ren{year-2000}_FPSE')]:
         mask = result[nb] < result['nb_ren_'+code]
         print(f"nb_ren_{code} : {result['nb_ren_'+code].sum()}")
 
@@ -1166,6 +1285,11 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     nb_apte_formation_PSE1_2_CI = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'n_structure', target_date)
     nb_apte_formation_PSE1_2_CI_DT = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'DT_de_rattachement', target_date)
 
+    from datetime import datetime
+    date_31122025 = datetime(2025, 12, 31)
+    nb_apte_formation_PSE1_2_CI_2025 = nb_bene_aptes_PSE1_2_CI_2025(df_filtered, filtres_bc, 'n_structure', date_31122025)
+    nb_apte_formation_PSE1_2_CI_DT_2025 = nb_bene_aptes_PSE1_2_CI_2025(df_filtered, filtres_bc, 'DT_de_rattachement', date_31122025)
+
     nb_apte_formation = nb_bene_aptes_autres(df_filtered, filtres_bc, 'n_structure', target_date)
     nb_apte_formation_DT = nb_bene_aptes_autres(df_filtered, filtres_bc, 'DT_de_rattachement', target_date)
 
@@ -1192,6 +1316,7 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
         nb_suivi_formation, nb_suivi_formation_DT,
         nb_suivi_formation_tous, nb_suivi_formation_tous_DT,
         nb_sessions, nb_sessions_DT, nb_apte_formation_PSE1_2_CI, nb_apte_formation_PSE1_2_CI_DT,
+        nb_apte_formation_PSE1_2_CI_2025, nb_apte_formation_PSE1_2_CI_DT_2025,
         nb_apte_formation, nb_apte_formation_DT,
         taux_rec, taux_rec_DT,
         taux_nouveau_form, taux_nouveau_form_DT,
