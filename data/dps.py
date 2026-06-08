@@ -173,7 +173,7 @@ def equivalent_poste_secours(df_dps, target_date, col_grpby):
     for frame in frames:
         df_res = df_res.merge(frame, on=col_grpby, how='outer')
 
-    df_res = df_res.fillna(0).astype({col: int for col in df_res.columns if col != col_grpby})
+    df_res = df_res.fillna(0)
 
     return df_res
 

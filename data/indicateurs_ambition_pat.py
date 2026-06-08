@@ -173,4 +173,24 @@ def charger_indicateurs_ambition_pat(df_indic_ambition, df_ref_structure):
 
     df_indic_ambition.loc[df_indic_ambition['n_structure'] == 4303, 'n_dept'] = '986'
     df_indic_ambition.loc[df_indic_ambition['n_structure'] == 3884, 'n_dept'] = '986'
+
+    #Création de la variable "PAT AEO_Structure_menant_activite" à partir de "PAT AEO_Nb_aeo_fixe" et des arbitrages avec Pierre et Ninon
+
+    df_indic_ambition["PAT AEO_Structure_menant_activite"] = df_indic_ambition["PAT AEO_Nb_aeo_fixe"]
+
+    # Dictionnaire : n_structure -> nouvelle valeur à mettre sur la base des arbitrages réalisés 
+    valeurs_aeo = {
+        4394: 8,
+        58: 3,
+        91: 5,
+        15: 5,
+        74: 6
+    }
+
+    # Remplacement uniquement pour les n_structure concernés
+    df_indic_ambition.loc[
+        df_indic_ambition["n_structure"].isin(valeurs_aeo.keys()),
+        "PAT AEO_Structure_menant_activite"
+    ] = df_indic_ambition["n_structure"].map(valeurs_aeo)
+
     return df_indic_ambition

@@ -555,7 +555,7 @@ def dt_rattachement(df, df_ref_structure):
   Permet d'associer les structures du dataframe avec la DT de rattachement, 
   utile pour le merge avec toutes les données par DT. 
   """
-  df_return = pd.merge(df, df_ref_structure[['n_structure','DT_de_rattachement']], on="n_structure", how="left")
+  df_return = pd.merge(df, df_ref_structure[['n_structure','DT_de_rattachement']].drop_duplicates(), on="n_structure", how="left")
   df_return['DT_de_rattachement'] = df_return['DT_de_rattachement'].astype(str).apply(keep_integer)
   return df_return
 

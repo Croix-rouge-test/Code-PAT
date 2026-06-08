@@ -753,7 +753,7 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
                         ('RECFPSE', 'nb_recy_FPSE')]:
         taux = df_res.groupby(col_groupby).apply(
             lambda g: g[
-                g['FORMATION_CODE'].isin(filtres_bc[code]) &
+                (g['FORMATION_CODE'].isin(filtres_bc[code]) &
                 (g['FORMATION_DATE_OBTENTION'] <= target) & (g['FORMATION_DATE_OBTENTION'].dt.year == {year}))
             ]['NIVOL_ID_FK'].nunique()
         )
@@ -948,8 +948,6 @@ def nb_nvx_forme_crb(client, df, filtres_bc, col_groupby, target_date = '2025-12
         print(f"  Codes trouvés  : {codes_trouves}")
         print(f"  Codes manquants: {codes_manquants}")
 
-        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
-
     def count_unique(group, col_name):
         return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
 
@@ -1116,8 +1114,6 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
         print(f"  Codes attendus : {codes_attendus}")
         print(f"  Codes trouvés  : {codes_trouves}")
         print(f"  Codes manquants: {codes_manquants}")
-
-        df_res[name] = df_res['FORMATION_CODE'].isin(codes_attendus)
 
     def count_unique(group, col_name):
         return group.loc[group[col_name], 'NIVOL_ID_FK'].nunique()
