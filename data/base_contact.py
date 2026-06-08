@@ -1195,7 +1195,6 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
         nb_suivi_formation, nb_suivi_formation_DT,
         nb_suivi_formation_tous, nb_suivi_formation_tous_DT,
         nb_sessions, nb_sessions_DT, nb_apte_formation_PSE1_2_CI, nb_apte_formation_PSE1_2_CI_DT,
-        nb_apte_formation_PSE1_2_CI_2025, nb_apte_formation_PSE1_2_CI_DT_2025,
         nb_apte_formation, nb_apte_formation_DT,
         taux_rec, taux_rec_DT,
         taux_nouveau_form, taux_nouveau_form_DT,
