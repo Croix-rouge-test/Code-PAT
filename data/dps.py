@@ -154,7 +154,7 @@ def equivalent_poste_secours(df_dps, target_date, col_grpby):
         (f"Secours Nb_DPS_ps_{year}",    (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "PAPS") |
                      (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de petite envergure") | 
                      (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de moyenne envergure") |
-                     (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de grande envergure"))),
+                     (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de grande envergure"))
     ]
 
     frames = []
