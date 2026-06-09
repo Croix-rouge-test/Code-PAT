@@ -239,12 +239,19 @@ def textile_calc(df_raw_ProdResTextile_c, df_ref_structure):
 
     # Nettoyage des DF et sélection des colonnes pertinentes
 
-    df_ProdResTextile_clean = df_raw_ProdResTextile_c.iloc[:, [0,1,25,-1]].copy()
+    df_ProdResTextile_clean = df_raw_ProdResTextile_c.iloc[:, [0, 1, 22, 28]].copy()
 
     df_ProdResTextile_clean.columns = ["n_structure", "nom_structure",
         "Textile Produit_2025",
         "Textile Vente_solidaire"
     ]
+
+    # Supprimer la ligne "03959 DT DE LA REUNION" : car doublon
+    df_ProdResTextile_clean = df_ProdResTextile_clean[
+        ~df_ProdResTextile_clean["nom_structure"]
+        .astype(str)
+        .str.contains(r"03959\s+DT DE LA REUNION", case=False, na=False, regex=True)
+    ].copy()
 
     df_ProdResTextile_clean.replace({"n_structure": {"ORDD02A": 3965}}, inplace=True)
     df_ProdResTextile_clean.replace({"n_structure": {"ORDD02B": 3967}}, inplace=True)
@@ -257,6 +264,7 @@ def textile_calc(df_raw_ProdResTextile_c, df_ref_structure):
         .astype(str)
         .str.replace(r"\D", "", regex=True)
         .replace("", pd.NA)
+        .replace("-", pd.NA)
     )
 
     df_ProdResTextile_clean["n_structure"] = pd.to_numeric(
@@ -276,8 +284,11 @@ def textile_calc(df_raw_ProdResTextile_c, df_ref_structure):
             .str.replace(" ", "", regex=False)
             .str.replace("\u00a0", "", regex=False)  # espaces insécables
             .str.replace("%", "", regex=False)
+            .str.replace("−", "-", regex=False)   # important
+            .str.replace("–", "-", regex=False)   # important
+            .str.replace(r"[^\d-]", "", regex=True)
+            .replace("-", pd.NA)
         )
-
     df_ProdResTextile_clean["Textile Vente_solidaire"] = pd.to_numeric(
     df_ProdResTextile_clean["Textile Vente_solidaire"],
     errors="coerce"
@@ -286,7 +297,10 @@ def textile_calc(df_raw_ProdResTextile_c, df_ref_structure):
     df_ProdResTextile_clean["Textile Produit_2025"] = (
         df_ProdResTextile_clean["Textile Produit_2025"]
         .astype(str)
-        .str.replace(r"\D", "", regex=True)
+        .str.replace("−", "-", regex=False)   # important
+        .str.replace("–", "-", regex=False)   # important
+        .str.replace(r"[^\d-]", "", regex=True)
+        .replace("-", pd.NA)
     )
 
     df_ProdResTextile_clean["Textile Produit_2025"] = pd.to_numeric(

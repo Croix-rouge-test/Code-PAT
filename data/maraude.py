@@ -31,14 +31,21 @@ def import_maraude(client, target_date="2025-12-31"):
     df_maraude_beneficiaire = client.query(query).to_dataframe()
 
     df_maraude_filtre = df_maraude.copy()
-    df_maraude_filtre =df_maraude_filtre[
-    (df_maraude["maraude_date_debut"] > pd.Timestamp("2025-12-31")) &
-    (df_maraude["maraude_date_debut"] <= pd.Timestamp(target)) &
-    (df_maraude["maraude_statut"] == "FINISHED") &
-    (df_maraude["maraude_rencontre_contact_realise"] == "Oui") &
-    (df_maraude["maraude_rencontre_beneficiaire_id_fk"].notna())].copy()
 
-    return  df_maraude, df_maraude_beneficiaire, df_maraude_filtre
+    # Filtre pour les CONTACTS : on garde aussi les lignes sans bénéficiaire identifié
+    df_maraude_filtre_contacts = df_maraude[
+        (df_maraude["maraude_date_debut"] > pd.Timestamp("2025-12-31")) &
+        (df_maraude["maraude_date_debut"] <= pd.Timestamp(target)) &
+        (df_maraude["maraude_statut"] == "FINISHED") &
+        (df_maraude["maraude_rencontre_contact_realise"] == "Oui")
+    ].copy()
+
+    # Filtre pour les BENEFICIAIRES DIFFERENTS : on garde seulement les lignes avec bénéficiaire identifié
+    df_maraude_filtre = df_maraude_filtre_contacts[
+        df_maraude_filtre_contacts["maraude_rencontre_beneficiaire_id_fk"].notna()
+    ].copy()
+
+    return df_maraude, df_maraude_beneficiaire, df_maraude_filtre, df_maraude_filtre_contacts
 
 
 
@@ -260,7 +267,7 @@ def maraude_retraitement(df_maraude_beneficiaire, df_maraude, df_maraude_filtre)
         .groupby("maraude_structure_id_fk", as_index=False)["nombre_personnes_diff_moyenne"]
         .sum()
         .rename(columns={
-            "nombre_personnes_diff_moyenne": "Maraude Nb_personnes_diff_rencontrees"
+            "nombre_personnes_diff_moyenne": "nb_beneficiaires_differents_rencontres"
         })
     )
 
@@ -307,7 +314,7 @@ def maraude_calcul_final(df_final, df_Nb_maraudes_SIGMA_prep, df_nb_personnes_re
             df_final.groupby('n_structure-ratt', as_index=False)
             .agg(
                 **{
-                    'Maraude Nb_personnes_diff_rencontrees': ('Maraude Nb_personnes_diff_rencontrees', 'sum'),
+                    'nb_beneficiaires_differents_rencontres': ('nb_beneficiaires_differents_rencontres', 'sum'),
                     'Maraude Nb_contacts': ('Maraude Nb_contacts', 'sum'),
                     'Maraude Nb_maraudes_SIGMA': ('Maraude Nb_maraudes_SIGMA', 'sum')
                 }
@@ -322,7 +329,7 @@ def maraude_calcul_final(df_final, df_Nb_maraudes_SIGMA_prep, df_nb_personnes_re
             df_SIGMA_DT.groupby('DT_de_rattachement', as_index=False)
             .agg(
                 **{
-                    'Maraude Nb_personnes_diff_rencontrees': ('Maraude Nb_personnes_diff_rencontrees', 'sum'),
+                    'nb_beneficiaires_differents_rencontres': ('nb_beneficiaires_differents_rencontres', 'sum'),
                     'Maraude Nb_contacts': ('Maraude Nb_contacts', 'sum'),
                     'Maraude Nb_maraudes_SIGMA': ('Maraude Nb_maraudes_SIGMA', 'sum')
                 }
