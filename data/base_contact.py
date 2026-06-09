@@ -1165,15 +1165,24 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     nb_apte_formation_PSE1_2_CI = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'n_structure', target_date)
     nb_apte_formation_PSE1_2_CI_DT = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'DT_de_rattachement', target_date)
 
-    date_31122025 = datetime(2025, 12, 31)
-    nb_apte_formation_PSE1_2_CI_2025 = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'n_structure', date_31122025)
-    nb_apte_formation_PSE1_2_CI_DT_2025 = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'DT_de_rattachement', date_31122025)
-
     nb_apte_formation = nb_bene_aptes_autres(df_filtered, filtres_bc, 'n_structure', target_date)
     nb_apte_formation_DT = nb_bene_aptes_autres(df_filtered, filtres_bc, 'DT_de_rattachement', target_date)
 
-    taux_rec = taux_recy(df_filtered,nb_apte_formation_PSE1_2_CI_2025, filtres_bc, 'n_structure', target_date)
-    taux_rec_DT = taux_recy(df_filtered,nb_apte_formation_PSE1_2_CI_DT_2025, filtres_bc, 'DT_de_rattachement', target_date)
+
+        # Pour calculer le taux de recyclage et le taux de renouvellement, on a besoin du nombre de personnes aptes à 
+    # la formation PSE1, PSE2, CI en 2024, pour cela on refait les mêmes calculs mais en filtrant sur
+    #  les formations obtenues l'année précédente au 31-12
+    date_31122025 = datetime(year - 1, 12, 31)
+    df_formation_session_resultat_prev, df_formation_count_session_year_prev, df_formation_session_resultat_fpg_prev = clean_base_contact(client, df_ref_structure, target_date=f"{year - 1}-12-31")
+    df_filtered_prev = df_formation_session_resultat_prev.copy()
+    df_filtered_prev = df_filtered_prev[df_filtered_prev['FORMATION_CODE'].isin(flatten(list(filtres_bc.values())))]
+    df_filtered_prev = dt_rattachement(df_filtered_prev, df_ref_structure)
+
+    nb_apte_formation_PSE1_2_CI_prev = nb_bene_aptes_PSE1_2_CI(df_filtered_prev, filtres_bc, 'n_structure', date_31122025)
+    nb_apte_formation_PSE1_2_CI_DT_prev = nb_bene_aptes_PSE1_2_CI(df_filtered_prev, filtres_bc, 'DT_de_rattachement', date_31122025)
+    
+    taux_rec = taux_recy(df_filtered,nb_apte_formation_PSE1_2_CI_prev, filtres_bc, 'n_structure', target_date)
+    taux_rec_DT = taux_recy(df_filtered,nb_apte_formation_PSE1_2_CI_DT_prev, filtres_bc, 'DT_de_rattachement', target_date)
 
     taux_nouveau_form = taux_ren(df_filtered,nb_apte_formation_PSE1_2_CI, filtres_bc, 'n_structure', target_date)
     taux_nouveau_form_DT = taux_ren(df_filtered,nb_apte_formation_PSE1_2_CI_DT, filtres_bc, 'DT_de_rattachement', target_date)
