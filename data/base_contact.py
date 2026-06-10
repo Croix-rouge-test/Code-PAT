@@ -11,7 +11,7 @@ from datetime import datetime
 
 filtres_bc = {
         'CRB' : ['CRB', 'ECRB', 'VI'],
-        'ACRB' : ['ACRB','ACRB2','ACRB3','ACRB2024'], # suppression'AVI'
+        'ACRB' : ['ACRB2','ACRB2024'], # suppression'AVI'
         'TCAS' : ['TCAS', 'ETCAS'], # suppression 'TCAS2'
         'TCAU' : ['TCAU', 'ETCAU'],
         'TCEO' : ['TCEO','ESE'],
@@ -434,8 +434,7 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby, target_date):
     # ======================
     df_res = df[
         (df['FORMATION_RESULTAT'] == 'Apte') &
-        (df['FORMATION_DATE_OBTENTION'] <= target) &
-        (df['FORMATION_DATE_OBTENTION'] >= target - pd.DateOffset(years=1)) &
+        (df['DATE_FILTRE'] >= target) &
         (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')
     ].copy()
 
@@ -528,7 +527,7 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby, target_date):
     for col in totaux.index:
         print(f"{col} : {totaux[col]}")
 
-    result['Secours Nb_IS'] = result['Secours Nb_PSE1'] + result['Secours Nb_PSE2'] + result['Secours Nb_CI']
+    result['Secours Nb_IS'] = result['Secours Nb_PSE1'] + result['Secours Nb_PSE2']
 
     return result
 
@@ -541,7 +540,7 @@ def nb_bene_aptes_autres(df, filtres_bc, col_groupby, target_date):
     """
     target = pd.Timestamp(target_date)
     year = target.year
-    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_DATE_OBTENTION'] <= target) & (df['FORMATION_DATE_OBTENTION'] >= target - pd.DateOffset(years=1))].copy()
+    df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['DATE_FILTRE'] >= target)].copy()
 
     # Identifier les NIVOLs à exclure
     fps_nivols = set(df_res[df_res['FORMATION_CODE'].isin(filtres_bc['FPS'])]['NIVOL_ID_FK'])
@@ -637,8 +636,8 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
                         ('RECFPSE', 'nb_recy_FPSE')]:
         taux = df_res.groupby(col_groupby).apply(
             lambda g: g[
-                (g['FORMATION_CODE'].isin(filtres_bc[code]) &
-                (g['FORMATION_DATE_OBTENTION'] <= target) & (g['FORMATION_DATE_OBTENTION'].dt.year == year))
+                (g['FORMATION_CODE'].isin(filtres_bc[code])) &
+                (g['DATE_FILTRE'].dt.year == year + 1)
             ]['NIVOL_ID_FK'].nunique()
         )
         result[alias] = taux
@@ -697,7 +696,7 @@ def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
         taux = df_res.groupby(col_groupby).apply(
             lambda g: g[
                 g['FORMATION_CODE'].isin(filtres_bc[code]) &
-                (g['FORMATION_DATE_OBTENTION'] <= target) & (g['FORMATION_DATE_OBTENTION'].dt.year == year)
+                (g['DATE_FILTRE'].dt.year == year + 1)
             ]['NIVOL_ID_FK'].nunique()
         )
         result[alias] = taux
@@ -878,7 +877,7 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby, target_date =
                           WHERE act.ACTIVITE_BENEVOLE_ID_FK IN (SELECT code FROM codes_actifs) AND insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide'
                             AND PEGASS_ACTIVITE_DATE_DEBUT >= DATE('{year}-01-01') AND PEGASS_ACTIVITE_DATE_DEBUT <= DATE('{target_date}')"""
 
-    filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
+    filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2']
 
 
     df_is = client.query(query_is).to_dataframe()
@@ -888,10 +887,8 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby, target_date =
 
     # df_res = df_res[(df_res['FORMATION_DATE_OBTENTION'].dt.year == 2025) | (df_res['FORMATION_DATE_OBTENTION'].dt.year == 2024)]
 
-    # On garde les obtentions dans les 12 mois précédant la date cible
-    annee_aptitude = target - pd.DateOffset(years=1)
 
-    df_res = df_res[(df_res['FORMATION_DATE_OBTENTION'] >= annee_aptitude) & (df_res['FORMATION_DATE_OBTENTION'] <= target)]
+    df_res = df_res[(df_res['DATE_FILTRE'] >= target)]
 
     df_res = df_res[df_res['FORMATION_CODE'].isin(filtres_bc['IS'])]
 
@@ -1025,7 +1022,9 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     - Dataframe df_formation_count_session_2025 pour garder uniquement les structures organisatrices quand on doit calculer le nombre de session
     - apply_rattachement_benevole pour remplacer les numéros de structure ILs et équipes locales par leur rattachement UL ou DT
     """
-    
+    target = pd.Timestamp(target_date)
+    year = target.year
+
     codes_filtres_bc = list({element for sous_liste in filtres_bc.values() for element in sous_liste})
     TARGET_YEAR = pd.to_datetime(target_date).year
 
@@ -1037,7 +1036,38 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     df_formation_session_resultat['FORMATION_DATE_OBTENTION'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_OBTENTION'], errors='coerce')
     df_formation_session_resultat['FORMATION_DATE_RECYCLAGE'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_RECYCLAGE'], errors='coerce')
 
-    df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat["FORMATION_CODE"].isin( codes_filtres_bc )]
+    df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat["FORMATION_CODE"].isin(codes_filtres_bc)]
+
+
+    # dataframe date recyclage 
+    df_formation_session_resultat_IS = df_formation_session_resultat.copy()
+
+    df_formation_session_resultat_IS = df_formation_session_resultat_IS[df_formation_session_resultat_IS['FORMATION_DATE_RECYCLAGE'].dt.year < year + 2]
+
+    # Création de DATE_FILTRE
+    df_formation_session_resultat_IS["DATE_FILTRE"] = df_formation_session_resultat_IS["FORMATION_DATE_RECYCLAGE"]
+
+    # Si recyclage est nul :
+    # année de FORMATION_DATE_OBTENTION + 1
+    # date fixée au 31 décembre
+    mask_recy_null = df_formation_session_resultat_IS["FORMATION_DATE_RECYCLAGE"].isna()
+
+    df_formation_session_resultat_IS.loc[mask_recy_null, "DATE_FILTRE"] = (
+        pd.to_datetime(
+            (df_formation_session_resultat_IS.loc[mask_recy_null, "FORMATION_DATE_OBTENTION"].dt.year + 1).astype(str)
+            + "-12-31"
+        )
+    )
+
+    # UNIQUEMENT POUR PSE1, PSE2, CI, FPSE, FPSC, AGQS, FIPSEN
+    # Suppression des nivol doublons
+    # en conservant la ligne ayant la DATE_FILTRE la plus élevée
+    df_formation_session_resultat_IS = (
+        df_formation_session_resultat_IS.copy().sort_values("DATE_FILTRE")
+        .drop_duplicates(subset="NIVOL_ID_FK", keep="last")
+        .reset_index(drop=True)
+    )
+
 
     df_formation_session_resultat_fpg = df_formation_session_resultat.copy()
     df_formation_session_resultat_fpg = df_formation_session_resultat_fpg.rename(columns={'FORMATION_SESSION_STRUCTURE_ID_FK' : 'n_structure'})
@@ -1070,7 +1100,7 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
 
     df_rattachement_benevole = df_rattachement_benevole.drop_duplicates("rattachement_benevole_nivol_id_fk")
 
-    target = pd.Timestamp(target_date)
+    
     df_rattachement_benevole = df_rattachement_benevole.loc[
         (df_rattachement_benevole["rattachement_benevole_date_fin"].isna()
         | (df_rattachement_benevole["rattachement_benevole_date_fin"] >= target)) & (df_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
@@ -1081,11 +1111,19 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
 
 
     df_formation_session_resultat_rattachement = pd.merge(
-    df_formation_session_resultat,
-    df_rattachement_benevole,
-    left_on="NIVOL_ID_FK",
-    right_on="rattachement_benevole_nivol_id_fk",
-    how="left"
+        df_formation_session_resultat,
+        df_rattachement_benevole,
+        left_on="NIVOL_ID_FK",
+        right_on="rattachement_benevole_nivol_id_fk",
+        how="left"
+    )
+
+    df_formation_session_resultat_IS = pd.merge(
+        df_formation_session_resultat_IS,
+        df_rattachement_benevole,
+        left_on="NIVOL_ID_FK",
+        right_on="rattachement_benevole_nivol_id_fk",
+        how="left"
     )
 
 
@@ -1098,17 +1136,12 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     df_formation_count_session = dt_rattachement(df_formation_count_session, df_ref_structure)
     df_formation_count_session_year = df_formation_count_session[df_formation_count_session['FORMATION_DATE_OBTENTION'].dt.year == TARGET_YEAR].copy()
 
-    df_formation_session_resultat =df_formation_session_resultat_rattachement
+    df_formation_session_resultat = df_formation_session_resultat_rattachement
     df_formation_session_resultat = df_formation_session_resultat.rename(columns={"rattachement_benevole_structure_id_fk": "n_structure"})
     df_formation_session_resultat = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat, col = 'n_structure')
 
-    
-
-    mask_year = df_formation_session_resultat['FORMATION_DATE_OBTENTION'].dt.year == TARGET_YEAR
-
-
-    df_formation_session_resultat_fpg = dt_rattachement(df_formation_session_resultat_fpg, df_ref_structure)
-
+    df_formation_session_resultat_IS = df_formation_session_resultat_IS.rename(columns={"rattachement_benevole_structure_id_fk": "n_structure"})
+    df_formation_session_resultat_IS = apply_rattachement_successif(df_ref_structure, df_formation_session_resultat_IS, col = 'n_structure')
 
 
     df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['FORMATION_RESULTAT'] != 'Absent']
@@ -1117,13 +1150,19 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
 
     liste_structure_garder = df_ref_structure['n_structure'].drop_duplicates().tolist()
     df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['n_structure'].isin(liste_structure_garder)]
+    df_formation_session_resultat_IS = df_formation_session_resultat_IS[df_formation_session_resultat_IS['n_structure'].isin(liste_structure_garder)]
     df_formation_session_resultat_fpg = df_formation_session_resultat_fpg[df_formation_session_resultat_fpg['n_structure'].isin(liste_structure_garder)]
     df_formation_count_session_year = df_formation_count_session_year[df_formation_count_session_year['n_structure'].isin(liste_structure_garder)]
 
+    
+    df_formation_session_resultat_fpg = dt_rattachement(df_formation_session_resultat_fpg, df_ref_structure)
+    df_formation_session_resultat = dt_rattachement(df_formation_session_resultat, df_ref_structure)
+    df_formation_session_resultat_IS = dt_rattachement(df_formation_session_resultat_IS, df_ref_structure)
 
-    return df_formation_session_resultat, df_formation_count_session_year, df_formation_session_resultat_fpg
 
-def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_count_session_year,df_formation_session_resultat_fpg, df_ref_structure, target_date="2025-12-31"):
+    return df_formation_session_resultat,df_formation_session_resultat_IS, df_formation_count_session_year, df_formation_session_resultat_fpg
+
+def indicateurs_base_contact(client,df_formation_session_resultat,df_formation_session_resultat_IS, df_formation_count_session_year,df_formation_session_resultat_fpg, df_ref_structure, target_date="2025-12-31"):
     """
     Utilisation de toutes les fonctions du fichier pour calculer les indicateurs fonction par fonction.
     Les résultats sont stockés dans un dataframe différent à chaque fois, on a un calcul par structure et un par DT de rattachement pour obtenir les deux types d'agrégat.
@@ -1135,10 +1174,11 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     target = pd.Timestamp(target_date)
     year = target.year
 
-    # Ajouter DT
     df_filtered = df_formation_session_resultat.copy()
     df_filtered = df_filtered[df_filtered['FORMATION_CODE'].isin(flatten(list(filtres_bc.values())))]
-    df_filtered = dt_rattachement(df_filtered, df_ref_structure)
+
+    df_filtered_IS = df_formation_session_resultat_IS.copy()
+    df_filtered_IS = df_filtered_IS[df_filtered_IS['FORMATION_CODE'].isin(flatten(list(filtres_bc.values())))]
 
     df_filtered_year = df_filtered[df_filtered['FORMATION_DATE_OBTENTION'].dt.year == year].copy()
 
@@ -1162,38 +1202,37 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     nb_structures_ma = nb_structures_menant_activite(df_formation_count_session_year, filtres_bc, 'n_structure', target_date)
     nb_structures_ma_DT = nb_structures_menant_activite(df_formation_count_session_year, filtres_bc, 'DT_de_rattachement', target_date)
 
-    nb_apte_formation_PSE1_2_CI = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'n_structure', target_date)
-    nb_apte_formation_PSE1_2_CI_DT = nb_bene_aptes_PSE1_2_CI(df_filtered, filtres_bc, 'DT_de_rattachement', target_date)
+    nb_apte_formation_PSE1_2_CI = nb_bene_aptes_PSE1_2_CI(df_filtered_IS, filtres_bc, 'n_structure', target_date)
+    nb_apte_formation_PSE1_2_CI_DT = nb_bene_aptes_PSE1_2_CI(df_filtered_IS, filtres_bc, 'DT_de_rattachement', target_date)
 
-    nb_apte_formation = nb_bene_aptes_autres(df_filtered, filtres_bc, 'n_structure', target_date)
-    nb_apte_formation_DT = nb_bene_aptes_autres(df_filtered, filtres_bc, 'DT_de_rattachement', target_date)
+    nb_apte_formation = nb_bene_aptes_autres(df_filtered_IS, filtres_bc, 'n_structure', target_date)
+    nb_apte_formation_DT = nb_bene_aptes_autres(df_filtered_IS, filtres_bc, 'DT_de_rattachement', target_date)
 
 
     # Pour calculer le taux de recyclage et le taux de renouvellement, on a besoin du nombre de personnes aptes à 
     # la formation PSE1, PSE2, CI en 2024, pour cela on refait les mêmes calculs mais en filtrant sur
     #  les formations obtenues l'année précédente au 31-12
-    date_31122025 = datetime(year - 1, 12, 31)
-    df_formation_session_resultat_prev, df_formation_count_session_year_prev, df_formation_session_resultat_fpg_prev = clean_base_contact(client, df_ref_structure, target_date=f"{year - 1}-12-31")
+    date_31122025 = datetime(year - 2, 12, 31)
+    _,df_formation_session_resultat_prev, _, _ = clean_base_contact(client, df_ref_structure, target_date=f"{year - 2}-12-31")
     df_filtered_prev = df_formation_session_resultat_prev.copy()
     df_filtered_prev = df_filtered_prev[df_filtered_prev['FORMATION_CODE'].isin(flatten(list(filtres_bc.values())))]
-    df_filtered_prev = dt_rattachement(df_filtered_prev, df_ref_structure)
 
     nb_apte_formation_PSE1_2_CI_prev = nb_bene_aptes_PSE1_2_CI(df_filtered_prev, filtres_bc, 'n_structure', date_31122025)
     nb_apte_formation_PSE1_2_CI_DT_prev = nb_bene_aptes_PSE1_2_CI(df_filtered_prev, filtres_bc, 'DT_de_rattachement', date_31122025)
 
-    taux_rec = taux_recy(df_filtered,nb_apte_formation_PSE1_2_CI_prev, filtres_bc, 'n_structure', target_date)
-    taux_rec_DT = taux_recy(df_filtered,nb_apte_formation_PSE1_2_CI_DT_prev, filtres_bc, 'DT_de_rattachement', target_date)
+    taux_rec = taux_recy(df_filtered_IS,nb_apte_formation_PSE1_2_CI_prev, filtres_bc, 'n_structure', target_date)
+    taux_rec_DT = taux_recy(df_filtered_IS,nb_apte_formation_PSE1_2_CI_DT_prev, filtres_bc, 'DT_de_rattachement', target_date)
 
-    taux_nouveau_form = taux_ren(df_filtered,nb_apte_formation_PSE1_2_CI_prev, filtres_bc, 'n_structure', target_date)
-    taux_nouveau_form_DT = taux_ren(df_filtered,nb_apte_formation_PSE1_2_CI_DT_prev, filtres_bc, 'DT_de_rattachement', target_date)
+    taux_nouveau_form = taux_ren(df_filtered_IS,nb_apte_formation_PSE1_2_CI_prev, filtres_bc, 'n_structure', target_date)
+    taux_nouveau_form_DT = taux_ren(df_filtered_IS,nb_apte_formation_PSE1_2_CI_DT_prev, filtres_bc, 'DT_de_rattachement', target_date)
 
     # Indicateurs fusion
 
     nb_actifs_solidar = nb_bene_actifs_solidar(client, df_formation_session_resultat, filtres_bc, df_ref_structure, 'n_structure', target_date)
     nb_actifs_solidar_DT = nb_bene_actifs_solidar(client, df_formation_session_resultat, filtres_bc, df_ref_structure, 'DT_de_rattachement', target_date)
 
-    taux_is_actifs = taux_IS(client, df_formation_session_resultat, filtres_bc, df_ref_structure, 'n_structure', target_date)
-    taux_is_actifs_DT = taux_IS(client, df_formation_session_resultat, filtres_bc, df_ref_structure, 'DT_de_rattachement', target_date)
+    taux_is_actifs = taux_IS(client, df_filtered_IS, filtres_bc, df_ref_structure, 'n_structure', target_date)
+    taux_is_actifs_DT = taux_IS(client, df_filtered_IS, filtres_bc, df_ref_structure, 'DT_de_rattachement', target_date)
 
     df_nvx_forme_crb = nb_nvx_forme_crb(client, df_filtered_year, filtres_bc, 'n_structure', target_date)
     df_nvx_forme_crb_DT = nb_nvx_forme_crb(client, df_filtered_year, filtres_bc, 'DT_de_rattachement', target_date)

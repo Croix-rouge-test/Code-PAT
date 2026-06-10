@@ -142,8 +142,8 @@ def equivalent_poste_secours(df_dps, target_date, col_grpby):
     df_dps['nb_heures'] = diff_seconds / 3600.0
     df_dps['nb_is_reel/theorique'] = (
         df_dps['DPS_DIMENSIONNEMENT_ACTEUR_NOMBRE_INTERVENANTS_SECOURISTES']
-        + df_dps['DPS_DIMENSIONNEMENT_PUBLIC_NOMBRE_INTERVENANTS_SECOURISTES'] / 4
-    )
+        + df_dps['DPS_DIMENSIONNEMENT_PUBLIC_NOMBRE_INTERVENANTS_SECOURISTES']) / 4
+    
     df_dps['equivalent_poste_secours'] = np.ceil(df_dps['nb_heures'] / 4) * df_dps['nb_is_reel/theorique']
 
     indics_mask = [
