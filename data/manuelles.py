@@ -417,21 +417,29 @@ def indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure):
     df = df.rename(columns={"nom_structure": "nom_structure_OCR"})
 
 
-    df = rapprochement_libelles(df_ref_structure, df, "nom_structure_OCR")
-
-    mask = df["n_structure"] == ""
+    # Création du dictionnaire de correspondance
     mapping_dict = (
-        df_ref_structure[
-            df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"
-        ]
-        .set_index("n_dept")["n_structure"]
+        df_ref_structure
+        .set_index("nom_structure")["n_structure"]
         .to_dict()
     )
 
-    df.loc[mask, "n_structure"] = df.loc[mask, "Numéro du Département"].map(mapping_dict)
+    # Si la colonne n_structure n'existe pas encore
+    if "n_structure" not in df.columns:
+           df["n_structure"] = ""
 
-    df = df["n_structure"].value_counts().reset_index()
-    df = df.rename(columns={"count": "OCR Nb_deployees"})
+    mask = df["n_structure"].eq("")
+
+    df.loc[mask, "n_structure"] = (
+            df.loc[mask, "nom_structure_OCR"]
+            .map(mapping_dict)
+    )
+
+    df = (
+    df.groupby("n_structure")
+    .size()
+    .reset_index(name="OCR Nb_deployees")
+    )
 
     return df
 
@@ -711,13 +719,21 @@ def indicateurs_CRope(df, df_ref_structure):
     - Dispositifs_d_urgence Nb_personnes_prises_charge
     """
 
-    # RAPPROCHEMENT STRUCTURES
+    df["Num_departement"] = df["Num_departement"].replace({
+        "01": "1",
+        "02": "2",
+        "03": "3",
+        "04": "4",
+        "05": "5",
+        "07": "7",
+        "09": "9",
+        "08": "8",
+        "06": "6"
+    })
 
-    df = rapprochement_libelles(
-        df_ref_structure,
-        df,
-        "Département"
-    )
+    # Si la colonne n_structure n'existe pas encore
+    if "n_structure" not in df.columns:
+        df["n_structure"] = ""
 
     mask = df["n_structure"] == ""
 
@@ -744,6 +760,7 @@ def indicateurs_CRope(df, df_ref_structure):
     df[end_col] = pd.to_datetime(df[end_col], errors="coerce", dayfirst=True)
 
     df = df[df["Date et heure du début de l'opération :"].dt.year == 2026]
+    df = df[df["Typologie"] == "Opérations"]
 
     # Calcul durée en jours
     df["nb_jours_operation"] = (

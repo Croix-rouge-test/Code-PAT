@@ -1025,12 +1025,17 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     target = pd.Timestamp(target_date)
     year = target.year
 
+    bdd_year = year
+
+    if year < 2025:
+        bdd_year = 2025
+
     codes_filtres_bc = list({element for sous_liste in filtres_bc.values() for element in sous_liste})
     TARGET_YEAR = pd.to_datetime(target_date).year
 
     query_formation_session_resultat = f"""
-        SELECT * FROM `crf-pat.dataset_PAT_{TARGET_YEAR}.crf_pat_{TARGET_YEAR}_formation_session_resultat`
-        """
+        SELECT * FROM `crf-pat.dataset_PAT_2026.crf_pat_2026_formation_session_resultat`
+        """ # On ne change pas le dataset car 2026 est supposé être mis à jour régulièrement, devra peut-être être changé ultérieurement
     df_formation_session_resultat = client.query(query_formation_session_resultat).to_dataframe()
 
     df_formation_session_resultat['FORMATION_DATE_OBTENTION'] = pd.to_datetime(df_formation_session_resultat['FORMATION_DATE_OBTENTION'], errors='coerce')
@@ -1077,7 +1082,7 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
 
     query_rattachement_benevole = f"""
         SELECT *
-        FROM `crf-pat.dataset_PAT_{TARGET_YEAR}.crf_pat_{TARGET_YEAR}_rattachement_benevole`
+        FROM `crf-pat.dataset_PAT_{bdd_year}.crf_pat_{bdd_year}_rattachement_benevole`
         """
 
         #SELECT rattachement_benevole_nivol_id_fk, rattachement_benevole_structure_id_fk
@@ -1162,11 +1167,12 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
 
     return df_formation_session_resultat,df_formation_session_resultat_IS, df_formation_count_session_year, df_formation_session_resultat_fpg
 
-def indicateurs_base_contact(client,df_formation_session_resultat,df_formation_session_resultat_IS, df_formation_count_session_year,df_formation_session_resultat_fpg, df_ref_structure, target_date="2025-12-31"):
+def indicateurs_base_contact(client,df_formation_session_resultat,df_formation_session_resultat_IS, df_formation_count_session_year,df_formation_session_resultat_fpg, df_ref_structure, target_date="2025-12-31", half_year = False):
     """
     Utilisation de toutes les fonctions du fichier pour calculer les indicateurs fonction par fonction.
     Les résultats sont stockés dans un dataframe différent à chaque fois, on a un calcul par structure et un par DT de rattachement pour obtenir les deux types d'agrégat.
     Tous les dataframes sont ensuite données à la fonction de fusion pour obtenir deux dataframes finaux : un par structure et un par DT, qui sont ensuite retournés 
+    half_year : si les données sont calculés en milieu d'année (TRUE), on prend comme dénominateur le nombre d'apte PSE1, PSE2, CI, FPSC de 2 ans plus tôt, sinon 1 an plus tôt
     """
     # Définition filtres
     filtres_bc['all_solidar'] = filtres_bc['solidar'] + filtres_bc['solidar20']
@@ -1212,8 +1218,12 @@ def indicateurs_base_contact(client,df_formation_session_resultat,df_formation_s
     # Pour calculer le taux de recyclage et le taux de renouvellement, on a besoin du nombre de personnes aptes à 
     # la formation PSE1, PSE2, CI en 2024, pour cela on refait les mêmes calculs mais en filtrant sur
     #  les formations obtenues l'année précédente au 31-12
-    date_31122025 = datetime(year - 2, 12, 31)
-    _,df_formation_session_resultat_prev, _, _ = clean_base_contact(client, df_ref_structure, target_date=f"{year - 2}-12-31")
+    year_gap = 1
+    if half_year :
+        year_gap = 2
+
+    date_31122025 = datetime(year - year_gap, 12, 31)
+    _,df_formation_session_resultat_prev, _, _ = clean_base_contact(client, df_ref_structure, target_date=f"{year - year_gap}-12-31")
     df_filtered_prev = df_formation_session_resultat_prev.copy()
     df_filtered_prev = df_filtered_prev[df_filtered_prev['FORMATION_CODE'].isin(flatten(list(filtres_bc.values())))]
 
