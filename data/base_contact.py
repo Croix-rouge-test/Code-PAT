@@ -895,7 +895,7 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby, target_date =
 
     df_is = pd.merge(df_res, df_is, on = 'NIVOL_ID_FK', how = 'inner')
 
-
+    df_res = df_res.drop('DT_de_rattachement', axis = 1)
     df_res = dt_rattachement(df_res, df_ref_structure)
     df_is = dt_rattachement(df_is, df_ref_structure)
 
