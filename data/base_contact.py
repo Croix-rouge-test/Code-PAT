@@ -973,7 +973,7 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
     df_res = df[(df['FORMATION_RESULTAT'] == 'Apte') & (df['FORMATION_BENEVOLE_DANS_L_ANNEE'] == 'Oui')].copy()
     df_res = apply_rattachement_successif(df_ref_structure, df_res, col = 'n_structure')
 
-    #df_res = df_res.drop('DT_de_rattachement', axis = 1)
+    df_res = df_res.drop('DT_de_rattachement', axis = 1)
     df_res = dt_rattachement(df_res, df_ref_structure)
 
     df_res = df_res.drop_duplicates(['n_structure','NIVOL_ID_FK'])
