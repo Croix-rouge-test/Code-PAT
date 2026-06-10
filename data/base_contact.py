@@ -638,7 +638,7 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
         taux = df_res.groupby(col_groupby).apply(
             lambda g: g[
                 (g['FORMATION_CODE'].isin(filtres_bc[code]) &
-                (g['FORMATION_DATE_OBTENTION'] <= target) & (g['FORMATION_DATE_OBTENTION'].dt.year == {year}))
+                (g['FORMATION_DATE_OBTENTION'] <= target) & (g['FORMATION_DATE_OBTENTION'].dt.year == year))
             ]['NIVOL_ID_FK'].nunique()
         )
         result[alias] = taux
@@ -697,7 +697,7 @@ def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
         taux = df_res.groupby(col_groupby).apply(
             lambda g: g[
                 g['FORMATION_CODE'].isin(filtres_bc[code]) &
-                (g['FORMATION_DATE_OBTENTION'] <= target) & (g['FORMATION_DATE_OBTENTION'].dt.year == {year})
+                (g['FORMATION_DATE_OBTENTION'] <= target) & (g['FORMATION_DATE_OBTENTION'].dt.year == year)
             ]['NIVOL_ID_FK'].nunique()
         )
         result[alias] = taux
@@ -1169,7 +1169,7 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
     nb_apte_formation_DT = nb_bene_aptes_autres(df_filtered, filtres_bc, 'DT_de_rattachement', target_date)
 
 
-        # Pour calculer le taux de recyclage et le taux de renouvellement, on a besoin du nombre de personnes aptes à 
+    # Pour calculer le taux de recyclage et le taux de renouvellement, on a besoin du nombre de personnes aptes à 
     # la formation PSE1, PSE2, CI en 2024, pour cela on refait les mêmes calculs mais en filtrant sur
     #  les formations obtenues l'année précédente au 31-12
     date_31122025 = datetime(year - 1, 12, 31)
@@ -1180,12 +1180,12 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
 
     nb_apte_formation_PSE1_2_CI_prev = nb_bene_aptes_PSE1_2_CI(df_filtered_prev, filtres_bc, 'n_structure', date_31122025)
     nb_apte_formation_PSE1_2_CI_DT_prev = nb_bene_aptes_PSE1_2_CI(df_filtered_prev, filtres_bc, 'DT_de_rattachement', date_31122025)
-    
+
     taux_rec = taux_recy(df_filtered,nb_apte_formation_PSE1_2_CI_prev, filtres_bc, 'n_structure', target_date)
     taux_rec_DT = taux_recy(df_filtered,nb_apte_formation_PSE1_2_CI_DT_prev, filtres_bc, 'DT_de_rattachement', target_date)
 
-    taux_nouveau_form = taux_ren(df_filtered,nb_apte_formation_PSE1_2_CI, filtres_bc, 'n_structure', target_date)
-    taux_nouveau_form_DT = taux_ren(df_filtered,nb_apte_formation_PSE1_2_CI_DT, filtres_bc, 'DT_de_rattachement', target_date)
+    taux_nouveau_form = taux_ren(df_filtered,nb_apte_formation_PSE1_2_CI_prev, filtres_bc, 'n_structure', target_date)
+    taux_nouveau_form_DT = taux_ren(df_filtered,nb_apte_formation_PSE1_2_CI_DT_prev, filtres_bc, 'DT_de_rattachement', target_date)
 
     # Indicateurs fusion
 
