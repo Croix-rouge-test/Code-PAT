@@ -51,6 +51,7 @@ filtres_bc = {
 
 
 
+
 def keep_integer(x):
     if x is None:
         return None
@@ -83,8 +84,7 @@ def calcul_secours_par_annee(df, filtres_bc, target_date):
     year = target.year
     mask = (
         (df['FORMATION_RESULTAT'] == 'Apte') &
-        (df['FORMATION_DATE_OBTENTION'] >= target - pd.DateOffset(years=1)) &
-        (df['FORMATION_DATE_OBTENTION'] <= target)
+        (df['DATE_FILTRE'] >= target)
     )
 
     df_year = df.loc[mask, ['FORMATION_CODE', 'NIVOL_ID_FK']]
@@ -1046,7 +1046,7 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     # dataframe date recyclage 
     df_formation_session_resultat_IS = df_formation_session_resultat.copy()
 
-    df_formation_session_resultat_IS = df_formation_session_resultat_IS[df_formation_session_resultat_IS['FORMATION_DATE_RECYCLAGE'].dt.year < year + 2]
+    df_formation_session_resultat_IS = df_formation_session_resultat_IS[(df_formation_session_resultat_IS['FORMATION_DATE_RECYCLAGE'].dt.year < year + 2) | (df_formation_session_resultat_IS['FORMATION_DATE_RECYCLAGE'].isnull())]
 
     # Création de DATE_FILTRE
     df_formation_session_resultat_IS["DATE_FILTRE"] = df_formation_session_resultat_IS["FORMATION_DATE_RECYCLAGE"]
@@ -1057,10 +1057,41 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     mask_recy_null = df_formation_session_resultat_IS["FORMATION_DATE_RECYCLAGE"].isna()
 
     df_formation_session_resultat_IS.loc[mask_recy_null, "DATE_FILTRE"] = (
-        pd.to_datetime(
-            (df_formation_session_resultat_IS.loc[mask_recy_null, "FORMATION_DATE_OBTENTION"].dt.year + 1).astype(str)
-            + "-12-31"
-        )
+        df_formation_session_resultat_IS.loc[mask_recy_null, "FORMATION_DATE_OBTENTION"]
+        .apply(lambda d: pd.Timestamp(d.year + 1, 12, 31) if pd.notna(d) else pd.NaT)
+    )
+
+    # UNIQUEMENT POUR PSE1, PSE2, CI, FPSE, FPSC, AGQS, FIPSEN
+
+    # Copier filtres_bc et supprimer des clés si nécessaire
+    remove_keys = [
+        # Ajoutez ici les clés à retirer de la copie, par exemple :
+        "PSE1_i",
+        "RECPSE1",
+        "PSE2_i",
+        "RECPSE2",
+        "CI_i",
+        "RECCI",
+        "FPSE_i",
+        "RECFPSE",
+    ]
+
+    filtres_bc_copy = {
+        k: v.copy()
+        for k, v in filtres_bc.items()
+        if k not in remove_keys
+    }
+
+    # Définir le groupe de formation selon les clés de filtres_bc
+    code_to_formation_group = {}
+    for group_key, codes in filtres_bc_copy.items():
+        for code in codes:
+            if code not in code_to_formation_group:
+                code_to_formation_group[code] = group_key
+
+    df_formation_session_resultat_IS["FORMATION_GROUP"] = (
+        df_formation_session_resultat_IS["FORMATION_CODE"].map(code_to_formation_group)
+        .fillna(df_formation_session_resultat_IS["FORMATION_CODE"])
     )
 
     # UNIQUEMENT POUR PSE1, PSE2, CI, FPSE, FPSC, AGQS, FIPSEN
@@ -1068,10 +1099,9 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     # en conservant la ligne ayant la DATE_FILTRE la plus élevée
     df_formation_session_resultat_IS = (
         df_formation_session_resultat_IS.copy().sort_values("DATE_FILTRE")
-        .drop_duplicates(subset="NIVOL_ID_FK", keep="last")
+        .drop_duplicates(subset=["NIVOL_ID_FK","FORMATION_GROUP"], keep="last")
         .reset_index(drop=True)
     )
-
 
     df_formation_session_resultat_fpg = df_formation_session_resultat.copy()
     df_formation_session_resultat_fpg = df_formation_session_resultat_fpg.rename(columns={'FORMATION_SESSION_STRUCTURE_ID_FK' : 'n_structure'})
@@ -1200,12 +1230,14 @@ def indicateurs_base_contact(client,df_formation_session_resultat,df_formation_s
     # nb_sessions = nb_session_form(df_filtered_2025, filtres_bc, 'n_structure') => Ancienne version
     # nb_sessions_DT = nb_session_form(df_filtered_2025, filtres_bc, 'DT_de_rattachement')
 
-    #Nouvelle version
+    # Nouvelle version
     nb_sessions = nb_session_form(df_formation_count_session_year, filtres_bc, 'n_structure', target_date)
     nb_sessions_DT = nb_session_form(df_formation_count_session_year, filtres_bc, 'DT_de_rattachement', target_date)
 
     nb_structures_ma = nb_structures_menant_activite(df_formation_count_session_year, filtres_bc, 'n_structure', target_date)
     nb_structures_ma_DT = nb_structures_menant_activite(df_formation_count_session_year, filtres_bc, 'DT_de_rattachement', target_date)
+
+
 
     nb_apte_formation_PSE1_2_CI = nb_bene_aptes_PSE1_2_CI(df_filtered_IS, filtres_bc, 'n_structure', target_date)
     nb_apte_formation_PSE1_2_CI_DT = nb_bene_aptes_PSE1_2_CI(df_filtered_IS, filtres_bc, 'DT_de_rattachement', target_date)
