@@ -85,10 +85,7 @@ def nb_dps(df_dps, target_date, col_grpby):
                     (f"Secours Nb_DPS_PE_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de petite envergure"),
                     (f"Secours Nb_DPS_ME_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de moyenne envergure"),
                     (f"Secours Nb_DPS_GE_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de grande envergure"),
-                    (f"Secours Nb_DPS_{year}", (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "PAPS") |
-                     (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de petite envergure") | 
-                     (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de moyenne envergure") |
-                     (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de grande envergure"))]
+                    (f"Secours Nb_DPS_{year}", df_dps['DPS_DIMENSIONNEMENT_ID_PK'] == df_dps['DPS_DIMENSIONNEMENT_ID_PK']) ]
 
     df_res = pd.DataFrame()
     frames = []
@@ -151,10 +148,7 @@ def equivalent_poste_secours(df_dps, target_date, col_grpby):
         (f"Secours Nb_DPS_PE_ps_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de petite envergure"),
         (f"Secours Nb_DPS_ME_ps_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de moyenne envergure"),
         (f"Secours Nb_DPS_GE_ps_{year}", df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de grande envergure"),
-        (f"Secours Nb_DPS_ps_{year}",    (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "PAPS") |
-                     (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de petite envergure") | 
-                     (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de moyenne envergure") |
-                     (df_dps['TYPE_DISPOSITIF_LIBELLE'] == "Dispositif de grande envergure"))
+        (f"Secours Nb_DPS_ps_{year}",    df_dps['TYPE_DISPOSITIF_LIBELLE'] == df_dps['TYPE_DISPOSITIF_LIBELLE'] )
     ]
 
     frames = []
