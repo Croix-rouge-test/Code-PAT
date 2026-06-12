@@ -12,8 +12,7 @@ def filtres_mobilite(mobilite,mapping_df, df_ref_structure):
     AEO_mobile = ["Accès aux droits et Orientation", "Lien social"]
     pattern_aeo = "|".join(map(re.escape, AEO_mobile))
 
-    mobilite = get_as_dataframe(mobilite.worksheet('Consolidation 2025'), evaluate_formulas=True)
-    #mobilite = mobilite[(mobilite['Etat'] == 'Actif') & (mobilite['Code structure unifié'] != '') & (mobilite['Code structure unifié'].notna()) & (mobilite['Typologie des CRsr/trajets'].isin(AEO_mobile))]
+    mobilite = get_as_dataframe(mobilite.worksheet('Consolidation 2026'), evaluate_formulas=True)    #mobilite = mobilite[(mobilite['Etat'] == 'Actif') & (mobilite['Code structure unifié'] != '') & (mobilite['Code structure unifié'].notna()) & (mobilite['Typologie des CRsr/trajets'].isin(AEO_mobile))]
 
     mobilite = mobilite[
         (mobilite['Etat'] == 'Actif')

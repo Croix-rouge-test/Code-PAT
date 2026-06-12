@@ -71,8 +71,6 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     f"Dispositifs_d_urgence Nb_formes_PSP_{year}", 
     f"Dispositifs_d_urgence Nb_formes_IRR_{year}", 
     f"Dispositifs_d_urgence Nb_formes_GQS_{year}", 
-    f"Dispositifs_d_urgence Nb_formes_PREVIC_{year}", 
-    f"Dispositifs_d_urgence Nb_sessions_PREVIC_{year}"
     f"Dispositifs_d_urgence Taux_formation_TCAU_{year}",
     f"Dispositifs_d_urgence Taux_formation_PSP_{year}",
     f"Dispositifs_d_urgence Taux_formation_GQS_{year}",
