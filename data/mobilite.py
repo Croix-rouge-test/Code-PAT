@@ -18,6 +18,7 @@ def filtres_mobilite(mobilite,mapping_df, df_ref_structure):
         (mobilite['Etat'] == 'Actif')
         & (mobilite['Code structure unifié'] != '')
         & (mobilite['Code structure unifié'].notna())
+        & (mobilite['Code structure unifié'].astype(str).str.isnumeric())
         & (
             mobilite['Typologie des CRsr/trajets']
             .fillna('')
