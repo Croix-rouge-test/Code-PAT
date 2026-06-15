@@ -379,7 +379,6 @@ def fusion_bc_final(df_ref_structure, df_ref_structure_DT,nb_bene_suivi_formatio
                     nb_suivi_formation_tous, nb_suivi_formation_tous_DT,
                     nb_sessions, nb_sessions_DT,
                     nb_actifs_solidar, nb_actifs_solidar_DT,
-                    taux_is_actifs, taux_is_actifs_DT,
                     df_nvx_forme_crb, df_nvx_forme_crb_DT,
                     nb_structures_ma, nb_structures_ma_DT,
                     col_groupby):
@@ -398,18 +397,16 @@ def fusion_bc_final(df_ref_structure, df_ref_structure_DT,nb_bene_suivi_formatio
                                          nb_suivi_formation_tous,
                                          nb_sessions,
                                          nb_actifs_solidar,
-                                         taux_is_actifs,
                                          df_nvx_forme_crb])
 
     # Même pour DT
-    for df in [nb_bene_suivi_formation_DT,nb_suivi_formation_DT, nb_suivi_formation_tous_DT, nb_sessions_DT, nb_actifs_solidar_DT,taux_is_actifs_DT,df_nvx_forme_crb_DT,nb_structures_ma_DT]:
+    for df in [nb_bene_suivi_formation_DT,nb_suivi_formation_DT, nb_suivi_formation_tous_DT, nb_sessions_DT, nb_actifs_solidar_DT,df_nvx_forme_crb_DT,nb_structures_ma_DT]:
         df.rename(columns={'DT_de_rattachement':'n_structure'}, inplace=True)
 
     indicateurs_base_contact_DT = merge_all([df_ref_structure_DT,nb_bene_suivi_formation_DT,nb_suivi_formation_DT,
                                             nb_suivi_formation_tous_DT,
                                             nb_sessions_DT,
                                             nb_actifs_solidar_DT,
-                                            taux_is_actifs_DT,
                                             df_nvx_forme_crb_DT,nb_structures_ma_DT])
 
     return indicateurs_base_contact, indicateurs_base_contact_DT
@@ -642,19 +639,17 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
 
     liste_structure_garder = df_ref_structure['n_structure'].drop_duplicates().tolist()
     df_formation_session_resultat = df_formation_session_resultat[df_formation_session_resultat['n_structure'].isin(liste_structure_garder)]
-    df_formation_session_resultat_IS = df_formation_session_resultat_IS[df_formation_session_resultat_IS['n_structure'].isin(liste_structure_garder)]
     df_formation_session_resultat_fpg = df_formation_session_resultat_fpg[df_formation_session_resultat_fpg['n_structure'].isin(liste_structure_garder)]
     df_formation_count_session_year = df_formation_count_session_year[df_formation_count_session_year['n_structure'].isin(liste_structure_garder)]
 
     
     df_formation_session_resultat_fpg = dt_rattachement(df_formation_session_resultat_fpg, df_ref_structure)
     df_formation_session_resultat = dt_rattachement(df_formation_session_resultat, df_ref_structure)
-    df_formation_session_resultat_IS = dt_rattachement(df_formation_session_resultat_IS, df_ref_structure)
 
 
     return df_formation_session_resultat, df_formation_count_session_year, df_formation_session_resultat_fpg
 
-def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_count_session_year,df_formation_session_resultat_fpg, df_ref_structure, target_date="2025-12-31", half_year = False):
+def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_count_session_year,df_formation_session_resultat_fpg, df_ref_structure, target_date="2025-12-31"):
     """
     Utilisation de toutes les fonctions du fichier pour calculer les indicateurs fonction par fonction.
     Les résultats sont stockés dans un dataframe différent à chaque fois, on a un calcul par structure et un par DT de rattachement pour obtenir les deux types d'agrégat.
@@ -719,7 +714,7 @@ def indicateurs_base_contact(client,df_formation_session_resultat, df_formation_
 def correction_indic_BC_DT(df_ref_structure, indicateurs_base_contact, indicateurs_base_contact_DT, year):
 
     #On définit df_rattachement_structure2
-    df_rattachement_structure2 = df_ref_structure[["n_structure","DT_de_rattachement"]]
+    df_rattachement_structure2 = df_ref_structure[["n_structure","DT_de_rattachement"]].drop_duplicates()
 
     #On merge indic base contact avec rattachement structure
     indicateurs_base_contact_2= indicateurs_base_contact.merge(df_rattachement_structure2, on="n_structure", how="left")

@@ -550,11 +550,12 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby, target_date =
 # Fusion
 # ------------------------------
 
-def fusion_bc_final(df_ref_structure, df_ref_structure_DT,
+def fusion_pofo_final(df_ref_structure, df_ref_structure_DT,
                     nb_apte_formation_PSE1_2_CI, nb_apte_formation_PSE1_2_CI_DT,
                     nb_apte_formation, nb_apte_formation_DT,
                     taux_rec, taux_rec_DT,
                     taux_nouveau_form, taux_nouveau_form_DT,
+                    taux_is_actifs, taux_is_actifs_DT,
                     col_groupby):
 
     """
@@ -569,18 +570,18 @@ def fusion_bc_final(df_ref_structure, df_ref_structure_DT,
                                          nb_apte_formation_PSE1_2_CI,
                                          nb_apte_formation,
                                          taux_rec,
-                                         taux_nouveau_form])
+                                         taux_nouveau_form,taux_is_actifs])
 
     # Même pour DT
     for df in [nb_apte_formation_PSE1_2_CI_DT,
-               nb_apte_formation_DT, taux_rec_DT, taux_nouveau_form_DT]:
+               nb_apte_formation_DT, taux_rec_DT, taux_nouveau_form_DT,taux_is_actifs_DT]:
         df.rename(columns={'DT_de_rattachement': 'n_structure'}, inplace=True)
 
     indicateurs_base_contact_DT = merge_all([df_ref_structure_DT,
                                             nb_apte_formation_PSE1_2_CI_DT,
                                             nb_apte_formation_DT,
                                             taux_rec_DT,
-                                            taux_nouveau_form_DT])
+                                            taux_nouveau_form_DT,taux_is_actifs_DT])
 
     return indicateurs_base_contact, indicateurs_base_contact_DT
 
@@ -589,7 +590,7 @@ def fusion_bc_final(df_ref_structure, df_ref_structure_DT,
 # Fonction principale
 # ------------------------------
 
-def clean_base_contact(client, df_ref_structure, target_date="2025-12-31", half_year = False):
+def clean_pofo(client, df_ref_structure, target_date="2025-12-31", half_year = False):
     """
     Traitements à partir de la table brute big query:
     - Filtre pour garder uniquement les codes formation nécessaires et les nivols absents aux sessions
@@ -733,7 +734,7 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31", half_
 
     return df_formation_session_resultat_IS
 
-def indicateurs_base_contact(client, df_formation_session_resultat_IS, df_ref_structure, target_date="2025-12-31"):
+def indicateurs_pofo(client, df_formation_session_resultat_IS, df_ref_structure, target_date="2025-12-31"):
     """
     Utilisation de toutes les fonctions du fichier pour calculer les indicateurs fonction par fonction.
     Les résultats sont stockés dans un dataframe différent à chaque fois, on a un calcul par structure et un par DT de rattachement pour obtenir les deux types d'agrégat.
@@ -759,7 +760,7 @@ def indicateurs_base_contact(client, df_formation_session_resultat_IS, df_ref_st
     year_gap = 1
 
     date_31122025 = datetime(year - year_gap, 12, 31)
-    df_formation_session_resultat_IS_prev = clean_base_contact(client, df_ref_structure, target_date=f"{year - year_gap}-12-31")
+    df_formation_session_resultat_IS_prev = clean_pofo(client, df_ref_structure, target_date=f"{year - year_gap}-12-31")
     df_filtered_prev = df_formation_session_resultat_IS_prev.copy()
     df_filtered_prev = df_filtered_prev[df_filtered_prev['FORMATION_CODE'].isin(flatten(list(filtres_bc.values())))]
 
@@ -775,16 +776,70 @@ def indicateurs_base_contact(client, df_formation_session_resultat_IS, df_ref_st
     taux_is_actifs = taux_IS(client, df_filtered_IS, filtres_bc, df_ref_structure, 'n_structure', target_date)
     taux_is_actifs_DT = taux_IS(client, df_filtered_IS, filtres_bc, df_ref_structure, 'DT_de_rattachement', target_date)
 
-    indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd = fusion_bc_final(
+    indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd = fusion_pofo_final(
       df_ref_structure['n_structure'].drop_duplicates().to_frame(),
       df_ref_structure[df_ref_structure['type_structure'] == "DELEGATION TERRITORIALE - DT"]['n_structure'].astype(str).drop_duplicates().to_frame(),
         nb_apte_formation_PSE1_2_CI, nb_apte_formation_PSE1_2_CI_DT,
         nb_apte_formation, nb_apte_formation_DT,
         taux_rec, taux_rec_DT,
         taux_nouveau_form, taux_nouveau_form_DT,
+        taux_is_actifs, taux_is_actifs_DT,
         'n_structure'
     )
 
     indicateurs_base_contact_DT_pd = indicateurs_base_contact_DT_pd[indicateurs_base_contact_DT_pd['n_structure'] != '']
 
     return indicateurs_base_contact_pd, indicateurs_base_contact_DT_pd
+
+
+def correction_indic_pofo_DT(df_ref_structure, indicateurs_base_contact, indicateurs_base_contact_DT, year):
+
+
+    indicateurs_base_contact_DT['n_structure'] = indicateurs_base_contact_DT['n_structure'].astype(int)
+    #On définit df_rattachement_structure2
+    df_rattachement_structure2 = df_ref_structure[["n_structure","DT_de_rattachement"]].drop_duplicates()
+
+    #On merge indic base contact avec rattachement structure
+    indicateurs_base_contact_2= indicateurs_base_contact.merge(df_rattachement_structure2, on="n_structure", how="left")
+
+    #On enlève le siège
+    indicateurs_base_contact_2 = indicateurs_base_contact_2[~indicateurs_base_contact_2["DT_de_rattachement"].isna()]
+
+    #Groupby par structure de rattachement
+    indicateurs_base_contact_2 = (
+        indicateurs_base_contact_2
+        .groupby("DT_de_rattachement")
+        .sum()
+        .reset_index()
+    )
+
+    #Passage en Int pour les indicateurs
+    cols_to_int = ['Secours Nb_PSE1', 'Secours Nb_PSE2',
+        'Secours Nb_CI', 'Secours Nb_FPSE', 'Secours Nb_IS', 'Formation_grand_public Nb_FPSC',
+        'Formation_grand_public Nb_AGQS', 'Formation_grand_public Nb_FIPSEN',
+    ]
+
+    indicateurs_base_contact_2[cols_to_int] = (
+        indicateurs_base_contact_2[cols_to_int]
+        .apply(pd.to_numeric, errors="coerce")
+        .fillna(0)
+        .astype(int)
+    )
+
+    indicateurs_base_contact_2 = indicateurs_base_contact_2[["DT_de_rattachement"] + cols_to_int]
+
+    #On comment les 4 indicateurs différents
+    indicateurs_base_contact_DT= indicateurs_base_contact_DT[['n_structure',#'Secours Nb_PSE1', 'Secours Nb_PSE2',
+        #   'Secours Nb_CI', 'Secours Nb_FPSE', 'Secours Nb_IS', 'Formation_grand_public Nb_FPSC',
+        #   'Formation_grand_public Nb_AGQS', 'Formation_grand_public Nb_FIPSEN',
+          f'Secours Taux_recy{year+1-2000}_PSE1', f'Secours Taux_recy{year+1-2000}_PSE2',
+          f'Secours Taux_recy{year+1-2000}_CI', f'Secours Taux_recy{year+1-2000}_FPSE', f'Secours Taux_ren{year-2000}_PSE1',
+          f'Secours Taux_ren{year-2000}_PSE2', f'Secours Taux_ren{year-2000}_CI', f'Secours Taux_ren{year-2000}_FPSE']].copy()
+
+    indicateurs_base_contact_DT['n_structure'] = pd.to_numeric(indicateurs_base_contact_DT['n_structure'], errors='coerce').fillna(0).astype(int)
+    indicateurs_base_contact_DT = indicateurs_base_contact_DT.merge(df_rattachement_structure2, on="n_structure", how="left").copy()
+
+    indicateurs_base_contact_DT = pd.merge(indicateurs_base_contact_DT, indicateurs_base_contact_2, on="DT_de_rattachement")
+    indicateurs_base_contact_DT = indicateurs_base_contact_DT.drop(columns="DT_de_rattachement")
+
+    return indicateurs_base_contact_DT
