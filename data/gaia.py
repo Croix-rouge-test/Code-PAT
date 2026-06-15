@@ -26,6 +26,10 @@ def import_table_GAIA_date_fixe(client, target_date="2025-12-31", project_id="cr
     df_rattachement_benevole["rattachement_benevole_date_debut"],
     errors="coerce"
     )
+    target = pd.Timestamp(target_date)
+    df_rattachement_benevole = df_rattachement_benevole.loc[
+        ~(df_rattachement_benevole["rattachement_benevole_date_fin"] < target) | ~(df_rattachement_benevole["rattachement_benevole_date_debut"]  > target)
+    ]
 
     df_rattachement_benevole = (
         df_rattachement_benevole
@@ -35,12 +39,6 @@ def import_table_GAIA_date_fixe(client, target_date="2025-12-31", project_id="cr
     )
 
     df_rattachement_benevole = df_rattachement_benevole.drop_duplicates("rattachement_benevole_nivol_id_fk")
-
-    target = pd.Timestamp(target_date)
-    df_rattachement_benevole = df_rattachement_benevole.loc[
-        (df_rattachement_benevole["rattachement_benevole_date_fin"].isna()
-        | (df_rattachement_benevole["rattachement_benevole_date_fin"] >= target)) & (df_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
-    ]
     
     df_rattachement_benevole = df_rattachement_benevole[["rattachement_benevole_nivol_id_fk"]]
     return df_rattachement_benevole

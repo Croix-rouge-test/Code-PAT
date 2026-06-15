@@ -304,7 +304,6 @@ def ajouter_colonnes_taux(df: pd.DataFrame, year: int) -> pd.DataFrame:
     Les noms des nouvelles colonnes sont définis en dur dans la fonction.
     """
 
-    # ⚠️ noms hardcodés (modifie-les ici selon ton besoin)
     mapping_noms = {
         (f"Dispositifs_d_urgence Nb_formes_TCAU_{year}", "Structure Nb_Benevoles"): f"Dispositifs_d_urgence Taux_formation_TCAU_{year}",
         (f"Dispositifs_d_urgence Nb_formes_TCEO_{year}", "Structure Nb_Benevoles"): f"Dispositifs_d_urgence Taux_formation_TCEO_{year}",
