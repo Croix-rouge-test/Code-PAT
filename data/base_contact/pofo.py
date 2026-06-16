@@ -371,11 +371,13 @@ def taux_recy(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
         if mask.any():
             lignes_erreur = result[mask][['nb_recy_'+code,nb]]
             print(f"{mask.sum()} ligne(s) ont {nb} < nb_recy_{code} :\n{lignes_erreur}")
-        result[alias] = np.where(
+        ratio = np.where(
           (result['nb_recy_'+code] == 0) | (result[nb] == 0),
           0,  # si l'un des deux est 0
           result['nb_recy_'+code] / result[nb]  # sinon le calcul normal
-      )
+        )
+        result[alias] = np.minimum(ratio, 1)
+
 
     result = result.reset_index()
     return result[[col_groupby, f'Secours Taux_recy{year+1-2000}_PSE1', f'Secours Taux_recy{year+1-2000}_PSE2', f'Secours Taux_recy{year+1-2000}_CI', f'Secours Taux_recy{year+1-2000}_FPSE']]
@@ -431,11 +433,12 @@ def taux_ren(df_filtered, df_nb_aptes, filtres_bc, col_groupby, target_date):
         if mask.any():
             lignes_erreur = result[mask][['nb_ren_'+code,nb]]
             print(f"{mask.sum()} ligne(s) ont {nb} < nb_recy_{code} :\n{lignes_erreur}")
-        result[alias] = np.where(
+        ratio = np.where(
           (result['nb_ren_'+code] == 0) | (result[nb] == 0),
           0,  # si l'un des deux est 0
           result['nb_ren_'+code] / result[nb]  # sinon le calcul normal
-      )
+        )
+        result[alias] = np.minimum(ratio, 1)
 
     result = result.reset_index()
     return result[[col_groupby, f'Secours Taux_ren{year-2000}_PSE1', f'Secours Taux_ren{year-2000}_PSE2', f'Secours Taux_ren{year-2000}_CI', f'Secours Taux_ren{year-2000}_FPSE']]
@@ -834,7 +837,7 @@ def correction_indic_pofo_DT(df_ref_structure, indicateurs_base_contact, indicat
         #   'Formation_grand_public Nb_AGQS', 'Formation_grand_public Nb_FIPSEN',
           f'Secours Taux_recy{year+1-2000}_PSE1', f'Secours Taux_recy{year+1-2000}_PSE2',
           f'Secours Taux_recy{year+1-2000}_CI', f'Secours Taux_recy{year+1-2000}_FPSE', f'Secours Taux_ren{year-2000}_PSE1',
-          f'Secours Taux_ren{year-2000}_PSE2', f'Secours Taux_ren{year-2000}_CI', f'Secours Taux_ren{year-2000}_FPSE']].copy()
+          f'Secours Taux_ren{year-2000}_PSE2', f'Secours Taux_ren{year-2000}_CI', f'Secours Taux_ren{year-2000}_FPSE', 'Secours Taux_IS_actifs']].copy()
 
     indicateurs_base_contact_DT['n_structure'] = pd.to_numeric(indicateurs_base_contact_DT['n_structure'], errors='coerce').fillna(0).astype(int)
     indicateurs_base_contact_DT = indicateurs_base_contact_DT.merge(df_rattachement_structure2, on="n_structure", how="left").copy()
