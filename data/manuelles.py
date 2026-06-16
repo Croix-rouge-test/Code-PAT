@@ -900,6 +900,44 @@ def indicateurs_tracabilite_textile(df_tracabilite_textile, df_ref_structure):
     return df_final
 
 
+def indicateurs_minutis(df, df_ref_structure):
+
+    # Si la colonne n_structure n'existe pas encore
+    if "n_structure" not in df.columns:
+        df["n_structure"] = ""
+
+    mask = df["n_structure"].fillna("") == ""
+
+    mapping_dict = (
+        df_ref_structure[
+            df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"
+        ]
+        .set_index("n_dept")["n_structure"]
+        .to_dict()
+    )
+
+    df.loc[mask, "n_structure"] = (
+        df.loc[mask, "code_territoire"]
+        .map(mapping_dict)
+    )
+
+    # Renommage des colonnes
+    df = df.rename(
+        columns={
+            "interventions_associees": "Dispositifs_d_urgence_Minutis_Nb_interventions",
+            "victimes_associees": "Dispositifs_d_urgence_Minutis_Nb_victimes",
+        }
+    )
+
+    # Création de l'indicateur
+    df["Utilisation_Minutis"] = (
+        df["operations_reellement_gerees"]
+        .gt(0)
+        .map({True: "Oui", False: ""})
+    )
+
+    return df
+
 
 
 
@@ -912,6 +950,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     df_raw_Textile,
     df_CRope_clean,
     df_tracabilite_textile,
+    df_minutis,
     df_ref_structure
 ):
     df_OCR_Nb_deployees = indicateurs_OCR_nb_deployees(df_OCR, df_ref_structure)
@@ -924,6 +963,7 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
     # df_raw_ProdResTextile = indicateurs_ProdResTextile(df_raw_ProdResTextile , df_ref_structure)
     df_CRopeVF = indicateurs_CRope(df_CRope_clean, df_ref_structure)
     df_tracabilite_textileVF = indicateurs_tracabilite_textile(df_tracabilite_textile, df_ref_structure)
+    df_MinutisVF = indicateurs_minutis(df_minutis, df_ref_structure)
 
     return (
         df_OCR_Nb_deployees,
@@ -933,7 +973,8 @@ def indicateurs_OCR_PST_DEC_RED_CAI_CONV(
         df_CAICHUCMCC_conventionsVF,
         df_raw_TextileVF,
         df_CRopeVF,
-        df_tracabilite_textileVF
+        df_tracabilite_textileVF,
+        df_MinutisVF
     )
 
 
