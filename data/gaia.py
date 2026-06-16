@@ -59,7 +59,7 @@ def clean_gaia(client, df_ref_structure, target_date="2025-12-31"):
   df_gaia_rattachement_benevole = client.query(query_gaia).to_dataframe()
   liste_structure_garder = df_ref_structure['n_structure'].drop_duplicates().to_list()
 
-  df_rattachement_benevole = df_rattachement_benevole[df_rattachement_benevole['rattachement_benevole_structure_id_fk'].isin(liste_structure_garder)]
+  df_gaia_rattachement_benevole = df_gaia_rattachement_benevole[df_gaia_rattachement_benevole['rattachement_benevole_structure_id_fk'].isin(liste_structure_garder)]
   # Vérification que la colonne est au format datetime
   df_gaia_rattachement_benevole['rattachement_benevole_date_fin'] = pd.to_datetime(df_gaia_rattachement_benevole['rattachement_benevole_date_fin'], errors='coerce')
   df_gaia_rattachement_benevole['rattachement_benevole_date_debut'] = pd.to_datetime(df_gaia_rattachement_benevole['rattachement_benevole_date_debut'], errors='coerce')
