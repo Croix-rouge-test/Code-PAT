@@ -64,6 +64,8 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Dispositifs_d_urgence Nb_lots_CMCC",
     "Dispositifs_d_urgence Utilisation_RedCall",
     "Dispositifs_d_urgence Utilisation_Minutis",
+    "Dispositifs_d_urgence Minutis_Nb_interventions",
+    "Dispositifs_d_urgence Minutis_Nb_victimes",
     "Dispositifs_d_urgence Nb_exercices",
     "Dispositifs_d_urgence PST",
     f"Dispositifs_d_urgence Nb_formes_TCAU_{year}",

@@ -14,226 +14,184 @@ def dept_clean(x):
   else : return str(int(x))
 
 
-def import_clean_donnees_financieres(financier, df_ref_structure, mapping_df):
+def import_clean_donnees_financieres(financier, df_ref_structure):
 
     # ======================
     # IMPORT
     # ======================
-    dt_prod = get_as_dataframe(financier.worksheet('DT_Prod'), skiprows=3, evaluate_formulas=True)
-    dt_resnet = get_as_dataframe(financier.worksheet('DT_Res Net'), skiprows=3, evaluate_formulas=True)
-    dt_resnet_corr_prod = get_as_dataframe(financier.worksheet('DT_Res corrélé Prod'), skiprows=3, evaluate_formulas=True)
+    dt_prod = get_as_dataframe(financier.worksheet('Produits expl°'), skiprows=3, evaluate_formulas=True)
+    dt_resnet = get_as_dataframe(financier.worksheet('Résultat'), skiprows=3, evaluate_formulas=True)
 
-    dt_ul_ant_prod = get_as_dataframe(financier.worksheet('DT-UL-Ant_Prod'), skiprows=3, evaluate_formulas=True)
-    dt_ul_ant_res_net = get_as_dataframe(financier.worksheet('DT-UL-Ant_Res Net'), skiprows=3, evaluate_formulas=True)
-    dt_ul_res_net_corr_prod = get_as_dataframe(financier.worksheet('DT-UL-Res corrélé Prod'), skiprows=3, evaluate_formulas=True)
+
 
     # ======================
     # RENOMMAGE
     # ======================
-    dt_prod = renommer_par_nom_table(dt_prod, "financier_DT", mapping_df)
-    dt_resnet = renommer_par_nom_table(dt_resnet, "financier_DT", mapping_df)
-    dt_resnet_corr_prod = renommer_par_nom_table(dt_resnet_corr_prod, "financier_DT", mapping_df)
+    dt_prod = dt_prod.rename(columns = {'N° Structure' : 'n_structure',"Dptmt":"n_dept"})
+    dt_resnet = dt_resnet.rename(columns = {'N° Structure' : 'n_structure', "Dptmt":"n_dept" })
 
-    dt_ul_ant_prod = renommer_par_nom_table(dt_ul_ant_prod, "financier_DT_UL", mapping_df)
-    dt_ul_ant_res_net = renommer_par_nom_table(dt_ul_ant_res_net, "financier_DT_UL", mapping_df)
-    dt_ul_res_net_corr_prod = renommer_par_nom_table(dt_ul_res_net_corr_prod, "financier_DT_UL", mapping_df)
+    
+    dt_prod = dt_prod[dt_prod['n_structure'] == 'D']
+    dt_resnet = dt_resnet[dt_resnet['n_structure'] == 'D']
 
-    # ======================
-    # ====== 2024 ==========
-    # ======================
-    dt_prod_2024 = dt_prod[['n_dept','Réalisé 2024 Total Année','libelle_structure']]\
-        .rename(columns={'Réalisé 2024 Total Année': 'Financier Prod_2024'})\
+    dt_prod= dt_prod[['n_dept','Réalisé 2023 Total Année','Réalisé 2024 Total Année','Nom Structure']]\
+        .rename(columns={'Réalisé 2024 Total Année': 'Financier Prod_2024', 'Réalisé 2023 Total Année': 'Financier Prod_2023'})\
         .iloc[:dt_prod.shape[0]-2]
 
-    dt_prod_2024['libelle_structure'] = 'DT - ' + dt_prod_2024['libelle_structure']
+    dt_prod['Nom Structure'] = 'DT - ' + dt_prod['Nom Structure']
 
-    dt_resnet_2024 = dt_resnet[['n_dept','Réalisé 2024 Total Année']]\
-        .rename(columns={'Réalisé 2024 Total Année': 'Financier ResNet_2024'})\
-        .iloc[:dt_resnet.shape[0]-2]
-
-    dt_rescorr_2024 = dt_resnet_corr_prod[['n_dept','Réalisé 2024 Total Année']]\
-        .rename(columns={'Réalisé 2024 Total Année': 'Financier ResCorrProd_2024'})\
-        .iloc[:dt_resnet_corr_prod.shape[0]-2]
-
-    dt_ul_prod_2024 = dt_ul_ant_prod[['n_structure','Réalisé 2024 Total Année','libelle_structure']]\
-        .rename(columns={'Réalisé 2024 Total Année': 'Financier Prod_2024'})\
-        .iloc[:dt_ul_ant_prod.shape[0]-1]
-
-    dt_ul_resnet_2024 = dt_ul_ant_res_net[['n_structure','Réalisé 2024 Total Année']]\
-        .rename(columns={'Réalisé 2024 Total Année': 'Financier ResNet_2024'})\
-        .iloc[:dt_ul_ant_res_net.shape[0]-1]
-
-    dt_ul_rescorr_2024 = dt_ul_res_net_corr_prod[['n_structure','Réalisé 2024 Total Année']]\
-        .rename(columns={'Réalisé 2024 Total Année': 'Financier ResCorrProd_2024'})\
-        .iloc[:dt_ul_res_net_corr_prod.shape[0]-1]
-
-    # ======================
-    # ====== 2023 ==========
-    # ======================
-    dt_prod_2023 = dt_prod[['n_dept','Réalisé 2023 Total Année','libelle_structure']]\
-        .rename(columns={'Réalisé 2023 Total Année': 'Financier Prod_2023'})\
+    dt_resnet= dt_resnet[['n_dept','Réalisé 2023 Total Année','Réalisé 2024 Total Année','Nom Structure']]\
+        .rename(columns={'Réalisé 2024 Total Année': 'Financier ResNet_2024', 'Réalisé 2023 Total Année': 'Financier ResNet_2023'})\
         .iloc[:dt_prod.shape[0]-2]
 
-    dt_prod_2023['libelle_structure'] = 'DT - ' + dt_prod_2023['libelle_structure']
+    dt_resnet['Nom Structure'] = 'DT - ' + dt_resnet['Nom Structure']
 
-    dt_resnet_2023 = dt_resnet[['n_dept','Réalisé 2023 Total Année']]\
-        .rename(columns={'Réalisé 2023 Total Année': 'Financier ResNet_2023'})\
-        .iloc[:dt_resnet.shape[0]-2]
-
-    dt_rescorr_2023 = dt_resnet_corr_prod[['n_dept','Réalisé 2023 Total Année']]\
-        .rename(columns={'Réalisé 2023 Total Année': 'Financier ResCorrProd_2023'})\
-        .iloc[:dt_resnet_corr_prod.shape[0]-2]
-
-
-    dt_ul_prod_2023 = dt_ul_ant_prod[['n_structure','Réalisé 2023 Total Année','libelle_structure']]\
-        .rename(columns={'Réalisé 2023 Total Année': 'Financier Prod_2023'})\
-        .iloc[:dt_ul_ant_prod.shape[0]-1]
-
-    dt_ul_resnet_2023 = dt_ul_ant_res_net[['n_structure','Réalisé 2023 Total Année']]\
-        .rename(columns={'Réalisé 2023 Total Année': 'Financier ResNet_2023'})\
-        .iloc[:dt_ul_ant_res_net.shape[0]-1]
-
-    dt_ul_rescorr_2023 = dt_ul_res_net_corr_prod[['n_structure','Réalisé 2023 Total Année']]\
-        .rename(columns={'Réalisé 2023 Total Année': 'Financier ResCorrProd_2023'})\
-        .iloc[:dt_ul_res_net_corr_prod.shape[0]-1]
 
 
 
     # ======================
     # CLEAN COMMUN
     # ======================
-    for df in [dt_prod_2024, dt_resnet_2024, dt_rescorr_2024,
-               dt_prod_2023, dt_resnet_2023, dt_rescorr_2023]:
+    for df in [dt_prod, dt_resnet]:
         df['n_dept'] = df['n_dept'].apply(dept_clean)
-
-    for df in [dt_ul_prod_2024, dt_ul_resnet_2024, dt_ul_rescorr_2024,
-               dt_ul_prod_2023, dt_ul_resnet_2023, dt_ul_rescorr_2023]:
-        df['n_structure'] = df['n_structure'].astype(int)
 
     # Filtre structures
     valid_structures = set(df_ref_structure['n_structure'].drop_duplicates().values)
 
-    dt_ul_prod_2024 = dt_ul_prod_2024[dt_ul_prod_2024['n_structure'].isin(valid_structures)]
-    dt_ul_prod_2023 = dt_ul_prod_2023[dt_ul_prod_2023['n_structure'].isin(valid_structures)]
+    DT_dept = df_ref_structure[df_ref_structure['type_structure'] == 'DELEGATION TERRITORIALE - DT'][['n_structure','n_dept']].drop_duplicates()
+
+    dt_prod = pd.merge(dt_prod, DT_dept, on = 'n_dept').drop('n_dept',axis = 1).drop('Nom Structure', axis = 1)
+    dt_resnet = pd.merge(dt_resnet, DT_dept, on = 'n_dept')
+
+    df_financier_2023_2024 = pd.merge(dt_prod,dt_resnet, on = 'n_structure', how = 'inner')
+
+    df_financier_2023_2024['Financier ResNet_2024'] = pd.to_numeric(
+        df_financier_2023_2024['Financier ResNet_2024'],
+        errors='coerce'
+    ) 
+
+    
+    df_financier_2023_2024['Financier ResNet_2023'] = pd.to_numeric(
+        df_financier_2023_2024['Financier ResNet_2023'],
+        errors='coerce'
+    ) 
+    
+    df_financier_2023_2024['Financier Prod_2024'] = pd.to_numeric(
+        df_financier_2023_2024['Financier Prod_2024'],
+        errors='coerce'
+    ) 
+
+    
+    df_financier_2023_2024['Financier Prod_2023'] = pd.to_numeric(
+        df_financier_2023_2024['Financier Prod_2023'],
+        errors='coerce'
+    ) 
+    
+    df_financier_2023_2024['Financier ResCorrProd_2024'] = df_financier_2023_2024['Financier ResNet_2024'] / df_financier_2023_2024['Financier Prod_2024']
+
+    df_financier_2023_2024['Financier ResCorrProd_2023'] = df_financier_2023_2024['Financier ResNet_2023'] / df_financier_2023_2024['Financier Prod_2023']
 
     # ======================
     # RETURN DICTIONNAIRE
     # ======================
-    return {
-        "2024": {
-            "dt_prod": dt_prod_2024,
-            "dt_resnet": dt_resnet_2024,
-            "dt_rescorr": dt_rescorr_2024,
-            "dt_ul_prod": dt_ul_prod_2024,
-            "dt_ul_resnet": dt_ul_resnet_2024,
-            "dt_ul_rescorr": dt_ul_rescorr_2024,
-        },
-        "2023": {
-            "dt_prod": dt_prod_2023,
-            "dt_resnet": dt_resnet_2023,
-            "dt_rescorr": dt_rescorr_2023,
-            "dt_ul_prod": dt_ul_prod_2023,
-            "dt_ul_resnet": dt_ul_resnet_2023,
-            "dt_ul_rescorr": dt_ul_rescorr_2023,
-        }
-    }
+    return df_financier_2023_2024
 
 
-def fusion_donnees_financieres(financial_data, df_ref_structure):
+# def fusion_donnees_financieres(financial_data, df_ref_structure):
 
-    result = {}
+#     result = {}
 
-    for year in ["2024", "2023"]:
+#     for year in ["2024", "2023"]:
 
-        # ======================
-        # INPUTS
-        # ======================
-        dt_prod = financial_data[year]["dt_prod"]
-        dt_resnet = financial_data[year]["dt_resnet"]
-        dt_rescorr = financial_data[year]["dt_rescorr"]
+#         # ======================
+#         # INPUTS
+#         # ======================
+#         dt_prod = financial_data[year]["dt_prod"]
+#         dt_resnet = financial_data[year]["dt_resnet"]
+#         dt_rescorr = financial_data[year]["dt_rescorr"]
 
-        dt_ul_prod = financial_data[year]["dt_ul_prod"]
-        dt_ul_resnet = financial_data[year]["dt_ul_resnet"]
-        dt_ul_rescorr = financial_data[year]["dt_ul_rescorr"]
+#         dt_ul_prod = financial_data[year]["dt_ul_prod"]
+#         dt_ul_resnet = financial_data[year]["dt_ul_resnet"]
+#         dt_ul_rescorr = financial_data[year]["dt_ul_rescorr"]
 
-        # ======================
-        # DONNÉES PAR DT
-        # ======================
-        df_financier_DT = pd.merge(dt_prod, dt_resnet, on="n_dept", how="left")
-        df_financier_DT = pd.merge(df_financier_DT, dt_rescorr, on="n_dept", how="left")
+#         # ======================
+#         # DONNÉES PAR DT
+#         # ======================
+#         df_financier_DT = pd.merge(dt_prod, dt_resnet, on="n_dept", how="left")
+#         df_financier_DT = pd.merge(df_financier_DT, dt_rescorr, on="n_dept", how="left")
 
-        # ======================
-        # DONNÉES PAR STRUCTURE
-        # ======================
-        df_financier_DT_UL = pd.merge(dt_ul_prod, dt_ul_resnet, on="n_structure", how="left")
-        df_financier_DT_UL = pd.merge(df_financier_DT_UL, dt_ul_rescorr, on="n_structure", how="left")
+#         # ======================
+#         # DONNÉES PAR STRUCTURE
+#         # ======================
+#         df_financier_DT_UL = pd.merge(dt_ul_prod, dt_ul_resnet, on="n_structure", how="left")
+#         df_financier_DT_UL = pd.merge(df_financier_DT_UL, dt_ul_rescorr, on="n_structure", how="left")
 
-        # ======================
-        # RATTACHEMENT DT
-        # ======================
-        df_financier_DT = pd.merge(
-            df_ref_structure[df_ref_structure['type_structure'] == "DELEGATION TERRITORIALE - DT"][['DT_de_rattachement','n_dept']].drop_duplicates(),
-            df_financier_DT,
-            on='n_dept',
-            how='inner'
-        )
+#         # ======================
+#         # RATTACHEMENT DT
+#         # ======================
+#         df_financier_DT = pd.merge(
+#             df_ref_structure[df_ref_structure['type_structure'] == "DELEGATION TERRITORIALE - DT"][['DT_de_rattachement','n_dept']].drop_duplicates(),
+#             df_financier_DT,
+#             on='n_dept',
+#             how='inner'
+#         )
 
-        df_financier_DT = df_financier_DT.drop_duplicates(['DT_de_rattachement'])
+#         df_financier_DT = df_financier_DT.drop_duplicates(['DT_de_rattachement'])
 
-        df_financier_DT_UL = apply_rattachement_successif(
-            df_ref_structure,
-            df_financier_DT_UL,
-            col='n_structure'
-        )
+#         df_financier_DT_UL = apply_rattachement_successif(
+#             df_ref_structure,
+#             df_financier_DT_UL,
+#             col='n_structure'
+#         )
 
-        # ======================
-        # CAS PARTICULIER 4381
-        # ======================
-        mask = df_financier_DT_UL['n_structure'] == 4381
-        df_subset = df_financier_DT_UL.loc[mask].copy()
+#         # ======================
+#         # CAS PARTICULIER 4381
+#         # ======================
+#         mask = df_financier_DT_UL['n_structure'] == 4381
+#         df_subset = df_financier_DT_UL.loc[mask].copy()
 
-        if not df_subset.empty:
+#         if not df_subset.empty:
 
-            # filtrer UL / DT
-            mask_dt_ul = df_subset['libelle_structure'].str.contains('DT|UL', case=False, na=False)
-            df_dt_ul = df_subset.loc[mask_dt_ul]
+#             # filtrer UL / DT
+#             mask_dt_ul = df_subset['libelle_structure'].str.contains('DT|UL', case=False, na=False)
+#             df_dt_ul = df_subset.loc[mask_dt_ul]
 
-            prod_col = f'Financier Prod_{year}'
-            resnet_col = f'Financier ResNet_{year}'
-            rescorr_col = f'Financier ResCorrProd_{year}'
+#             prod_col = f'Financier Prod_{year}'
+#             resnet_col = f'Financier ResNet_{year}'
+#             rescorr_col = f'Financier ResCorrProd_{year}'
 
 
-            # agrégations
-            prod_sum = df_subset[prod_col].sum()
-            resnet_sum = df_subset[resnet_col].sum()
+#             # agrégations
+#             prod_sum = df_subset[prod_col].sum()
+#             resnet_sum = df_subset[resnet_col].sum()
 
-            rescorr = (
-                resnet_sum / prod_sum
-                if len(df_subset) > 1 and prod_sum != 0
-                else df_subset[rescorr_col].iloc[0]
-            )
+#             rescorr = (
+#                 resnet_sum / prod_sum
+#                 if len(df_subset) > 1 and prod_sum != 0
+#                 else df_subset[rescorr_col].iloc[0]
+#             )
 
-            # mise à jour
-            df_financier_DT_UL.loc[mask, prod_col] = prod_sum
-            df_financier_DT_UL.loc[mask, resnet_col] = resnet_sum
-            df_financier_DT_UL.loc[mask, rescorr_col] = rescorr
+#             # mise à jour
+#             df_financier_DT_UL.loc[mask, prod_col] = prod_sum
+#             df_financier_DT_UL.loc[mask, resnet_col] = resnet_sum
+#             df_financier_DT_UL.loc[mask, rescorr_col] = rescorr
 
-        df_financier_DT_UL = df_financier_DT_UL.drop_duplicates(subset=['n_structure'], keep='first')
+#         df_financier_DT_UL = df_financier_DT_UL.drop_duplicates(subset=['n_structure'], keep='first')
 
-        df_financier_DT = df_financier_DT.rename(columns={'DT_de_rattachement':'n_structure'})
-        df_financier_DT['n_structure'] = df_financier_DT['n_structure'].astype(str).apply(keep_integer).astype(int)
+#         df_financier_DT = df_financier_DT.rename(columns={'DT_de_rattachement':'n_structure'})
+#         df_financier_DT['n_structure'] = df_financier_DT['n_structure'].astype(str).apply(keep_integer).astype(int)
 
-        df_financier_DT_UL['n_structure'] = df_financier_DT_UL['n_structure'].astype(int)
+#         df_financier_DT_UL['n_structure'] = df_financier_DT_UL['n_structure'].astype(int)
 
-        # ======================
-        # STOCKAGE RESULTAT
-        # ======================
-        result[year] = {
-            "df_financier_DT": df_financier_DT,
-            "df_financier_DT_UL": df_financier_DT_UL
-        }
+#         # ======================
+#         # STOCKAGE RESULTAT
+#         # ======================
+#         result[year] = {
+#             "df_financier_DT": df_financier_DT,
+#             "df_financier_DT_UL": df_financier_DT_UL
+#         }
 
-    return result
+#     return result
 
 def textile_calc(df_raw_ProdResTextile_c, df_ref_structure):
 
@@ -510,9 +468,9 @@ def textile_calc(df_raw_ProdResTextile_c, df_ref_structure):
 
     return df_ProdResTextile_clean_structure, df_ProdResTextile_clean_DT
 
-def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024,financier_textile,financier_DPS, df_ref_structure, mapping_df):
+def import_clean_donnees_financieres_bigquery(financier_sheet,financier_textile,financier_DPS, df_ref_structure):
     
-    donnees_2023_2024 = fusion_donnees_financieres(import_clean_donnees_financieres(financier_2023_2024,df_ref_structure, mapping_df), df_ref_structure)
+    donnees_2023_2024 = import_clean_donnees_financieres(financier_sheet,df_ref_structure)
 
     # query_donnees_financieres = """
     #     SELECT *
@@ -522,7 +480,7 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
     
     df_ref_structure['n_dept'] = df_ref_structure['n_dept'].apply(dept_clean)
 
-    financier = get_as_dataframe(financier_2025.worksheet('Données'), evaluate_formulas=True)
+    financier = get_as_dataframe(financier_sheet.worksheet('Données'), evaluate_formulas=True)
 
     financier.columns = [
         ''.join(c if c.isalnum() else '_' for c in str(col))
@@ -541,7 +499,7 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
     df_financier_DT['Financier ResCorrProd_2025'] = df_financier_DT['Financier ResNet_2025']/df_financier_DT['Financier Prod_2025']
 
     #  Financier TresoBrute_2025
-    tresobrute = get_as_dataframe(financier_2025.worksheet('Tréso'), skiprows=2, evaluate_formulas=True)
+    tresobrute = get_as_dataframe(financier_sheet.worksheet('Tréso'), skiprows=2, evaluate_formulas=True)
     tresobrute = tresobrute.iloc[:tresobrute.shape[0]-1]
     tresobrute = tresobrute[(tresobrute['Trésorerie brute'] != '31/12/2025') & (tresobrute['Avance de tréso en mois'] != '31/12/2025') & (tresobrute['N° Structure'].notna())]
     tresobrute.loc[tresobrute['N° Dptmt'].notna(), 'N° Dptmt'] = tresobrute.loc[tresobrute['N° Dptmt'].notna(), 'N° Dptmt'].apply(dept_clean)
@@ -594,7 +552,7 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
     #     #SELECT rattachement_benevole_nivol_id_fk, rattachement_benevole_structure_id_fk
     # caf = client.query(query_donnees_financieres).to_dataframe().rename(columns={'Dptmt':'n_dept','N__Structure':'n_structure','Nom_Structure':'nom_structure'})
     
-    caf = get_as_dataframe(financier_2025.worksheet('CAF'), skiprows=3, evaluate_formulas=True)
+    caf = get_as_dataframe(financier_sheet.worksheet('CAF'), skiprows=3, evaluate_formulas=True)
 
     # Filtre brute pour enlever structure dupiquée
 
@@ -632,11 +590,8 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
     df_financier_DT = pd.merge(df_ref_structure[df_ref_structure['type_structure'] == 'DELEGATION TERRITORIALE - DT']['n_structure'].drop_duplicates(), df_financier_DT, on='n_structure', how='left')
 
 
-    df_financier = pd.merge(df_financier, donnees_2023_2024['2023']['df_financier_DT_UL'], on='n_structure', how='left')
-    df_financier_DT = pd.merge(df_financier_DT, donnees_2023_2024['2023']['df_financier_DT'], on='n_structure', how='left')
 
-    df_financier = pd.merge(df_financier, donnees_2023_2024['2024']['df_financier_DT_UL'], on='n_structure', how='left')
-    df_financier_DT = pd.merge(df_financier_DT, donnees_2023_2024['2024']['df_financier_DT'], on='n_structure', how='left')
+    df_financier_DT = pd.merge(df_financier_DT, donnees_2023_2024, on='n_structure', how='left')
 
     df_financier['n_structure'] = df_financier['n_structure'].astype(int)
     df_financier_DT['n_structure'] = df_financier_DT['n_structure'].astype(int)
@@ -652,6 +607,8 @@ def import_clean_donnees_financieres_bigquery(financier_2025,financier_2023_2024
 
     df_financier = pd.merge(df_financier,df_financier_textile_struct, on='n_structure', how='left')
     df_financier_DT = pd.merge(df_financier_DT,df_financier_textile_DT, on='n_structure', how='left')
+
+    df_financier_DT = df_financier_DT.drop('n_dept_x', axis = 1).drop('n_dept_y', axis = 1).drop('Nom Structure', axis = 1).drop('nom_structure', axis = 1)
 
     return df_financier, df_financier_DT, financier
 

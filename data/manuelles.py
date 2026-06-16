@@ -926,13 +926,13 @@ def indicateurs_minutis(df, df_ref_structure):
     # Renommage des colonnes
     df = df.rename(
         columns={
-            "interventions_associees": "Dispositifs_d_urgence_Minutis_Nb_interventions",
-            "victimes_associees": "Dispositifs_d_urgence_Minutis_Nb_victimes",
+            "interventions_associees": "Dispositifs_d_urgence Minutis_Nb_interventions",
+            "victimes_associees": "Dispositifs_d_urgence Minutis_Nb_victimes",
         }
     )
 
     # Création de l'indicateur
-    df["Utilisation_Minutis"] = (
+    df["Dispositifs_d_urgence Utilisation_Minutis"] = (
         df["operations_reellement_gerees"]
         .gt(0)
         .map({True: "Oui", False: ""})
