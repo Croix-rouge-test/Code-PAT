@@ -908,6 +908,7 @@ def indicateurs_minutis(df, df_ref_structure):
 
     mask = df["n_structure"].fillna("") == ""
 
+
     mapping_dict = (
         df_ref_structure[
             df_ref_structure["type_structure"] == "DELEGATION TERRITORIALE - DT"
@@ -916,6 +917,7 @@ def indicateurs_minutis(df, df_ref_structure):
         .to_dict()
     )
 
+    df['code_territoire'] = df['code_territoire'].astype(int).astype(str)
     df.loc[mask, "n_structure"] = (
         df.loc[mask, "code_territoire"]
         .map(mapping_dict)
