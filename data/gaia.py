@@ -5,7 +5,7 @@ import sys
 sys.path.append(os.path.abspath("/Code-PAT"))
 from utils import *
 
-def import_table_GAIA_date_fixe(client, target_date="2025-12-31", project_id="crf-pat"):
+def import_table_GAIA_date_fixe(client,df_ref_structure, target_date="2025-12-31", project_id="crf-pat"):
     """
     Charge la table GAIA nécessaires et renvoie le DataFrame importé.
     """
@@ -20,6 +20,9 @@ def import_table_GAIA_date_fixe(client, target_date="2025-12-31", project_id="cr
     """
 
     df_rattachement_benevole = client.query(query).to_dataframe()
+    liste_structure_garder = df_ref_structure['n_structure'].drop_duplicates().to_list()
+
+    df_rattachement_benevole = df_rattachement_benevole[df_rattachement_benevole['rattachement_benevole_structure_id_fk'].isin(liste_structure_garder)]
     df_rattachement_benevole["rattachement_benevole_date_fin"] = pd.to_datetime(df_rattachement_benevole["rattachement_benevole_date_fin"])
 
     df_rattachement_benevole["rattachement_benevole_date_debut"] = pd.to_datetime(
@@ -54,6 +57,9 @@ def clean_gaia(client, df_ref_structure, target_date="2025-12-31"):
   FROM crf-pat.{dataset_id}.crf_pat_{year}_rattachement_benevole
   """
   df_gaia_rattachement_benevole = client.query(query_gaia).to_dataframe()
+  liste_structure_garder = df_ref_structure['n_structure'].drop_duplicates().to_list()
+
+  df_rattachement_benevole = df_rattachement_benevole[df_rattachement_benevole['rattachement_benevole_structure_id_fk'].isin(liste_structure_garder)]
   # Vérification que la colonne est au format datetime
   df_gaia_rattachement_benevole['rattachement_benevole_date_fin'] = pd.to_datetime(df_gaia_rattachement_benevole['rattachement_benevole_date_fin'], errors='coerce')
   df_gaia_rattachement_benevole['rattachement_benevole_date_debut'] = pd.to_datetime(df_gaia_rattachement_benevole['rattachement_benevole_date_debut'], errors='coerce')

@@ -583,6 +583,9 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
         #SELECT rattachement_benevole_nivol_id_fk, rattachement_benevole_structure_id_fk
     df_rattachement_benevole = client.query(query_rattachement_benevole).to_dataframe()
     #df_rattachement_benevole.drop_duplicates(subset=["rattachement_benevole_nivol_id_fk"], inplace=True)
+    liste_structure_garder = df_ref_structure['n_structure'].drop_duplicates().to_list()
+
+    df_rattachement_benevole = df_rattachement_benevole[df_rattachement_benevole['rattachement_benevole_structure_id_fk'].isin(liste_structure_garder)]
 
     df_rattachement_benevole["rattachement_benevole_date_fin"] = pd.to_datetime(df_rattachement_benevole["rattachement_benevole_date_fin"])
 
@@ -590,6 +593,10 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     df_rattachement_benevole["rattachement_benevole_date_debut"],
     errors="coerce"
     )
+
+    df_rattachement_benevole = df_rattachement_benevole.loc[
+        ~(df_rattachement_benevole["rattachement_benevole_date_fin"] < target) | ~(df_rattachement_benevole["rattachement_benevole_date_debut"]  > target)
+    ]
 
     df_rattachement_benevole = (
         df_rattachement_benevole
@@ -599,12 +606,6 @@ def clean_base_contact(client, df_ref_structure, target_date="2025-12-31"):
     )
 
     df_rattachement_benevole = df_rattachement_benevole.drop_duplicates("rattachement_benevole_nivol_id_fk")
-
-    
-    df_rattachement_benevole = df_rattachement_benevole.loc[
-        (df_rattachement_benevole["rattachement_benevole_date_fin"].isna()
-        | (df_rattachement_benevole["rattachement_benevole_date_fin"] >= target)) & (df_rattachement_benevole["rattachement_benevole_date_debut"]  <= target)
-    ]
     
     df_rattachement_benevole = df_rattachement_benevole[["rattachement_benevole_nivol_id_fk","rattachement_benevole_structure_id_fk"]]
 
