@@ -483,13 +483,23 @@ def nb_bene_actifs_solidar(client, df, filtres_bc, df_ref_structure, col_groupby
 
     target = pd.Timestamp(target_date)
     year = target.year
-    query_bene_actifs = f"""SELECT
+    query_bene_actifs = f"""WITH codes_actifs AS (
+                            SELECT 10032 AS code UNION ALL
+                            SELECT 10033 UNION ALL
+                            SELECT 10034 UNION ALL
+                            SELECT 10035 UNION ALL
+                            SELECT 10036 UNION ALL
+                            SELECT 10037 UNION ALL
+                            SELECT 11110
+                          )
+                          
+                          SELECT
                             act.*,
                             insc.*
                         FROM `crf-pat.dataset_PAT_{year}.crf_pat_{year}_pegass_activite` AS act
                         INNER JOIN `crf-pat.dataset_PAT_{year}.crf_pat_{year}_pegass_activite_seance_inscription` AS insc
                             ON act.PEGASS_ACTIVITE_ID_PK = insc.PEGASS_ACTIVITE_ID_FK
-                        WHERE insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide' AND PEGASS_ACTIVITE_DATE_DEBUT >= DATE('{year}-01-01')  AND PEGASS_ACTIVITE_DATE_DEBUT <= DATE('{target_date}')"""
+                        WHERE act.ACTIVITE_BENEVOLE_ID_FK IN (SELECT code FROM codes_actifs) AND insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide' AND PEGASS_ACTIVITE_DATE_DEBUT >= DATE('{year}-01-01')  AND PEGASS_ACTIVITE_DATE_DEBUT <= DATE('{target_date}')"""
 
     df_bene_actifs = client.query(query_bene_actifs).to_dataframe()
     df_bene_actifs = df_bene_actifs.rename(columns = {'PEGASS_ACTIVITE_STRUCTURE_MENANT_ACTIVITE_ID_FK': 'n_structure','PEGASS_ACTIVITE_SEANCE_INSCRIPTION_NIVOL_ID_FK' : 'NIVOL_ID_FK'})[['n_structure','NIVOL_ID_FK']].drop_duplicates()

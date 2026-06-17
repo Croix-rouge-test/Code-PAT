@@ -309,6 +309,31 @@ def calcul_u2a(df_ref_structure, df_U2A_statut, df_U2A_actions, df_contact):
 
     df_U2A_statut_ref["Aide_alimentaire Nb_U2A"] = 1
 
+    df_U2A_statut_ref_agrege = (
+        df_U2A_statut_ref
+        .groupby(
+            [
+                "Code U2A",
+                "Structure de rattachement",
+                "n_structure-ratt",
+                 "DT_de_rattachement"
+            ],
+            as_index=False,
+            dropna=False
+        )
+        .agg({
+            "Aide_alimentaire Nb_Centre_distribution_alimentaire": "sum",
+            "Aide_alimentaire Nb_epiceries_sociales": "sum",
+            "Aide_alimentaire Nb_crsr": "sum",
+            "Aide_alimentaire Nb_U2A": "max"
+        })
+    )
+
+
+
+   
+    
+
     #On merge les différents DF d'indicateurs d'U2A pour avoir un DF global avec tous les indicateurs
 
     df_U2A_merged = (
@@ -317,11 +342,11 @@ def calcul_u2a(df_ref_structure, df_U2A_statut, df_U2A_actions, df_contact):
         .merge(df_U2A_Poids_distributions, on="CD_U2A", how="outer")
     )
     
-    df_U2A_statut_ref.drop_duplicates("Code U2A")
+
 
     #On merge le DF avec le DF de statut pour avoir un DF final avec les indicateurs et le statut d'activité des U2A
     df_U2A_final = df_U2A_merged.merge(
-        df_U2A_statut_ref,
+        df_U2A_statut_ref_agrege,
         left_on="CD_U2A",
         right_on="Code U2A",
         how="inner"
@@ -354,7 +379,26 @@ def calcul_u2a(df_ref_structure, df_U2A_statut, df_U2A_actions, df_contact):
     df_struct_DT = df_U2A_Structure[["n_structure-ratt"]]
     df_struct_DT["Aide_alimentaire Nb_struct"] = 1
 
-    df_struct_DT =pd.merge(df_struct_DT, df_ref_structure[["n_structure-ratt", "DT_de_rattachement"]], on="n_structure-ratt", how="left")
+    mapping_structure_DT = (
+    df_ref_structure[
+        [
+            "n_structure-ratt",
+            "DT_de_rattachement"
+        ]
+    ]
+    .drop_duplicates()
+    )
+
+
+    df_struct_DT =pd.merge(df_struct_DT, mapping_structure_DT, on="n_structure-ratt", how="left")
+
+    df_struct_DT = pd.merge(
+    df_struct_DT,
+    mapping_structure_DT,
+    on="n_structure-ratt",
+    how="left",
+    validate="one_to_one"
+    )
 
     df_struct_DT = df_struct_DT[["DT_de_rattachement", "Aide_alimentaire Nb_struct"]]
 

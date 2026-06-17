@@ -244,7 +244,7 @@ def nb_bene_aptes_PSE1_2_CI(df, filtres_bc, col_groupby, target_date):
     for col in totaux.index:
         print(f"{col} : {totaux[col]}")
 
-    result['Secours Nb_IS'] = result['Secours Nb_PSE1'] + result['Secours Nb_PSE2']
+    result['Secours Nb_IS'] = result['Secours Nb_PSE1'] + result['Secours Nb_PSE2'] + result['Secours Nb_CI']
 
     return result
 
@@ -474,7 +474,7 @@ def taux_IS(client, df, filtres_bc, df_ref_structure, col_groupby, target_date =
                           WHERE act.ACTIVITE_BENEVOLE_ID_FK IN (SELECT code FROM codes_actifs) AND insc.PEGASS_ACTIVITE_SEANCE_INSCRIPTION_STATUT = 'Valide'
                             AND PEGASS_ACTIVITE_DATE_DEBUT >= DATE('{year}-01-01') AND PEGASS_ACTIVITE_DATE_DEBUT <= DATE('{target_date}')"""
 
-    filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2']
+    filtres_bc['IS'] = filtres_bc['PSE1'] + filtres_bc['PSE2'] + filtres_bc['CI']
 
 
     df_is = client.query(query_is).to_dataframe()

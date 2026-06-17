@@ -29,6 +29,7 @@ def import_clean_donnees_financieres(financier, df_ref_structure):
     # ======================
     dt_prod = dt_prod.rename(columns = {'N° Structure' : 'n_structure',"Dptmt":"n_dept"})
     dt_resnet = dt_resnet.rename(columns = {'N° Structure' : 'n_structure', "Dptmt":"n_dept" })
+    
 
     
     dt_prod = dt_prod[dt_prod['n_structure'] == 'D']
@@ -36,13 +37,11 @@ def import_clean_donnees_financieres(financier, df_ref_structure):
 
     dt_prod= dt_prod[['n_dept','Réalisé 2023 Total Année','Réalisé 2024 Total Année','Nom Structure']]\
         .rename(columns={'Réalisé 2024 Total Année': 'Financier Prod_2024', 'Réalisé 2023 Total Année': 'Financier Prod_2023'})\
-        .iloc[:dt_prod.shape[0]-2]
 
     dt_prod['Nom Structure'] = 'DT - ' + dt_prod['Nom Structure']
 
     dt_resnet= dt_resnet[['n_dept','Réalisé 2023 Total Année','Réalisé 2024 Total Année','Nom Structure']]\
         .rename(columns={'Réalisé 2024 Total Année': 'Financier ResNet_2024', 'Réalisé 2023 Total Année': 'Financier ResNet_2023'})\
-        .iloc[:dt_prod.shape[0]-2]
 
     dt_resnet['Nom Structure'] = 'DT - ' + dt_resnet['Nom Structure']
 
@@ -63,7 +62,9 @@ def import_clean_donnees_financieres(financier, df_ref_structure):
     dt_prod = pd.merge(dt_prod, DT_dept, on = 'n_dept').drop('n_dept',axis = 1).drop('Nom Structure', axis = 1)
     dt_resnet = pd.merge(dt_resnet, DT_dept, on = 'n_dept')
 
-    df_financier_2023_2024 = pd.merge(dt_prod,dt_resnet, on = 'n_structure', how = 'inner')
+
+
+    df_financier_2023_2024 = pd.merge(dt_prod,dt_resnet, on = 'n_structure', how = 'outer')
 
     df_financier_2023_2024['Financier ResNet_2024'] = pd.to_numeric(
         df_financier_2023_2024['Financier ResNet_2024'],
@@ -90,6 +91,26 @@ def import_clean_donnees_financieres(financier, df_ref_structure):
     df_financier_2023_2024['Financier ResCorrProd_2024'] = df_financier_2023_2024['Financier ResNet_2024'] / df_financier_2023_2024['Financier Prod_2024']
 
     df_financier_2023_2024['Financier ResCorrProd_2023'] = df_financier_2023_2024['Financier ResNet_2023'] / df_financier_2023_2024['Financier Prod_2023']
+
+    colonnes_futuna_vide = [
+        "Financier Prod_2025",
+        "Financier ResNet_2025",
+        "Financier ResCorrProd_2025",
+        "Financier Prod_2023",
+        "Financier ResNet_2023",
+        "Financier ResCorrProd_2023",
+        "Financier Prod_2024",
+        "Financier ResNet_2024",
+        "Financier ResCorrProd_2024",
+        "Financier caf_2025",
+        "Financier TresoBrute_2025",
+        "Financier Mois_AvanceTreso_2025"
+    ]
+
+    for col in colonnes_futuna_vide:
+        df_financier_2023_2024.loc[df_financier_2023_2024['n_structure'] == 3884, col] = None
+    
+    df_financier_2023_2024.loc[df_financier_2023_2024['n_structure'] == 1285, 'Financier TresoBrute_2025'] = 661366
 
     # ======================
     # RETURN DICTIONNAIRE
