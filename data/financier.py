@@ -92,25 +92,6 @@ def import_clean_donnees_financieres(financier, df_ref_structure):
 
     df_financier_2023_2024['Financier ResCorrProd_2023'] = df_financier_2023_2024['Financier ResNet_2023'] / df_financier_2023_2024['Financier Prod_2023']
 
-    colonnes_futuna_vide = [
-        "Financier Prod_2025",
-        "Financier ResNet_2025",
-        "Financier ResCorrProd_2025",
-        "Financier Prod_2023",
-        "Financier ResNet_2023",
-        "Financier ResCorrProd_2023",
-        "Financier Prod_2024",
-        "Financier ResNet_2024",
-        "Financier ResCorrProd_2024",
-        "Financier caf_2025",
-        "Financier TresoBrute_2025",
-        "Financier Mois_AvanceTreso_2025"
-    ]
-
-    for col in colonnes_futuna_vide:
-        df_financier_2023_2024.loc[df_financier_2023_2024['n_structure'] == 3884, col] = None
-    
-    df_financier_2023_2024.loc[df_financier_2023_2024['n_structure'] == 1285, 'Financier TresoBrute_2025'] = 661366
 
     # ======================
     # RETURN DICTIONNAIRE
@@ -630,6 +611,26 @@ def import_clean_donnees_financieres_bigquery(financier_sheet,financier_textile,
     df_financier_DT = pd.merge(df_financier_DT,df_financier_textile_DT, on='n_structure', how='left')
 
     df_financier_DT = df_financier_DT.drop('n_dept_x', axis = 1).drop('n_dept_y', axis = 1).drop('Nom Structure', axis = 1).drop('nom_structure', axis = 1)
+
+    colonnes_futuna_vide = [
+        "Financier Prod_2025",
+        "Financier ResNet_2025",
+        "Financier ResCorrProd_2025",
+        "Financier Prod_2023",
+        "Financier ResNet_2023",
+        "Financier ResCorrProd_2023",
+        "Financier Prod_2024",
+        "Financier ResNet_2024",
+        "Financier ResCorrProd_2024",
+        "Financier caf_2025",
+        "Financier TresoBrute_2025",
+        "Financier Mois_AvanceTreso_2025"
+    ]
+
+    for col in colonnes_futuna_vide:
+        df_financier_DT.loc[df_financier_DT['n_structure'] == 3884, col] = None
+    
+    df_financier_DT.loc[df_financier_DT['n_structure'] == 1285, 'Financier TresoBrute_2025'] = 661366
 
     return df_financier, df_financier_DT, financier
 

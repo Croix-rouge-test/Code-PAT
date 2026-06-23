@@ -390,8 +390,6 @@ def calcul_u2a(df_ref_structure, df_U2A_statut, df_U2A_actions, df_contact):
     )
 
 
-    df_struct_DT =pd.merge(df_struct_DT, mapping_structure_DT, on="n_structure-ratt", how="left")
-
     df_struct_DT = pd.merge(
     df_struct_DT,
     mapping_structure_DT,
