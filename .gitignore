@@ -1,2 +1,18 @@
+# Python cache files
 __pycache__/
 *.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local environment and secrets
+.env
+service_account/
+
+# System and editor temporary files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tmp
+*.temp
+~$*
