@@ -154,6 +154,8 @@ def indicateurs_gaia_nvx(df_gaia, target_date="2025-12-31"):
       | (df_gaia["rattachement_benevole_date_fin"] >= target)) & (df_gaia["rattachement_benevole_date_debut"]  <= target)
   ]
 
+  df_NIVOLS_Nouveaux_benevoles_gaia = df_gaia.copy()
+
   # Renommage
   df_gaia = df_gaia.rename(columns={
       'rattachement_benevole_structure_id_fk': 'n_structure',
@@ -173,7 +175,7 @@ def indicateurs_gaia_nvx(df_gaia, target_date="2025-12-31"):
   total_nvx_benevoles = nb_nvx_benevoles[f'Structure Nb_nvx_Benevoles_{year}'].sum()
   print(f"Nombre total de nouveaux bénévoles uniques : {total_nvx_benevoles}")
   
-  return nb_nvx_benevoles
+  return nb_nvx_benevoles, df_NIVOLS_Nouveaux_benevoles_gaia 
 
 
 
@@ -267,11 +269,11 @@ def calcul_indicateurs_gaia(df_gaia_rattachement_benevole,rattachement_court,tar
     year = target.year
     
     nb_benevoles = indicateurs_gaia(df_gaia_rattachement_benevole, target_date)
-    nb_nvx_benevoles = indicateurs_gaia_nvx(df_gaia_rattachement_benevole, target_date)
+    nb_nvx_benevoles,df_NIVOLS_Nouveaux_benevoles_gaia = indicateurs_gaia_nvx(df_gaia_rattachement_benevole, target_date)
     nb_benevoles_DT = indicateurs_gaia_DT(nb_benevoles,rattachement_court)
     nb_nvx_benevoles_DT = indicateurs_gaia_nvx_DT(nb_nvx_benevoles, rattachement_court, year)
     df_indicateurs_gaia,df_indicateurs_gaia_DT = taux_nvx_benevoles(nb_benevoles, nb_nvx_benevoles, nb_benevoles_DT, nb_nvx_benevoles_DT, year)
-    return df_indicateurs_gaia, df_indicateurs_gaia_DT
+    return df_indicateurs_gaia, df_indicateurs_gaia_DT, df_NIVOLS_Nouveaux_benevoles_gaia
 
 
 

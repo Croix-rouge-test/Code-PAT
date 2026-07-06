@@ -43,7 +43,7 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     f"Structure Nb_nvx_Benevoles_{year}",
     "Structure Nb_Adherents",
     f"Structure Nb_formes_CRB_{year}",
-    "Structure Taux_formation_CRB",
+    f"Structure Taux_formation_CRB_{year}",
     f"Structure Nb_nvx_formes_CRB_{year}",
     f"Structure Nb_formateurs_CRB_{year}",
     f"Structure Nb_formes_TCAS_{year}",
@@ -129,6 +129,29 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
     "Secours Nb_sessions_PSE",
     "Secours Nb_sessions_CI",
     "Secours Nb_sessions_FPSE",
+        # Colonnes sources pour les taux de renouvellement et de recyclage
+    f"Secours Nb_PSE1_{year-1}",
+    f"Secours Nb_PSE2_{year-1}",
+    f"Secours Nb_CI_{year-1}",
+    f"Secours Nb_FPSE_{year-1}",
+
+    f"Secours Nb_FC_PSE1_recy{year}",
+    f"Secours Nb_FC_PSE2_recy{year}",
+    f"Secours Nb_FC_CI_recy{year}",
+    f"Secours Nb_FC_FPSE_recy{year}",
+
+    f"Secours Nb_FI_PSE1_renou_{year}",
+    f"Secours Nb_FI_PSE2_renou_{year}",
+    f"Secours Nb_FI_CI_renou_{year}",
+    f"Secours Nb_FI_FPSE_renou_{year}",
+
+        #Colonnes utiles pour la CNS 
+    "Secours Nb_IS_apte_inactif",
+    "Secours Nb_IS_actifs",
+    "Secours Nb_renfort_IS_OUT",
+    "Secours Nb_renfort_IS_IN",
+
+    #On reprend la suite
     f"Secours Nb_DPS_{year}",
     f"Secours Nb_DPS_ps_{year}",
     f"Secours Nb_PAPS_ps_{year}",
@@ -213,7 +236,58 @@ def traitement_all_data(liste_df_a_fusionner_toutes_structures, liste_df_a_fusio
 
     "PAT AEO_Structure_menant_activite",
     "PAT AEO_Nb_aeo_fixe",
-    "PAT AEO_Nb_aeo_mobile"
+    "PAT AEO_Nb_aeo_mobile",
+
+
+    #Les indicateurs qui étaient suppr : 
+    # DataFrame 19 — calcul principal
+    f"Formation_grand_public Nb_FPSC_{year}",
+    f"Secours Nb_PSE1_{year}",
+    f"Secours Nb_FI_PSE1_{year}",
+    f"Secours Nb_FC_PSE1_{year}",
+    f"Secours Nb_PSE2_{year}",
+    f"Secours Nb_FI_PSE2_{year}",
+    f"Secours Nb_FC_PSE2_{year}",
+    f"Secours Nb_CI_{year}",
+    f"Secours Nb_FI_CI_{year}",
+    f"Secours Nb_FC_CI_{year}",
+    f"Secours Nb_FPSE_{year}",
+    f"Secours Nb_FI_FPSE_{year}",
+    f"Secours Nb_FC_FPSE_{year}",
+
+    # DataFrame 20 — recyclage
+    f"Formation_grand_public Nb_FPSC_recy{year}",
+    f"Secours Nb_PSE1_recy{year}",
+    f"Secours Nb_FI_PSE1_recy{year}",
+    f"Secours Nb_PSE2_recy{year}",
+    f"Secours Nb_FI_PSE2_recy{year}",
+    f"Secours Nb_CI_recy{year}",
+    f"Secours Nb_FI_CI_recy{year}",
+    f"Secours Nb_FPSE_recy{year}",
+    f"Secours Nb_FI_FPSE_recy{year}",
+
+    # DataFrame 21 — dénominateur année précédente
+    f"Formation_grand_public Nb_FPSC_{year-1}",
+    f"Secours Nb_FI_PSE1_{year-1}",
+    f"Secours Nb_FC_PSE1_{year-1}",
+    f"Secours Nb_FI_PSE2_{year-1}",
+    f"Secours Nb_FC_PSE2_{year-1}",
+    f"Secours Nb_FI_CI_{year-1}",
+    f"Secours Nb_FC_CI_{year-1}",
+    f"Secours Nb_FI_FPSE_{year-1}",
+    f"Secours Nb_FC_FPSE_{year-1}",
+
+    # DataFrame 22 — renouvellement
+    f"Formation_grand_public Nb_FPSC_renou_{year}",
+    f"Secours Nb_PSE1_renou_{year}",
+    f"Secours Nb_FC_PSE1_renou_{year}",
+    f"Secours Nb_PSE2_renou_{year}",
+    f"Secours Nb_FC_PSE2_renou_{year}",
+    f"Secours Nb_CI_renou_{year}",
+    f"Secours Nb_FC_CI_renou_{year}",
+    f"Secours Nb_FPSE_renou_{year}",
+    f"Secours Nb_FC_FPSE_renou_{year}",
+
   ]
 
   mask = df_ref_structure['n_structure'].to_list()
@@ -313,8 +387,26 @@ def ajouter_colonnes_taux(df: pd.DataFrame, year: int) -> pd.DataFrame:
         (f"Dispositifs_d_urgence Nb_formes_IRR_{year}", "Structure Nb_Benevoles"): f"Dispositifs_d_urgence Taux_formation_IRR_{year}",
         (f"Dispositifs_d_urgence Nb_formes_GQS_{year}", "Structure Nb_Benevoles"): f"Dispositifs_d_urgence Taux_formation_GQS_{year}",
         (f"Structure Nb_formes_CRB_{year}", "Structure Nb_Benevoles"): f"Structure Taux_formation_CRB_{year}",
-        (f"Structure Nb_nvx_formes_CRB_{year}", f"Structure Nb_nvx_Benevoles_{year}"): f"Structure Taux_nvx_formes_CRB_{year}"
+        (f"Structure Nb_nvx_formes_CRB_{year}", f"Structure Nb_nvx_Benevoles_{year}"): f"Structure Taux_nvx_formes_CRB_{year}",
+        (f"Structure Nb_nvx_Benevoles_{year}", "Structure Nb_Benevoles"): "Structure Taux_nvx_Benevoles",
+        ("Secours Nb_IS_actifs", "Secours Nb_IS"): "Secours Taux_IS_actifs",
+
+        # Taux de recyclage Secours
+        (f"Secours Nb_FC_PSE1_recy{year}", f"Secours Nb_PSE1_{year-1}"): f"Secours Taux_recy{year+1-2000}_PSE1",
+        (f"Secours Nb_FC_PSE2_recy{year}", f"Secours Nb_PSE2_{year-1}"): f"Secours Taux_recy{year+1-2000}_PSE2",
+        (f"Secours Nb_FC_CI_recy{year}", f"Secours Nb_CI_{year-1}"): f"Secours Taux_recy{year+1-2000}_CI",
+        (f"Secours Nb_FC_FPSE_recy{year}", f"Secours Nb_FPSE_{year-1}"): f"Secours Taux_recy{year+1-2000}_FPSE",
+
+
+        # Taux de renouvellement Secours
+        (f"Secours Nb_FI_PSE1_renou_{year}", f"Secours Nb_PSE1_{year-1}"): f"Secours Taux_ren{year-2000}_PSE1",
+        (f"Secours Nb_FI_PSE2_renou_{year}", f"Secours Nb_PSE2_{year-1}"): f"Secours Taux_ren{year-2000}_PSE2",
+        (f"Secours Nb_FI_CI_renou_{year}", f"Secours Nb_CI_{year-1}"): f"Secours Taux_ren{year-2000}_CI",
+        (f"Secours Nb_FI_FPSE_renou_{year}", f"Secours Nb_FPSE_{year-1}"): f"Secours Taux_ren{year-2000}_FPSE",
+
     }
+
+
 
     for col, denominateur in mapping_noms:
         if col not in df.columns:
@@ -384,10 +476,10 @@ def vision_conso(df_alldata, df_alldata_DT, year):
 
 
   formations_secours = [
-      'Secours Nb_PSE1',
-      'Secours Nb_PSE2',
-      'Secours Nb_CI'
-  ]
+        f"Secours Nb_PSE1_{year}",
+        f"Secours Nb_PSE2_{year}",
+        f"Secours Nb_CI_{year}",
+    ]
 
   # df_alldata['vision_territoriale_formation_DPS'] = (
   #     df_alldata['formations_secours']
@@ -423,13 +515,17 @@ def vision_conso(df_alldata, df_alldata_DT, year):
   colonnes_nb_structure = [
     (('OCR Nb_deployees',), 'OCR Structures_menant_activite'),
     ((f'Secours Nb_DPS_{year}',f'Secours Nb_PAPS_{year}',f'Secours Nb_DPS_PE_{year}',f'Secours Nb_DPS_ME_{year}',f'Secours Nb_DPS_GE_{year}'), 'Secours Structures_menant_activite'),
-    (('Secours Nb_PSE1','Secours Nb_PSE2','Secours Nb_CI'), 'Secours Structures_menant_activite_formes'),
+    ((f"Secours Nb_PSE1_{year}", f"Secours Nb_PSE2_{year}", f"Secours Nb_CI_{year}"), 'Secours Structures_menant_activite_formes'),
     (('Secours Nb_sessions_PSE','Secours Nb_sessions_CI','Secours Nb_sessions_FPSE'), 'Secours Structures_menant_activite_sessions'),
     (('Maraude Nb_maraudes_PEGASS',), 'Maraudes Structures_menant_activite'),
     (('Textile Nb_boutiques', 'Textile Nb_vestiaires'), 'Textile Structures_menant_activite'),
     # (('Dispositifs_d_urgence Nb_formes_TCAU_2025',), 'Dispositifs_d_urgence Structures_menant_activite_TCAU'),
     # (('Dispositifs_d_urgence Nb_formes_PSP_2025',), 'Dispositifs_d_urgence Structures_menant_activite_PSP'),
     # (('Dispositifs_d_urgence Nb_formes_GQS_2025',), 'Dispositifs_d_urgence Structures_menant_activite_GQS'),
+
+     
+            
+            
 
   ]
   colonnes_actions = [col_output for _, col_output in colonnes_nb_structure]
