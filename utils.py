@@ -1,11 +1,3 @@
-import pandas as pd
-import io
-import re
-import unicodedata
-import re
-import torch
-from sentence_transformers import SentenceTransformer, util
-from typing import List, Dict
 
 
 # Mensualisation 
