@@ -100,42 +100,6 @@ def indicateurs_impact_ppc(df_IMPACT):
 
 
 
-def indicateurs_impact_agrementAB(df_IMPACT):
-    # Filtre sur les libellés appropriés
-    libelles_Urgences = [10119, 10125, 10126, 10127, 10128, 10129, 10115, 10132, 10133, 10134, 10135, 10136, 10137]
-    IMPACT_Urgences = df_IMPACT[df_IMPACT["impact_indicateur_activite_benevole_id_fk"].isin(libelles_Urgences)]
-   
-    libelles_agrementAB = [355, 367, 380, 394, 414, 422, 438, 452, 461, 356, 368, 381, 395, 415, 423, 439, 453]
-    IMPACT_Urgences = df_IMPACT[df_IMPACT["impact_indicateur_id_fk"].isin(libelles_agrementAB)]
-   
-    IMPACT_Urgences['impact_reponse'] = (
-    IMPACT_Urgences['impact_reponse']
-    .str.replace("'", "", regex=False)   # enlève les guillemets simples
-    )
-
-
-    IMPACT_Urgences.loc[:, 'impact_reponse'] = (
-    IMPACT_Urgences['impact_reponse']
-    .astype(str)
-    .str.strip()
-    .str.lower()
-    .map({'Oui': 1.0, 'Non': 0.0})
-    .astype('Int64')   # ou .astype(int) si tu es sûre qu’il n’y a pas de NaN
-    )
-
-
-    IMPACT_agrementAB = (
-    IMPACT_Urgences
-    .groupby('impact_structure_id_fk')['impact_reponse'].sum().reset_index(name='Dispositifs_d_urgence Nb_agrements'))
-    IMPACT_agrementAB = IMPACT_agrementAB.rename(columns ={'impact_structure_id_fk': 'n_structure'})
-
-    print(f"Nombre de structures agrégées : {len(IMPACT_agrementAB)}")
-
-    # Somme totale nationale
-    total_agrements = IMPACT_agrementAB['Dispositifs_d_urgence Nb_agrements'].sum()
-    print(f"Somme totale agréments AB : {total_agrements}")
-
-    return IMPACT_agrementAB
 
 
 
